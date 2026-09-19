@@ -25,7 +25,7 @@ const ProductShell = preload("res://scripts/product_shell.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
-const DEFAULT_CAMERA_ZOOM := 0.52
+const DEFAULT_CAMERA_ZOOM := 1.04
 
 var world_map: Node2D
 var player: Node2D
@@ -126,7 +126,7 @@ func _ready() -> void:
 	camera = Camera2D.new()
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = 7.0
-	camera.zoom = Vector2(0.44,0.44)
+	camera.zoom = Vector2.ONE * DEFAULT_CAMERA_ZOOM
 	camera.position = Vector2(0,-90)
 	player.add_child(camera)
 	create_hud()
@@ -1950,7 +1950,7 @@ func b01_capture() -> void:
 
 func b01_preview() -> void:
 	camera.position_smoothing_enabled = false
-	camera.zoom = Vector2.ONE * DEFAULT_CAMERA_ZOOM
+	camera.zoom = Vector2(0.44,0.44)
 	camera.position = Vector2(0,-90)
 	player.position = world_map.map_to_world(Vector2(65.3,143.3))
 	player.update_depth()
