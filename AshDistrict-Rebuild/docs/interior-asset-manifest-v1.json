@@ -6,7 +6,7 @@
   "tile_pixels": [64, 32],
   "cell_meters": 0.5,
   "viewport": [1280, 720],
-  "default_zoom": 0.44,
+  "default_zoom": 0.52,
   "light_direction": "upper-left to lower-right",
   "generation_note": "Original AI-generated source art; normalized and validated in engine before approval",
   "reuse_policy": {
