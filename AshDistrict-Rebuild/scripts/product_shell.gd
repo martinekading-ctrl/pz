@@ -66,7 +66,7 @@ func rebuild() -> void:
 	var brand := make_label("余烬街区",38,Color("f0e8d0"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(brand)
-	var version := make_label("0.24  生存测试版",17,Color("b7c7be"))
+	var version := make_label("0.25  生存测试版",17,Color("b7c7be"))
 	version.custom_minimum_size.x = 190
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -100,7 +100,7 @@ func build_main(parent: VBoxContainer) -> void:
 	make_button(parent,"设置",push_screen.bind("settings"))
 	make_button(parent,"操作教程",push_screen.bind("tutorial"))
 	make_button(parent,"退出游戏",game.quit_from_shell)
-	var info := make_label("单人离线 · 自动备份 · F5 保存当前槽位 · F9 读取当前槽位",15,Color("879890"))
+	var info := make_label("单人离线 · 安全屋自动保存 · F5 手动保存 · F9 读取最近进度",15,Color("879890"))
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	info.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
@@ -241,7 +241,7 @@ WASD 或左摇杆移动；Shift 奔跑；C 蹲伏。奔跑更快，但消耗体�
 K 或手机“制作”按钮打开制作页。靠近住宅窗户按 E，可使用木板、钉子和木工锤加固。
 
 生存与存档
-留意生命、饱食、水分、体力与伤病。F5 保存到当前槽位，F9 读取当前槽位。
+留意生命、饱食、水分、体力与伤病。清理住宅后可在床边设为安全屋；睡醒、进入安全屋或退出时自动保存。F5 手动保存，F9 读取最近进度。
 """,18,Color("d0d9d4"))
 	text.custom_minimum_size.x = 740
 	scroll.add_child(text)

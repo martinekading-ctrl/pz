@@ -26,6 +26,9 @@ const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
 const DEFAULT_CAMERA_ZOOM := 0.68
+const SLEEP_DURATION_MINUTES := 480.0
+const SLEEP_MINUTES_PER_REAL_SECOND := 120.0
+const SAFEHOUSE_DANGER_RADIUS_METERS := 8.0
 
 var world_map: Node2D
 var player: Node2D
@@ -94,9 +97,20 @@ var population_timer := ZombiePopulation.RESPAWN_INTERVAL_SECONDS
 var population_respawn_budget := ZombiePopulation.RESPAWN_BUDGET
 var population_seed_cursor := 0
 var population_next_id := 0
+var safehouse_building_id := ""
+var safehouse_spawn_logical := Vector2.ZERO
+var last_player_building_id := ""
+var sleeping := false
+var sleep_elapsed_minutes := 0.0
+var sleep_overlay: ColorRect
+var sleep_clock_label: Label
+var sleep_progress: ProgressBar
+var autosave_cooldown := 0.0
+var autosave_path_override := ""
 
 func _ready() -> void:
-	DisplayServer.window_set_title("余烬街区：重建版 · 门窗攻防 0.24")
+	get_tree().auto_accept_quit = false
+	DisplayServer.window_set_title("余烬街区：重建版 · 安全屋与睡眠 0.25")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -176,6 +190,8 @@ func _ready() -> void:
 	if "--product-test" in OS.get_cmdline_user_args(): call_deferred("run_product_test")
 	if "--barrier-test" in OS.get_cmdline_user_args(): call_deferred("run_barrier_test")
 	if "--barrier-capture" in OS.get_cmdline_user_args(): call_deferred("barrier_capture")
+	if "--safehouse-test" in OS.get_cmdline_user_args(): call_deferred("run_safehouse_test")
+	if "--safehouse-capture" in OS.get_cmdline_user_args(): call_deferred("safehouse_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -191,7 +207,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.24"
+	title.text = "余烬街区 · 生存测试版 0.25"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -276,7 +292,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.game_input = game_input
 	hud.add_child(mobile_controls)
 	var args := OS.get_cmdline_user_args()
-	mobile_controls.visible = args.is_empty() or "--mobile-preview" in args or "--mobile-test" in args or "--mobile-capture" in args or "--settings-capture" in args or "--exertion-capture" in args or "--injury-capture" in args or "--population-capture" in args or "--firearm-capture" in args or "--firearm-preview" in args or "--crafting-preview" in args
+	mobile_controls.visible = args.is_empty() or "--mobile-preview" in args or "--mobile-test" in args or "--mobile-capture" in args or "--settings-capture" in args or "--exertion-capture" in args or "--injury-capture" in args or "--population-capture" in args or "--firearm-capture" in args or "--firearm-preview" in args or "--crafting-preview" in args or "--safehouse-capture" in args
 	if mobile_controls.visible:
 		apply_compact_mobile_hud()
 	quickbar = Quickbar.new()
@@ -350,12 +366,17 @@ func _process(delta: float) -> void:
 	var simulation_delta:=0.0 if simulation_paused or int(needs.health)<=0 else delta
 	if simulation_delta>0.0:
 		update_firearm_reload(simulation_delta)
-		update_exertion(simulation_delta)
-		update_movement_noise(simulation_delta)
 		update_zombie_population(simulation_delta)
-		if survival_clock_enabled:
+		if sleeping:
+			update_sleep(simulation_delta)
+		else:
+			update_exertion(simulation_delta)
+			update_movement_noise(simulation_delta)
+		if survival_clock_enabled and not sleeping:
 			advance_survival(simulation_delta)
+		autosave_cooldown = maxf(0.0, autosave_cooldown - simulation_delta)
 	for building in world_map.interactive_buildings: building.update_player(player.position,delta)
+	update_safehouse_entry()
 	player_invulnerability=maxf(0.0,player_invulnerability-simulation_delta)
 	combat_message_time=maxf(0.0,combat_message_time-simulation_delta)
 	if searching >= 0:
@@ -410,12 +431,13 @@ func update_survival_hud() -> void:
 		return
 	var clock:=Survival.clock_parts(game_time_minutes)
 	var phase:="夜晚" if int(clock.hour)<6 or int(clock.hour)>=20 else ("清晨" if int(clock.hour)<9 else ("傍晚" if int(clock.hour)>=17 else "白昼"))
-	var speed_text:="暂停" if simulation_paused else ("%d×" % roundi(time_multiplier))
+	var speed_text:="睡眠" if sleeping else ("暂停" if simulation_paused else ("%d×" % roundi(time_multiplier)))
 	clock_label.text="第 %d 天  %02d:%02d  %s  %s" % [clock.day,clock.hour,clock.minute,phase,speed_text]
 	for key: String in ["health","food","water","stamina"]:
 		need_bars[key].bar.value=clampf(float(needs.get(key,100.0)),0.0,100.0)
 		need_bars[key].label.text=str(roundi(float(needs.get(key,100.0))))
-	condition_label.text=Survival.condition_text(needs) + ("  ·  点击治疗" if is_instance_valid(mobile_controls) and mobile_controls.visible else "")
+	var safehouse_text := "  ·  安全屋" if not safehouse_building_id.is_empty() and current_player_building_id() == safehouse_building_id else ""
+	condition_label.text=Survival.condition_text(needs) + safehouse_text + ("  ·  点击治疗" if is_instance_valid(mobile_controls) and mobile_controls.visible else "")
 	var condition_warning := minf(float(needs.food),float(needs.water))<25.0 or float(needs.get("fatigue",0.0))>=70.0 or float(needs.get("stamina",100.0))<=10.0
 	condition_label.add_theme_color_override("font_color",Color("e0786d") if float(needs.get("bleeding",0.0))>0.0 or float(needs.get("infection",0.0))>=60.0 else (Color("e0bd69") if condition_warning or float(needs.get("pain",0.0))>=40.0 else Color("b9c9b6")))
 
@@ -463,29 +485,153 @@ func emit_world_sound(source: Vector2, radius_meters: float, kind: String) -> in
 
 func rest_at_bed() -> Dictionary:
 	if active_building == null or active_loot < 0 or active_loot >= active_building.furniture.size():
-		return {"rested":false, "message":"需要靠近一张床"}
+		return {"rested":false, "started":false, "message":"需要靠近一张床"}
 	if "床" not in str(active_building.furniture[active_loot].title):
-		return {"rested":false, "message":"这里只能搜索，不能休息"}
+		return {"rested":false, "started":false, "message":"这里只能搜索，不能睡觉"}
+	var sleep_check: Dictionary = Survival.can_sleep(needs)
+	if not bool(sleep_check.ok):
+		return {"rested":false, "started":false, "message":str(sleep_check.message)}
+	var danger := sleep_danger_reason()
+	if not danger.is_empty():
+		return {"rested":false, "started":false, "message":danger}
+	sleeping = true
+	sleep_elapsed_minutes = 0.0
+	close_loot()
+	create_sleep_overlay()
+	refresh_player_control()
+	update_survival_hud()
+	return {"rested":false, "started":true, "message":"正在睡眠……"}
+
+func claim_safehouse_at_bed() -> Dictionary:
+	if active_building == null or active_loot < 0 or active_loot >= active_building.furniture.size():
+		return {"ok":false, "message":"需要靠近一张床"}
+	var bed: Dictionary = active_building.furniture[active_loot]
+	if "床" not in str(bed.title):
+		return {"ok":false, "message":"只有带床的住宅可以设为安全屋"}
+	if building_has_living_zombie(active_building):
+		return {"ok":false, "message":"屋内仍有僵尸，无法设为安全屋"}
+	safehouse_building_id = str(active_building.name)
+	safehouse_spawn_logical = (bed.use_zone as Rect2).get_center()
+	last_player_building_id = safehouse_building_id
+	var saved := autosave_game("安全屋已设定")
+	return {"ok":bool(saved.ok), "message":"已设为安全屋并自动保存" if bool(saved.ok) else "安全屋已设定，但自动保存失败"}
+
+func is_safehouse(building: Node2D) -> bool:
+	return is_instance_valid(building) and not safehouse_building_id.is_empty() and str(building.name) == safehouse_building_id
+
+func building_has_living_zombie(building: Node2D) -> bool:
 	for zombie: Node2D in zombies:
-		if not zombie.is_dead() and Combat.distance_meters(world_map, player.position, zombie.position) <= 8.0:
-			return {"rested":false, "message":"附近有危险，无法休息"}
-	var result: Dictionary = Survival.rest(needs, 480.0)
-	if not bool(result.rested):
-		return result
-	InjuryRules.advance(injuries, needs, 480.0)
-	game_time_minutes += 480.0
+		if not zombie.is_dead() and world_map.building_containing(zombie.position) == building:
+			return true
+	return false
+
+func sleep_danger_reason() -> String:
+	for zombie: Node2D in zombies:
+		if not zombie.is_dead() and Combat.distance_meters(world_map, player.position, zombie.position) <= SAFEHOUSE_DANGER_RADIUS_METERS:
+			return "附近有危险，无法睡觉"
+	return ""
+
+func update_sleep(real_delta: float) -> void:
+	if not sleeping:
+		return
+	var danger := sleep_danger_reason()
+	if not danger.is_empty():
+		interrupt_sleep("你被附近的动静惊醒了")
+		return
+	var remaining := SLEEP_DURATION_MINUTES - sleep_elapsed_minutes
+	var advanced := minf(remaining, real_delta * SLEEP_MINUTES_PER_REAL_SECOND)
+	Survival.sleep_step(needs, advanced)
+	InjuryRules.advance(injuries, needs, advanced)
+	sleep_elapsed_minutes += advanced
+	game_time_minutes += advanced
+	world_tint.color = Survival.light_color(game_time_minutes)
+	update_sleep_overlay()
+	update_survival_hud()
+	if int(needs.health) <= 0:
+		finish_sleep(true, "你没能从睡眠中醒来")
+		show_game_over()
+	elif sleep_elapsed_minutes >= SLEEP_DURATION_MINUTES - 0.01:
+		Survival.finish_sleep(needs)
+		finish_sleep(false, "睡眠完成 · 新的一天开始了")
+
+func interrupt_sleep(reason: String) -> void:
+	if sleeping:
+		finish_sleep(true, reason)
+
+func finish_sleep(interrupted: bool, message: String) -> void:
+	sleeping = false
+	if is_instance_valid(sleep_overlay):
+		sleep_overlay.hide()
+		sleep_overlay.queue_free()
+	sleep_overlay = null
+	sleep_clock_label = null
+	sleep_progress = null
 	stamina_recovery_delay = 0.0
 	update_player_condition_effects()
-	world_tint.color = Survival.light_color(game_time_minutes)
 	update_survival_hud()
-	return result
+	refresh_player_control()
+	show_combat_message(message, 2.4)
+	if not interrupted:
+		autosave_game("睡眠完成")
+
+func create_sleep_overlay() -> void:
+	if is_instance_valid(sleep_overlay):
+		return
+	sleep_overlay = ColorRect.new()
+	sleep_overlay.name = "SleepOverlay"
+	sleep_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	sleep_overlay.color = Color(0.015,0.025,0.035,0.88)
+	sleep_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	hud.add_child(sleep_overlay)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	sleep_overlay.add_child(center)
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(520,210)
+	panel.add_theme_stylebox_override("panel", panel_style())
+	center.add_child(panel)
+	var margin := MarginContainer.new()
+	for edge: String in ["left","right","top","bottom"]:
+		margin.add_theme_constant_override("margin_"+edge,24)
+	panel.add_child(margin)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation",16)
+	margin.add_child(column)
+	var title := Label.new()
+	title.text = "正在睡眠"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size",30)
+	column.add_child(title)
+	sleep_clock_label = Label.new()
+	sleep_clock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sleep_clock_label.add_theme_font_size_override("font_size",21)
+	column.add_child(sleep_clock_label)
+	sleep_progress = ProgressBar.new()
+	sleep_progress.min_value = 0.0
+	sleep_progress.max_value = SLEEP_DURATION_MINUTES
+	sleep_progress.show_percentage = false
+	sleep_progress.custom_minimum_size = Vector2(460,18)
+	column.add_child(sleep_progress)
+	var note := Label.new()
+	note.text = "时间正在推进；危险靠近或门窗遭到撞击会惊醒你。"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.add_theme_color_override("font_color",Color("b9c9c2"))
+	column.add_child(note)
+	update_sleep_overlay()
+
+func update_sleep_overlay() -> void:
+	if not is_instance_valid(sleep_clock_label) or not is_instance_valid(sleep_progress):
+		return
+	var clock := Survival.clock_parts(game_time_minutes)
+	sleep_clock_label.text = "第 %d 天  %02d:%02d  ·  已睡 %.1f 小时" % [clock.day,clock.hour,clock.minute,sleep_elapsed_minutes/60.0]
+	sleep_progress.value = sleep_elapsed_minutes
 
 func gameplay_blocked() -> bool:
 	# Inventory and search screens do not pause the simulation.
 	return simulation_paused or int(needs.health)<=0
 
 func refresh_player_control() -> void:
-	var modal_open:=is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
+	var modal_open:=sleeping or is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
 	var gameplay_enabled := not simulation_paused and int(needs.health)>0 and not modal_open
 	player.set_physics_process(gameplay_enabled)
 	if not gameplay_enabled:
@@ -497,6 +643,19 @@ func refresh_player_control() -> void:
 		mobile_controls.set_gameplay_enabled(gameplay_enabled)
 	if is_instance_valid(quickbar):
 		quickbar.set_interactive(gameplay_enabled)
+
+func current_player_building_id() -> String:
+	var building: Node2D = world_map.building_containing(player.position) if is_instance_valid(world_map) and is_instance_valid(player) else null
+	return str(building.name) if is_instance_valid(building) else ""
+
+func update_safehouse_entry() -> void:
+	if not game_started or sleeping or safehouse_building_id.is_empty():
+		last_player_building_id = current_player_building_id()
+		return
+	var current_id := current_player_building_id()
+	if current_id == safehouse_building_id and last_player_building_id != safehouse_building_id and autosave_cooldown <= 0.0:
+		autosave_game("进入安全屋")
+	last_player_building_id = current_id
 
 func set_simulation_paused(value: bool) -> void:
 	if int(needs.health)<=0:
@@ -516,7 +675,8 @@ func should_spawn_zombies() -> bool:
 		"--survival-test", "--survival-capture", "--weapon-test", "--weapon-capture", "--save-test",
 		"--mobile-test", "--mobile-capture", "--settings-capture",
 		"--injury-test", "--injury-capture", "--crafting-test", "--crafting-capture", "--crafting-preview",
-		"--product-test", "--product-capture", "--product-preview"
+		"--product-test", "--product-capture", "--product-preview",
+		"--safehouse-test", "--safehouse-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -916,6 +1076,8 @@ func _on_player_melee_impact(origin: Vector2,direction: Vector2) -> void:
 func damage_player(amount: int,source_world: Vector2) -> void:
 	if player_invulnerability>0.0 or int(needs.health)<=0:
 		return
+	if sleeping:
+		interrupt_sleep("你受到攻击并惊醒了")
 	var interrupted_search := searching>=0
 	if interrupted_search:
 		searching=-1
@@ -943,6 +1105,11 @@ func damage_player(amount: int,source_world: Vector2) -> void:
 
 func _input(event: InputEvent) -> void:
 	if is_instance_valid(product_shell):
+		return
+	if sleeping:
+		if event.is_action_pressed("back") or event.is_action_pressed("interact"):
+			interrupt_sleep("你主动结束了睡眠")
+			get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.is_action_pressed("save_game"):
@@ -1307,6 +1474,8 @@ func on_barrier_damaged(entry: Dictionary,result: Dictionary,source: Vector2) ->
 		show_combat_message("附近有窗户玻璃被打碎")
 	elif event=="door_broken":
 		show_combat_message("附近有门被撞开")
+	if sleeping and event in ["board_broken","glass_broken","door_broken"]:
+		interrupt_sleep("撞击声把你惊醒了")
 
 func show_combat_message(text: String,duration: float=1.3) -> void:
 	combat_message=text
@@ -1492,6 +1661,39 @@ func run_standard_test() -> void:
 func run_barrier_test() -> void:
 	await preload("res://scripts/barrier_traversal_test.gd").run(self)
 
+func run_safehouse_test() -> void:
+	await preload("res://scripts/safehouse_sleep_test.gd").run(self)
+
+func safehouse_capture() -> void:
+	autosave_path_override = "user://ash_district_safehouse_capture.json"
+	for zombie: Node2D in zombies:
+		zombie.change_state(zombie.State.DEAD)
+	var building: Node2D = world_map.blue_house
+	var bed_index := -1
+	for index: int in building.furniture.size():
+		if "床" in str(building.furniture[index].title):
+			bed_index = index
+			break
+	var bed: Dictionary = building.furniture[bed_index]
+	player.position = world_map.map_to_world((bed.use_zone as Rect2).get_center())
+	active_building = building
+	active_loot = bed_index
+	claim_safehouse_at_bed()
+	needs.fatigue = 86.0
+	needs.stamina = 14.0
+	active_building = building
+	active_loot = bed_index
+	rest_at_bed()
+	update_sleep(2.2)
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output := ProjectSettings.globalize_path("res://build/safehouse-sleep-v025.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	remove_save_files(autosave_path_override)
+	print("SAFEHOUSE CAPTURE PASS: build/safehouse-sleep-v025.png")
+	get_tree().quit()
+
 func barrier_capture() -> void:
 	var building: Node2D=world_map.blue_house
 	var index:=2
@@ -1569,11 +1771,33 @@ func close_product_shell() -> void:
 func save_slot_path(slot: int) -> String:
 	return "user://ash_district_slot_%d.json" % clampi(slot,1,3)
 
+func autosave_slot_path(slot: int) -> String:
+	if not autosave_path_override.is_empty():
+		return autosave_path_override
+	return "user://ash_district_slot_%d.autosave.json" % clampi(slot,1,3)
+
+func load_best_slot(slot: int) -> Dictionary:
+	var best := {"ok":false, "error":"没有可用存档"}
+	var best_timestamp := -1
+	for path: String in [save_slot_path(slot), autosave_slot_path(slot)]:
+		var result: Dictionary = SaveSystem.load_file(path)
+		if not bool(result.ok):
+			continue
+		var timestamp := maxi(int(result.data.get("saved_unix_time",0)), int(FileAccess.get_modified_time(path)))
+		if timestamp >= best_timestamp:
+			best = result
+			best["autosave"] = path == autosave_slot_path(slot)
+			best_timestamp = timestamp
+	return best
+
 func save_slot_summary(slot: int) -> Dictionary:
-	var result: Dictionary = SaveSystem.load_file(save_slot_path(slot))
+	var result: Dictionary = load_best_slot(slot)
 	if not bool(result.ok):
 		return {"exists":false,"text":"空槽位"}
-	return save_data_summary(result.data)
+	var summary := save_data_summary(result.data)
+	if bool(result.get("autosave",false)):
+		summary.text += "  ·  自动保存"
+	return summary
 
 func save_data_summary(data: Dictionary) -> Dictionary:
 	var saved_time := int(data.get("saved_unix_time",0))
@@ -1613,13 +1837,18 @@ func continue_slot(slot: int) -> void:
 		combat_message_time = 2.5
 
 func delete_save_slot(slot: int) -> void:
-	var path := save_slot_path(slot)
+	remove_save_files(save_slot_path(slot))
+	remove_save_files(autosave_slot_path(slot))
+
+func remove_save_files(path: String) -> void:
 	for suffix in ["",".bak",".tmp"]:
 		var candidate: String = path+suffix
 		if FileAccess.file_exists(candidate):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(candidate))
 
 func quit_from_shell() -> void:
+	if game_started and int(needs.health) > 0:
+		autosave_game("退出游戏")
 	get_tree().quit()
 
 func product_capture() -> void:
@@ -1818,12 +2047,26 @@ func save_game() -> bool:
 	if int(needs.health) <= 0:
 		return false
 	var result: Dictionary = SaveSystem.write_atomic(save_slot_path(active_save_slot), SaveSystem.capture_state(self))
+	if bool(result.ok):
+		remove_save_files(autosave_slot_path(active_save_slot))
 	combat_message = "进度已保存" if bool(result.ok) else "保存失败：" + str(result.error)
 	combat_message_time = 2.0
 	return bool(result.ok)
 
+func autosave_game(reason: String) -> Dictionary:
+	if int(needs.health) <= 0:
+		return {"ok":false, "error":"角色已经死亡"}
+	if not game_started and autosave_path_override.is_empty():
+		return {"ok":true, "skipped":true}
+	var result: Dictionary = SaveSystem.write_atomic(autosave_slot_path(active_save_slot), SaveSystem.capture_state(self))
+	if bool(result.ok):
+		autosave_cooldown = 12.0
+		if game_started:
+			show_combat_message("已自动保存 · " + reason, 1.8)
+	return result
+
 func load_game() -> bool:
-	var result: Dictionary = SaveSystem.load_file(save_slot_path(active_save_slot))
+	var result: Dictionary = load_best_slot(active_save_slot)
 	if not bool(result.ok):
 		combat_message = str(result.error)
 		combat_message_time = 2.0
@@ -1832,9 +2075,16 @@ func load_game() -> bool:
 		combat_message = "存档内容无法应用"
 		combat_message_time = 2.0
 		return false
-	combat_message = "已从备份恢复" if bool(result.recovered) else "进度已读取"
+	last_player_building_id = current_player_building_id()
+	combat_message = "已读取自动保存" if bool(result.get("autosave",false)) else ("已从备份恢复" if bool(result.recovered) else "进度已读取")
 	combat_message_time = 2.0
 	return true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if game_started and int(needs.health) > 0:
+			autosave_game("退出游戏")
+		get_tree().quit()
 
 func weapon_capture() -> void:
 	simulation_paused=true

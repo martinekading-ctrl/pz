@@ -11,6 +11,7 @@ const INFECTION_DAMAGE_PER_GAME_MINUTE := 0.025
 const FED_REGEN_PER_GAME_MINUTE := 0.012
 const FATIGUE_PER_GAME_MINUTE := 100.0 / 960.0
 const FATIGUE_RECOVERY_PER_GAME_MINUTE := 0.16
+const SLEEP_HEALTH_RECOVERY_PER_GAME_MINUTE := 6.0 / 480.0
 
 static func advance(needs: Dictionary, game_minutes: float, active: bool) -> void:
 	var activity_multiplier := 1.55 if active else 1.0
@@ -53,17 +54,31 @@ static func use_item(needs: Dictionary, item_key: String) -> Dictionary:
 	return {"consumed": false, "message": "该物品不能直接使用"}
 
 static func rest(needs: Dictionary, game_minutes: float = 480.0) -> Dictionary:
+	var check := can_sleep(needs)
+	if not bool(check.ok):
+		return {"rested":false, "message":str(check.message)}
+	sleep_step(needs, game_minutes)
+	finish_sleep(needs)
+	return {"rested":true, "message":"休息了 8 小时，体力已经恢复"}
+
+static func can_sleep(needs: Dictionary) -> Dictionary:
 	if float(needs.get("bleeding", 0.0)) > 0.0 and not bool(needs.get("wounds_bandaged", false)):
-		return {"rested":false, "message":"正在流血，包扎后才能休息"}
+		return {"ok":false, "message":"正在流血，包扎后才能睡觉"}
 	if float(needs.get("fatigue", 0.0)) < 10.0 and float(needs.get("stamina", 100.0)) >= 95.0:
-		return {"rested":false, "message":"现在还不需要休息"}
+		return {"ok":false, "message":"现在还不需要睡觉"}
+	return {"ok":true, "message":"可以睡觉"}
+
+static func sleep_step(needs: Dictionary, game_minutes: float) -> void:
+	if game_minutes <= 0.0:
+		return
 	needs.food = maxf(0.0, float(needs.food) - HUNGER_PER_GAME_MINUTE * game_minutes * 0.72)
 	needs.water = maxf(0.0, float(needs.water) - THIRST_PER_GAME_MINUTE * game_minutes * 0.72)
 	needs.fatigue = maxf(0.0, float(needs.get("fatigue", 0.0)) - FATIGUE_RECOVERY_PER_GAME_MINUTE * game_minutes)
-	needs.stamina = MAX_VALUE
 	if float(needs.food) >= 25.0 and float(needs.water) >= 25.0:
-		needs.health = minf(MAX_VALUE, float(needs.health) + 6.0)
-	return {"rested":true, "message":"休息了 8 小时，体力已经恢复"}
+		needs.health = minf(MAX_VALUE, float(needs.health) + SLEEP_HEALTH_RECOVERY_PER_GAME_MINUTE * game_minutes)
+
+static func finish_sleep(needs: Dictionary) -> void:
+	needs.stamina = MAX_VALUE
 
 static func movement_multiplier(needs: Dictionary) -> float:
 	var lowest := minf(float(needs.food), float(needs.water))

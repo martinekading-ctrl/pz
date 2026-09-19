@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -87,6 +87,10 @@ static func capture_state(game: Node2D) -> Dictionary:
 			"seed_cursor":int(game.population_seed_cursor),
 			"next_id":int(game.population_next_id),
 		},
+		"safehouse": {
+			"building_id":str(game.safehouse_building_id),
+			"spawn_logical":[float(game.safehouse_spawn_logical.x),float(game.safehouse_spawn_logical.y)],
+		},
 	}
 
 static func apply_state(game: Node2D, data: Dictionary) -> bool:
@@ -153,6 +157,15 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	var building_lookup := {}
 	for building: Node2D in game.world_map.interactive_buildings:
 		building_lookup[str(building.name)] = building
+	var saved_safehouse: Dictionary = data.get("safehouse", {})
+	var safehouse_id := str(saved_safehouse.get("building_id", ""))
+	var safehouse_position: Array = saved_safehouse.get("spawn_logical", [0.0,0.0])
+	if not safehouse_id.is_empty() and building_lookup.has(safehouse_id) and valid_pair(safehouse_position):
+		game.safehouse_building_id = safehouse_id
+		game.safehouse_spawn_logical = Vector2(float(safehouse_position[0]),float(safehouse_position[1]))
+	else:
+		game.safehouse_building_id = ""
+		game.safehouse_spawn_logical = Vector2.ZERO
 	for saved_building: Dictionary in data.buildings:
 		var building: Node2D = building_lookup.get(str(saved_building.id))
 		if building == null:
@@ -206,6 +219,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.stamina_recovery_delay = 0.0
 	game.update_player_condition_effects()
 	game.world_tint.color = Survival.light_color(game.game_time_minutes)
+	game.last_player_building_id = game.current_player_building_id()
 	game.refresh_player_control()
 	game.update_survival_hud()
 	return true
@@ -255,9 +269,20 @@ static func read_valid(path: String) -> Dictionary:
 	if json.parse(FileAccess.get_file_as_string(path)) != OK:
 		return {}
 	var parsed = json.data
-	if typeof(parsed) != TYPE_DICTIONARY or not validate(parsed):
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	parsed = migrate(parsed)
+	if not validate(parsed):
 		return {}
 	return parsed
+
+static func migrate(source: Dictionary) -> Dictionary:
+	var data := source.duplicate(true)
+	var version := int(data.get("version", -1))
+	if version == 1:
+		data["safehouse"] = {"building_id":"", "spawn_logical":[0.0,0.0]}
+		data["version"] = 2
+	return data
 
 static func validate(data: Dictionary) -> bool:
 	if int(data.get("version", -1)) != SAVE_VERSION or str(data.get("map_schema", "")) != MAP_SCHEMA:
@@ -272,6 +297,11 @@ static func validate(data: Dictionary) -> bool:
 	if data.has("population") and typeof(data.population) != TYPE_DICTIONARY:
 		return false
 	if data.has("firearm_loaded") and typeof(data.firearm_loaded) != TYPE_DICTIONARY:
+		return false
+	if typeof(data.get("safehouse", {})) != TYPE_DICTIONARY:
+		return false
+	var safehouse: Dictionary = data.get("safehouse", {})
+	if not str(safehouse.get("building_id", "")).is_empty() and not valid_pair(safehouse.get("spawn_logical", [])):
 		return false
 	if not valid_pair(data.player.get("logical_position", [])):
 		return false

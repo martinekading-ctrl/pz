@@ -54,7 +54,9 @@ static func run(game: Node2D) -> void:
 	game.needs = {"health":80.0, "food":80.0, "water":80.0, "stamina":10.0, "fatigue":82.0, "bleeding":0.0}
 	var before_time: float = game.game_time_minutes
 	var bed_result: Dictionary = game.rest_at_bed()
-	assert(bed_result.rested and is_equal_approx(game.game_time_minutes,before_time+480.0), "Safe bed interaction must advance eight hours and recover the player")
+	assert(bed_result.started and game.sleeping, "Safe bed interaction must begin sleep")
+	game.update_sleep(4.1)
+	assert(not game.sleeping and is_equal_approx(game.game_time_minutes,before_time+480.0), "Safe bed interaction must advance eight hours and recover the player")
 
 	print("EXERTION PASS: running drain, delayed recovery, fatigue, attack cost, noise investigation and safe bed rest")
 	game.get_tree().quit()

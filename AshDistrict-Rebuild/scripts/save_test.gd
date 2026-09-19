@@ -41,8 +41,15 @@ static func run(game: Node2D) -> void:
 	game.zombies[1].change_state(game.zombies[1].State.DEAD)
 	game.population_respawn_budget = 2
 	game.population_timer = 31.0
+	game.safehouse_building_id = str(house.name)
+	game.safehouse_spawn_logical = Vector2(21.5,47.5)
 
 	var first_state := SaveSystem.capture_state(game)
+	var legacy_state: Dictionary = first_state.duplicate(true)
+	legacy_state.version = 1
+	legacy_state.erase("safehouse")
+	var migrated: Dictionary = SaveSystem.migrate(legacy_state)
+	assert(int(migrated.version) == SaveSystem.SAVE_VERSION and str(migrated.safehouse.building_id).is_empty(), "Version 1 saves must migrate to the safehouse schema")
 	assert(SaveSystem.write_atomic(path, first_state).ok, "Initial save must succeed")
 	game.player.position = Vector2.ZERO
 	game.needs.health = 1.0
@@ -57,6 +64,8 @@ static func run(game: Node2D) -> void:
 	game.ground_items.clear()
 	game.zombies[0].health = 68
 	game.zombies[0].alerted = false
+	game.safehouse_building_id = ""
+	game.safehouse_spawn_logical = Vector2.ZERO
 
 	var loaded := SaveSystem.load_file(path)
 	assert(loaded.ok and not loaded.recovered and SaveSystem.apply_state(game, loaded.data), "Primary save must load")
@@ -71,6 +80,7 @@ static func run(game: Node2D) -> void:
 	assert(game.zombies[0].health == 19 and game.zombies[0].state == game.zombies[0].State.INVESTIGATE and is_equal_approx(game.zombies[0].investigate_time,5.0))
 	assert(game.zombies.size() == first_state.zombies.size() and game.zombies[1].is_dead() and int(game.zombies[1].corpse_inventory.painkillers) == 2 and game.zombies[1].corpse_searched, "Corpses and their remaining loot must restore")
 	assert(game.population_respawn_budget == 2 and is_equal_approx(game.population_timer,31.0), "Population migration limits must restore")
+	assert(game.safehouse_building_id == str(house.name) and game.safehouse_spawn_logical.distance_to(Vector2(21.5,47.5)) < 0.01, "Safehouse identity and bed position must restore")
 
 	game.needs.health = 77.0
 	assert(SaveSystem.write_atomic(path, SaveSystem.capture_state(game)).ok, "Second save must create a backup")
@@ -81,7 +91,7 @@ static func run(game: Node2D) -> void:
 	assert(recovered.ok and recovered.recovered and SaveSystem.apply_state(game, recovered.data), "Corrupt primary must recover from backup")
 	assert(is_equal_approx(float(game.needs.health), 64.0), "Backup must contain the previous good snapshot")
 	cleanup(path)
-	print("SAVE PASS: versioned snapshot, firearm magazine state, injuries, population/corpses, player/world/inventory/weapons/containers/doors/ground/zombies, atomic backup recovery")
+	print("SAVE PASS: schema migration, safehouse, firearm magazine state, injuries, population/corpses, player/world/inventory/weapons/containers/doors/ground/zombies, atomic backup recovery")
 	game.get_tree().quit()
 
 static func cleanup(path: String) -> void:

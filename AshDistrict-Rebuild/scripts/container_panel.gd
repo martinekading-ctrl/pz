@@ -55,7 +55,12 @@ func rebuild() -> void:
 		if not any: label(rows,"容器已空" if from_container else "背包为空",18)
 	button(column,"拿取所有装得下的物品",take_all)
 	if "床" in str(item.title):
-		button(column,"休息 8 小时",rest_at_bed)
+		if game.is_safehouse(building):
+			var safehouse_label := label(column,"安全屋床位 · 进入住宅与睡醒后自动保存",17)
+			safehouse_label.add_theme_color_override("font_color",Color("d9c66f"))
+		else:
+			button(column,"将这栋住宅设为安全屋",claim_safehouse)
+		button(column,"睡觉 8 小时",rest_at_bed)
 	label(column,message,18)
 	label(column,"不拿取即保留在原处。本次游戏内，物品不会因重新打开或离开区域而刷新。",16)
 
@@ -89,6 +94,16 @@ func rest_at_bed() -> void:
 		game.close_loot()
 		return
 	var result: Dictionary = game.rest_at_bed()
+	if bool(result.get("started",false)):
+		return
+	message = str(result.message)
+	rebuild()
+
+func claim_safehouse() -> void:
+	if not valid_target():
+		game.close_loot()
+		return
+	var result: Dictionary = game.claim_safehouse_at_bed()
 	message = str(result.message)
 	rebuild()
 
