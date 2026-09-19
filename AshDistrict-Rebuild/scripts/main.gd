@@ -25,7 +25,7 @@ const ProductShell = preload("res://scripts/product_shell.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
-const DEFAULT_CAMERA_ZOOM := 1.04
+const DEFAULT_CAMERA_ZOOM := 0.68
 
 var world_map: Node2D
 var player: Node2D

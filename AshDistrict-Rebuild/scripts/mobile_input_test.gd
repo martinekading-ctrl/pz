@@ -6,7 +6,7 @@ static func run(game: Node2D) -> void:
 	await game.get_tree().process_frame
 	var controls: Control = game.mobile_controls
 	assert(is_instance_valid(controls) and controls.visible, "Mobile controls must be visible in mobile test mode")
-	assert(game.camera.zoom.is_equal_approx(Vector2(1.04,1.04)), "Normal mobile gameplay must use the close camera zoom")
+	assert(game.camera.zoom.is_equal_approx(Vector2(0.68,0.68)), "Normal mobile gameplay must use the balanced camera zoom")
 	controls.layout_controls()
 	assert(JoystickScript.apply_radial_deadzone(Vector2(0.1, 0.0)).is_zero_approx(), "Stick deadzone must reject center drift")
 	controls.move_stick.set_value_for_test(Vector2(0.8, 0.2))
