@@ -1,0 +1,23 @@
+{
+  "version": "0.8",
+  "source": "OpenAI image_gen, generated 2026-09-09; original family referenced",
+  "normalization": "tools/import_furniture.gd: fixed measured source regions, magenta key to RGBA, alpha crop; original generation retained",
+  "files": [
+    "art/house_blue/prop-v08-0.png",
+    "art/house_blue/prop-v08-1.png",
+    "art/house_blue/prop-v08-2.png",
+    "art/house_blue/prop-v08-3.png",
+    "art/house_blue/prop-v08-4.png",
+    "art/house_blue/prop-v08-5.png"
+  ],
+  "accepted_checks": [
+    "RGBA transparent background",
+    "in-engine preview",
+    "all 11 interaction zones reachable"
+  ],
+  "remaining": [
+    "independent dining chairs",
+    "placeholder player",
+    "pixel-exact projection calibration beyond silhouette bounding box"
+  ]
+}

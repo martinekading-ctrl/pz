@@ -1,0 +1,264 @@
+{
+  "status": "implemented_v0.11",
+  "template": "residential_B_01",
+  "world_origin_cells": [
+    53,
+    128
+  ],
+  "size_m": [
+    8.5,
+    6.5
+  ],
+  "wall_height_m": 2.7,
+  "external_wall_m": 0.15,
+  "partition_m": 0.1,
+  "main_passage_m": 1.1,
+  "items": [
+    {
+      "name": "双人床",
+      "rect_m": [
+        0.2,
+        0.2,
+        1.5,
+        2
+      ],
+      "front": "east",
+      "clearance_m": 0.8
+    },
+    {
+      "name": "衣柜",
+      "rect_m": [
+        2.5,
+        1.6,
+        0.6,
+        1.2
+      ],
+      "front": "west",
+      "clearance_m": 0.8
+    },
+    {
+      "name": "淋浴",
+      "rect_m": [
+        3.45,
+        0.2,
+        0.9,
+        0.9
+      ],
+      "front": "south",
+      "clearance_m": 0.65
+    },
+    {
+      "name": "马桶",
+      "rect_m": [
+        4.55,
+        0.2,
+        0.65,
+        0.85
+      ],
+      "front": "south",
+      "clearance_m": 0.8
+    },
+    {
+      "name": "洗手盆",
+      "rect_m": [
+        3.45,
+        1.8,
+        0.6,
+        0.55
+      ],
+      "front": "east",
+      "clearance_m": 0.6
+    },
+    {
+      "name": "厨房台面",
+      "rect_m": [
+        5.85,
+        0.15,
+        1.7,
+        0.6
+      ],
+      "front": "south",
+      "clearance_m": 1
+    },
+    {
+      "name": "冰箱",
+      "rect_m": [
+        7.65,
+        0.15,
+        0.7,
+        0.7
+      ],
+      "front": "south",
+      "clearance_m": 1
+    },
+    {
+      "name": "沙发",
+      "rect_m": [
+        0.2,
+        4.1,
+        0.8,
+        1.9
+      ],
+      "front": "east",
+      "clearance_m": 0.9
+    },
+    {
+      "name": "餐桌",
+      "rect_m": [
+        3.1,
+        4.35,
+        1.2,
+        0.8
+      ],
+      "front": "west",
+      "clearance_m": 0.8
+    },
+    {
+      "name": "餐椅A",
+      "rect_m": [
+        3.4,
+        3.75,
+        0.45,
+        0.45
+      ],
+      "front": "north",
+      "clearance_m": 0.35
+    },
+    {
+      "name": "餐椅B",
+      "rect_m": [
+        3.4,
+        5.4,
+        0.45,
+        0.45
+      ],
+      "front": "south",
+      "clearance_m": 0.35
+    },
+    {
+      "name": "储物柜",
+      "rect_m": [
+        7.75,
+        4.25,
+        0.6,
+        1.2
+      ],
+      "front": "west",
+      "clearance_m": 0.9
+    }
+  ],
+  "doors": [
+    {
+      "name": "前门",
+      "wall": "south",
+      "position_m": [
+        5.65,
+        6.5
+      ],
+      "width_m": 1.0,
+      "swing": "inward",
+      "clearance": [
+        5.65,
+        5.5,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "卧室门",
+      "wall": "internal",
+      "position_m": [
+        1.9,
+        3.3
+      ],
+      "width_m": 1,
+      "swing": "outward",
+      "clearance": [
+        1.9,
+        3.3,
+        1,
+        1
+      ]
+    },
+    {
+      "name": "卫浴门",
+      "wall": "internal",
+      "position_m": [
+        4.35,
+        2.6
+      ],
+      "width_m": 0.9,
+      "swing": "outward",
+      "clearance": [
+        4.35,
+        2.6,
+        0.9,
+        0.9
+      ]
+    },
+    {
+      "name": "后门",
+      "wall": "east",
+      "position_m": [
+        8.5,
+        2
+      ],
+      "width_m": 1,
+      "swing": "outward",
+      "clearance": [
+        8.5,
+        2,
+        1,
+        1
+      ]
+    }
+  ],
+  "roof": "独立双坡屋顶，进入对应室内时隐藏",
+  "yard": {
+    "bounds_local_m": [
+      -2,
+      -3,
+      12.5,
+      13
+    ],
+    "front_gate": [
+      6.15,
+      10
+    ],
+    "rear_gate": [
+      10.5,
+      2.5
+    ],
+    "side_passage_m": 1.2
+  },
+  "windows": [
+    {
+      "wall": "west",
+      "span": [
+        0.6,
+        1.8
+      ]
+    },
+    {
+      "wall": "north",
+      "span": [
+        6.0,
+        7.2
+      ]
+    },
+    {
+      "wall": "south",
+      "span": [
+        1.25,
+        2.45
+      ]
+    },
+    {
+      "wall": "east",
+      "span": [
+        3.15,
+        4.05
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3190 @@
+[
+  {
+    "id": "R02",
+    "template": "H01",
+    "title": "紧凑独居屋",
+    "origin": [
+      92,
+      128
+    ],
+    "size_m": [
+      6.5,
+      6
+    ],
+    "entry": 4.8,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        6.5,
+        0
+      ],
+      [
+        6.5,
+        6
+      ],
+      [
+        0,
+        6
+      ]
+    ],
+    "rooms": [
+      [
+        "卧室",
+        0,
+        0,
+        3.5,
+        3.2
+      ],
+      [
+        "卫浴",
+        3.5,
+        0,
+        3,
+        3.2
+      ],
+      [
+        "客餐厨",
+        0,
+        3.2,
+        6.5,
+        2.8
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          6.5,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.2
+        ],
+        "b": [
+          2.0,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.0,
+          3.2
+        ],
+        "b": [
+          4.2,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.2,
+          3.2
+        ],
+        "b": [
+          6.5,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          6.0
+        ],
+        "b": [
+          4.3,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          5.3,
+          6.0
+        ],
+        "b": [
+          6.5,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          0.0
+        ],
+        "b": [
+          3.5,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.5,
+          0.0
+        ],
+        "b": [
+          6.5,
+          6.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.02,
+          3.2
+        ],
+        [
+          3.02,
+          3.2
+        ]
+      ],
+      [
+        [
+          5.16,
+          3.2
+        ],
+        [
+          6.16,
+          3.2
+        ]
+      ],
+      [
+        [
+          4.18,
+          3.2
+        ],
+        [
+          5.18,
+          3.2
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "卧室床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          3.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "客餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          3.6
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          1.4,
+          5.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "a6b4a0",
+    "roof_style": "双坡屋顶",
+    "roofs": [
+      [
+        0,
+        0,
+        6.5,
+        6
+      ]
+    ]
+  },
+  {
+    "id": "R03",
+    "template": "H02",
+    "title": "两卧家庭屋",
+    "origin": [
+      143,
+      126
+    ],
+    "size_m": [
+      9,
+      8
+    ],
+    "entry": 4,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        0,
+        8
+      ]
+    ],
+    "rooms": [
+      [
+        "主卧",
+        0,
+        0,
+        3.5,
+        3.5
+      ],
+      [
+        "次卧",
+        3.5,
+        0,
+        3,
+        3.5
+      ],
+      [
+        "卫浴",
+        6.5,
+        0,
+        2.5,
+        3.5
+      ],
+      [
+        "客厅",
+        0,
+        4.7,
+        4.5,
+        3.3
+      ],
+      [
+        "餐厨",
+        4.5,
+        4.7,
+        4.5,
+        3.3
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          9.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.5
+        ],
+        "b": [
+          2.0,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.0,
+          3.5
+        ],
+        "b": [
+          5.2,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.2,
+          3.5
+        ],
+        "b": [
+          7.8,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.8,
+          3.5
+        ],
+        "b": [
+          9.0,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          4.7
+        ],
+        "b": [
+          2.7,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.7,
+          4.7
+        ],
+        "b": [
+          7.2,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.2,
+          4.7
+        ],
+        "b": [
+          9.0,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          8.0
+        ],
+        "b": [
+          3.5,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          4.5,
+          8.0
+        ],
+        "b": [
+          9.0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          0.0
+        ],
+        "b": [
+          3.5,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          4.5,
+          4.7
+        ],
+        "b": [
+          4.5,
+          8.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.5,
+          0.0
+        ],
+        "b": [
+          6.5,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          9,
+          0.0
+        ],
+        "b": [
+          9,
+          8.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.02,
+          3.5
+        ],
+        [
+          3.02,
+          3.5
+        ]
+      ],
+      [
+        [
+          5.16,
+          3.5
+        ],
+        [
+          6.16,
+          3.5
+        ]
+      ],
+      [
+        [
+          7.800000000000001,
+          3.5
+        ],
+        [
+          8.8,
+          3.5
+        ]
+      ],
+      [
+        [
+          2.7399999999999998,
+          4.7
+        ],
+        [
+          3.7399999999999998,
+          4.7
+        ]
+      ],
+      [
+        [
+          7.24,
+          4.7
+        ],
+        [
+          8.24,
+          4.7
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "主卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "次卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          3.8,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          6.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "客厅沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          5.1
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          4.75,
+          5.1
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          7.2,
+          7.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "d4c7ab",
+    "roof_style": "四坡屋顶",
+    "roofs": [
+      [
+        0,
+        0,
+        9,
+        8
+      ]
+    ]
+  },
+  {
+    "id": "R04",
+    "template": "H05",
+    "title": "车库家庭屋",
+    "origin": [
+      165,
+      193
+    ],
+    "size_m": [
+      12,
+      8
+    ],
+    "entry": 5.4,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        12,
+        0
+      ],
+      [
+        12,
+        8
+      ],
+      [
+        0,
+        8
+      ]
+    ],
+    "rooms": [
+      [
+        "主卧",
+        0,
+        0,
+        3.8,
+        3.5
+      ],
+      [
+        "卫浴",
+        3.8,
+        0,
+        2.8,
+        3.5
+      ],
+      [
+        "储藏",
+        6.6,
+        0,
+        1.6,
+        3.5
+      ],
+      [
+        "客餐厨",
+        0,
+        4.7,
+        8.2,
+        3.3
+      ],
+      [
+        "车库",
+        8.2,
+        0,
+        3.8,
+        8
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          12.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.5
+        ],
+        "b": [
+          2.2,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.2,
+          3.5
+        ],
+        "b": [
+          5.3,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.3,
+          3.5
+        ],
+        "b": [
+          7.3,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          4.7
+        ],
+        "b": [
+          5.4,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.4,
+          4.7
+        ],
+        "b": [
+          8.2,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          8.0
+        ],
+        "b": [
+          4.9,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          5.9,
+          8.0
+        ],
+        "b": [
+          12.0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.8,
+          0.0
+        ],
+        "b": [
+          3.8,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.6,
+          0.0
+        ],
+        "b": [
+          6.6,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.2,
+          0.0
+        ],
+        "b": [
+          8.2,
+          5.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.2,
+          6.4
+        ],
+        "b": [
+          8.2,
+          8.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          12.0,
+          0.0
+        ],
+        "b": [
+          12.0,
+          8.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.2359999999999998,
+          3.5
+        ],
+        [
+          3.2359999999999998,
+          3.5
+        ]
+      ],
+      [
+        [
+          5.316,
+          3.5
+        ],
+        [
+          6.316,
+          3.5
+        ]
+      ],
+      [
+        [
+          7.252,
+          3.5
+        ],
+        [
+          8.251999999999999,
+          3.5
+        ]
+      ],
+      [
+        [
+          5.403999999999999,
+          4.7
+        ],
+        [
+          6.403999999999999,
+          4.7
+        ]
+      ],
+      [
+        [
+          8.2,
+          5.4
+        ],
+        [
+          8.2,
+          6.4
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "主卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          4.1,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "储藏柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-5.png",
+        "position_m": [
+          6.85,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          1.0
+        ],
+        "height_m": 1.2,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "客餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          5.1
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          6.4,
+          7.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "车库工具柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-5.png",
+        "position_m": [
+          8.5,
+          0.3
+        ],
+        "size_m": [
+          1.2,
+          0.6
+        ],
+        "height_m": 1.2,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "d7cfb7",
+    "roof_style": "住宅双坡＋低车库顶",
+    "roofs": [
+      [
+        0,
+        0,
+        12,
+        8
+      ]
+    ]
+  },
+  {
+    "id": "R05",
+    "template": "H03",
+    "title": "狭长排屋",
+    "origin": [
+      167,
+      237
+    ],
+    "size_m": [
+      5,
+      11
+    ],
+    "entry": 4.35,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        5,
+        11
+      ],
+      [
+        0,
+        11
+      ]
+    ],
+    "rooms": [
+      [
+        "卧室",
+        0,
+        0,
+        3.8,
+        3.5
+      ],
+      [
+        "卫浴",
+        0,
+        3.5,
+        3.8,
+        2.5
+      ],
+      [
+        "餐厨",
+        0,
+        6,
+        3.8,
+        2.5
+      ],
+      [
+        "起居",
+        0,
+        8.5,
+        3.8,
+        2.5
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          5.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.5
+        ],
+        "b": [
+          3.8,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          6.0
+        ],
+        "b": [
+          3.8,
+          6.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          8.5
+        ],
+        "b": [
+          3.8,
+          8.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          11.0
+        ],
+        "b": [
+          3.8,
+          11.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          4.9,
+          11.0
+        ],
+        "b": [
+          5.0,
+          11.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          11.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.8,
+          0.0
+        ],
+        "b": [
+          3.8,
+          2.3
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.8,
+          3.3
+        ],
+        "b": [
+          3.8,
+          5.1
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.8,
+          6.1
+        ],
+        "b": [
+          3.8,
+          7.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.8,
+          8.6
+        ],
+        "b": [
+          3.8,
+          10.1
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          5,
+          0.0
+        ],
+        "b": [
+          5,
+          11.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          3.8,
+          2.275
+        ],
+        [
+          3.8,
+          3.275
+        ]
+      ],
+      [
+        [
+          3.8,
+          5.125
+        ],
+        [
+          3.8,
+          6.125
+        ]
+      ],
+      [
+        [
+          3.8,
+          7.625
+        ],
+        [
+          3.8,
+          8.625
+        ]
+      ],
+      [
+        [
+          3.8,
+          10.125
+        ],
+        [
+          3.8,
+          11.125
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "卧室床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          0.3,
+          3.8
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          6.4
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          2.0,
+          6.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "起居沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          8.9
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "a68574",
+    "roof_style": "前后双坡",
+    "roofs": [
+      [
+        0,
+        0,
+        5,
+        11
+      ]
+    ]
+  },
+  {
+    "id": "R06",
+    "template": "H06",
+    "title": "乡间农舍",
+    "origin": [
+      141,
+      307
+    ],
+    "size_m": [
+      11,
+      9
+    ],
+    "entry": 3,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        11,
+        0
+      ],
+      [
+        11,
+        9
+      ],
+      [
+        0,
+        9
+      ]
+    ],
+    "rooms": [
+      [
+        "主卧",
+        0,
+        0,
+        4,
+        3.6
+      ],
+      [
+        "次卧",
+        4,
+        0,
+        3.5,
+        3.6
+      ],
+      [
+        "卫浴",
+        7.5,
+        0,
+        3.5,
+        3.6
+      ],
+      [
+        "客厅",
+        0,
+        4.8,
+        4,
+        4.2
+      ],
+      [
+        "餐厨",
+        4,
+        4.8,
+        4.5,
+        4.2
+      ],
+      [
+        "食品储藏",
+        8.5,
+        4.8,
+        2.5,
+        4.2
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          11.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.6
+        ],
+        "b": [
+          2.4,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.4,
+          3.6
+        ],
+        "b": [
+          6.0,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          7.0,
+          3.6
+        ],
+        "b": [
+          9.5,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          10.5,
+          3.6
+        ],
+        "b": [
+          11.0,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          4.8
+        ],
+        "b": [
+          2.4,
+          4.8
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.4,
+          4.8
+        ],
+        "b": [
+          6.7,
+          4.8
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          7.7,
+          4.8
+        ],
+        "b": [
+          9.8,
+          4.8
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          10.8,
+          4.8
+        ],
+        "b": [
+          11.0,
+          4.8
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          9.0
+        ],
+        "b": [
+          2.5,
+          9.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          9.0
+        ],
+        "b": [
+          11.0,
+          9.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          9.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          4,
+          0.0
+        ],
+        "b": [
+          4,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          4,
+          4.8
+        ],
+        "b": [
+          4,
+          9.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          7.5,
+          0.0
+        ],
+        "b": [
+          7.5,
+          3.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.5,
+          4.8
+        ],
+        "b": [
+          8.5,
+          9.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          11,
+          0.0
+        ],
+        "b": [
+          11,
+          9.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.38,
+          3.6
+        ],
+        [
+          3.38,
+          3.6
+        ]
+      ],
+      [
+        [
+          6.02,
+          3.6
+        ],
+        [
+          7.02,
+          3.6
+        ]
+      ],
+      [
+        [
+          9.52,
+          3.6
+        ],
+        [
+          10.52,
+          3.6
+        ]
+      ],
+      [
+        [
+          2.38,
+          4.8
+        ],
+        [
+          3.38,
+          4.8
+        ]
+      ],
+      [
+        [
+          6.74,
+          4.8
+        ],
+        [
+          7.74,
+          4.8
+        ]
+      ],
+      [
+        [
+          9.8,
+          4.8
+        ],
+        [
+          10.8,
+          4.8
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "主卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "次卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          4.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          7.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "客厅沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          5.2
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          4.25,
+          5.2
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          6.7,
+          8.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "食品储藏柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-5.png",
+        "position_m": [
+          8.75,
+          5.1
+        ],
+        "size_m": [
+          0.6,
+          1.0
+        ],
+        "height_m": 1.2,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "a5afa0",
+    "roof_style": "深色双坡＋前廊顶",
+    "roofs": [
+      [
+        0,
+        0,
+        11,
+        9
+      ]
+    ]
+  },
+  {
+    "id": "R07",
+    "template": "H04",
+    "title": "L形庭院屋",
+    "origin": [
+      64,
+      306
+    ],
+    "size_m": [
+      10,
+      8
+    ],
+    "entry": 4.6,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        10,
+        0
+      ],
+      [
+        10,
+        4.6
+      ],
+      [
+        6,
+        4.6
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        0,
+        8
+      ]
+    ],
+    "rooms": [
+      [
+        "主卧",
+        0,
+        0,
+        3.5,
+        3.4
+      ],
+      [
+        "卫浴",
+        3.5,
+        0,
+        2.5,
+        3.4
+      ],
+      [
+        "餐厨",
+        6,
+        0,
+        4,
+        3.4
+      ],
+      [
+        "客厅",
+        0,
+        4.6,
+        6,
+        3.4
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          10.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.4
+        ],
+        "b": [
+          2.0,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.0,
+          3.4
+        ],
+        "b": [
+          4.8,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          5.8,
+          3.4
+        ],
+        "b": [
+          8.4,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          9.4,
+          3.4
+        ],
+        "b": [
+          10.0,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          4.6
+        ],
+        "b": [
+          3.8,
+          4.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          4.8,
+          4.6
+        ],
+        "b": [
+          6.0,
+          4.6
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.0,
+          4.6
+        ],
+        "b": [
+          10.0,
+          4.6
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          8.0
+        ],
+        "b": [
+          4.1,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          5.1,
+          8.0
+        ],
+        "b": [
+          6.0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          0.0
+        ],
+        "b": [
+          3.5,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.0,
+          0.0
+        ],
+        "b": [
+          6.0,
+          3.4
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.0,
+          4.6
+        ],
+        "b": [
+          6.0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          10,
+          0.0
+        ],
+        "b": [
+          10,
+          4.6
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.02,
+          3.4
+        ],
+        [
+          3.02,
+          3.4
+        ]
+      ],
+      [
+        [
+          4.8,
+          3.4
+        ],
+        [
+          5.8,
+          3.4
+        ]
+      ],
+      [
+        [
+          8.379999999999999,
+          3.4
+        ],
+        [
+          9.379999999999999,
+          3.4
+        ]
+      ],
+      [
+        [
+          3.8200000000000003,
+          4.6
+        ],
+        [
+          4.82,
+          4.6
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "主卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          3.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          6.25,
+          0.4
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          8.2,
+          0.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "客厅沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          5.0
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "b3b9bc",
+    "roof_style": "两段相交双坡",
+    "roofs": [
+      [
+        0,
+        0,
+        10,
+        4.6
+      ],
+      [
+        0,
+        4.6,
+        6,
+        3.4
+      ]
+    ]
+  },
+  {
+    "id": "R08",
+    "template": "H02",
+    "title": "两卧家庭屋",
+    "origin": [
+      47,
+      232
+    ],
+    "size_m": [
+      9,
+      8
+    ],
+    "entry": 4,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        9,
+        0
+      ],
+      [
+        9,
+        8
+      ],
+      [
+        0,
+        8
+      ]
+    ],
+    "rooms": [
+      [
+        "主卧",
+        0,
+        0,
+        3.5,
+        3.5
+      ],
+      [
+        "次卧",
+        3.5,
+        0,
+        3,
+        3.5
+      ],
+      [
+        "卫浴",
+        6.5,
+        0,
+        2.5,
+        3.5
+      ],
+      [
+        "客厅",
+        0,
+        4.7,
+        4.5,
+        3.3
+      ],
+      [
+        "餐厨",
+        4.5,
+        4.7,
+        4.5,
+        3.3
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          9.0,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.5
+        ],
+        "b": [
+          2.0,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.0,
+          3.5
+        ],
+        "b": [
+          5.2,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.2,
+          3.5
+        ],
+        "b": [
+          7.8,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.8,
+          3.5
+        ],
+        "b": [
+          9.0,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          4.7
+        ],
+        "b": [
+          2.7,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.7,
+          4.7
+        ],
+        "b": [
+          7.2,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          8.2,
+          4.7
+        ],
+        "b": [
+          9.0,
+          4.7
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          8.0
+        ],
+        "b": [
+          3.5,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          4.5,
+          8.0
+        ],
+        "b": [
+          9.0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          8.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          0.0
+        ],
+        "b": [
+          3.5,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          4.5,
+          4.7
+        ],
+        "b": [
+          4.5,
+          8.0
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.5,
+          0.0
+        ],
+        "b": [
+          6.5,
+          3.5
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          9,
+          0.0
+        ],
+        "b": [
+          9,
+          8.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.02,
+          3.5
+        ],
+        [
+          3.02,
+          3.5
+        ]
+      ],
+      [
+        [
+          5.16,
+          3.5
+        ],
+        [
+          6.16,
+          3.5
+        ]
+      ],
+      [
+        [
+          7.800000000000001,
+          3.5
+        ],
+        [
+          8.8,
+          3.5
+        ]
+      ],
+      [
+        [
+          2.7399999999999998,
+          4.7
+        ],
+        [
+          3.7399999999999998,
+          4.7
+        ]
+      ],
+      [
+        [
+          7.24,
+          4.7
+        ],
+        [
+          8.24,
+          4.7
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "主卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "次卧床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          3.8,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          6.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "客厅沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          5.1
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          4.75,
+          5.1
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          7.2,
+          7.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "d4c7ab",
+    "roof_style": "四坡屋顶",
+    "roofs": [
+      [
+        0,
+        0,
+        9,
+        8
+      ]
+    ]
+  },
+  {
+    "id": "R09",
+    "template": "H01",
+    "title": "紧凑独居屋",
+    "origin": [
+      52,
+      183
+    ],
+    "size_m": [
+      6.5,
+      6
+    ],
+    "entry": 4.8,
+    "outline": [
+      [
+        0,
+        0
+      ],
+      [
+        6.5,
+        0
+      ],
+      [
+        6.5,
+        6
+      ],
+      [
+        0,
+        6
+      ]
+    ],
+    "rooms": [
+      [
+        "卧室",
+        0,
+        0,
+        3.5,
+        3.2
+      ],
+      [
+        "卫浴",
+        3.5,
+        0,
+        3,
+        3.2
+      ],
+      [
+        "客餐厨",
+        0,
+        3.2,
+        6.5,
+        2.8
+      ]
+    ],
+    "walls": [
+      {
+        "a": [
+          0.0,
+          0
+        ],
+        "b": [
+          6.5,
+          0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0.0,
+          3.2
+        ],
+        "b": [
+          2.0,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          3.0,
+          3.2
+        ],
+        "b": [
+          4.2,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.2,
+          3.2
+        ],
+        "b": [
+          6.5,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          0.0,
+          6.0
+        ],
+        "b": [
+          4.3,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          5.3,
+          6.0
+        ],
+        "b": [
+          6.5,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          0,
+          0.0
+        ],
+        "b": [
+          0,
+          6.0
+        ],
+        "exterior": true
+      },
+      {
+        "a": [
+          3.5,
+          0.0
+        ],
+        "b": [
+          3.5,
+          3.2
+        ],
+        "exterior": false
+      },
+      {
+        "a": [
+          6.5,
+          0.0
+        ],
+        "b": [
+          6.5,
+          6.0
+        ],
+        "exterior": true
+      }
+    ],
+    "doorways": [
+      [
+        [
+          2.02,
+          3.2
+        ],
+        [
+          3.02,
+          3.2
+        ]
+      ],
+      [
+        [
+          5.16,
+          3.2
+        ],
+        [
+          6.16,
+          3.2
+        ]
+      ],
+      [
+        [
+          4.18,
+          3.2
+        ],
+        [
+          5.18,
+          3.2
+        ]
+      ]
+    ],
+    "items": [
+      {
+        "name": "卧室床",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-0.png",
+        "position_m": [
+          0.3,
+          0.3
+        ],
+        "size_m": [
+          1.5,
+          2
+        ],
+        "height_m": 0.65,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "浴室柜",
+        "cell": 0,
+        "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+        "position_m": [
+          3.8,
+          0.3
+        ],
+        "size_m": [
+          0.6,
+          0.55
+        ],
+        "height_m": 0.85,
+        "front": "south",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "bandage": 1
+        }
+      },
+      {
+        "name": "客餐厨沙发",
+        "cell": 0,
+        "asset": "res://art/residential_b01/sofa-v011.png",
+        "position_m": [
+          0.25,
+          3.6
+        ],
+        "size_m": [
+          0.8,
+          1.6
+        ],
+        "height_m": 0.8,
+        "front": "east",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      },
+      {
+        "name": "厨房橱柜",
+        "cell": 0,
+        "asset": "res://art/house_blue/prop-v08-2.png",
+        "position_m": [
+          1.4,
+          5.2
+        ],
+        "size_m": [
+          1.5,
+          0.6
+        ],
+        "height_m": 0.9,
+        "front": "north",
+        "wall": "",
+        "clearance_m": 0.85,
+        "asset_scale": 0.82,
+        "desaturate": 0,
+        "tint": "ffffff",
+        "loot": {
+          "food": 2,
+          "parts": 1
+        }
+      }
+    ],
+    "palette": "a6b4a0",
+    "roof_style": "双坡屋顶",
+    "roofs": [
+      [
+        0,
+        0,
+        6.5,
+        6
+      ]
+    ]
+  }
+]

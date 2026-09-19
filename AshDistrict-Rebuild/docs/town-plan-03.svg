@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 1110" font-family="Microsoft YaHei, sans-serif" role="img" aria-label="小镇差异化街区总图">
+<rect x="0" y="0" width="1120" height="1110" fill="#edf0df" />
+<text x="36" y="42" font-size="26" fill="#253d35" >小镇空间总图 03</text>
+<text x="36" y="69" font-size="13" fill="#253d35" >规划范围 512 × 512 米｜道路之外也能探索｜建筑为占地示意，非最终素材</text>
+<g transform="translate(48 90)">
+<rect x="0" y="0" width="1024" height="1024" fill="#a8be8c" />
+<path d="M5 410 Q70 335 155 360 L200 430 176 655 Q70 708 0 645 Z" fill="#799c6d" stroke="#729277" stroke-width="1.5"/>
+<path d="M700 475 Q810 413 1018 410 L1024 1010 640 1010 Q595 870 680 760 L725 660 Z" fill="#789b6c" stroke="#729277" stroke-width="1.5"/>
+<path d="M330 715 Q435 650 515 722 Q590 789 562 917 Q499 991 369 953 Q291 887 330 715 Z" fill="#79adbb" stroke="#729277" stroke-width="1.5"/>
+<path d="M338 710 Q438 638 524 714 Q607 792 577 926 Q500 1009 359 966" fill="none" stroke="#c6d0a8" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M10 106 L186 100 235 153 215 319 180 367 28 343 Z" fill="#d0c4a1" stroke="#729277" stroke-width="1.5"/>
+<path d="M274 118 L425 110 487 170 471 311 410 340 272 289 Z" fill="#d9c3a4" stroke="#729277" stroke-width="1.5"/>
+<path d="M528 95 L739 104 756 278 690 309 529 274 Z" fill="#c5c8b1" stroke="#729277" stroke-width="1.5"/>
+<path d="M276 379 Q398 337 481 386 L478 524 Q373 564 265 515 Z" fill="#adc994" stroke="#729277" stroke-width="1.5"/>
+<path d="M515 360 L664 329 729 403 712 562 544 570 510 475 Z" fill="#d3c7ad" stroke="#729277" stroke-width="1.5"/>
+<path d="M798 135 L1000 160 993 380 817 386 773 295 Z" fill="#b9b5a4" stroke="#729277" stroke-width="1.5"/>
+<path d="M35 719 L253 666 289 801 248 962 25 978 Z" fill="#d0c18b" stroke="#729277" stroke-width="1.5"/>
+<rect x="0" y="0" width="96" height="72" fill="#d8e5ce" stroke="#e2ad42" stroke-width="3"/>
+<rect x="16" y="43" width="13" height="10" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M22.5 43 v10" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="18" y="13" width="12" height="11" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M24.0 13 v11" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="57" y="15" width="16" height="12" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M65.0 15 v12" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="68" y="44" width="15" height="11" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M75.5 44 v11" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M48 0 V72 M0 36 H96" fill="none" stroke="#697778" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+<g id="roads">
+<path d="M48 72 L48 85 Q180 68 232 93 Q295 62 410 78 L743 78 Q792 90 783 140 L768 275 Q749 323 787 404 L814 448" fill="none" stroke="#d8d8c4" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M48 72 L48 85 Q180 68 232 93 Q295 62 410 78 L743 78 Q792 90 783 140 L768 275 Q749 323 787 404 L814 448" fill="none" stroke="#6e7c7b" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M239 92 Q246 196 236 289 Q220 349 235 385 L244 556 Q250 611 232 673" fill="none" stroke="#d8d8c4" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M239 92 Q246 196 236 289 Q220 349 235 385 L244 556 Q250 611 232 673" fill="none" stroke="#6e7c7b" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M236 346 Q355 322 481 337 L719 316 Q761 311 768 275" fill="none" stroke="#d8d8c4" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M236 346 Q355 322 481 337 L719 316 Q761 311 768 275" fill="none" stroke="#6e7c7b" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M239 172 H155 Q113 171 111 217 V279" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M239 172 H155 Q113 171 111 217 V279" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M241 290 H164" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M241 290 H164" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M333 78 V286" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M333 78 V286" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M590 78 V163" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M590 78 V163" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M703 78 V195" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M703 78 V195" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M770 240 H843 V329" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M770 240 H843 V329" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M481 337 Q477 440 489 563" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M481 337 Q477 440 489 563" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M489 454 H573" fill="none" stroke="#d3d1ba" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M489 454 H573" fill="none" stroke="#8b9186" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="111" cy="279" r="13" fill="#8b9186"/>
+</g>
+<rect x="53" y="128" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M61.5 128 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M48 122 h29 v31 h-11 M48 122 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="92" y="128" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M100.5 128 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M87 122 h29 v31 h-11 M87 122 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="143" y="126" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M151.5 126 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M138 120 h29 v31 h-11 M138 120 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="165" y="193" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M173.5 193 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M160 187 h29 v31 h-11 M160 187 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="167" y="237" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M175.5 237 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M162 231 h29 v31 h-11 M162 231 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="141" y="307" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M149.5 307 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M136 301 h29 v31 h-11 M136 301 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="64" y="306" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M72.5 306 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M59 300 h29 v31 h-11 M59 300 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="47" y="232" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M55.5 232 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M42 226 h29 v31 h-11 M42 226 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="52" y="183" width="17" height="13" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M60.5 183 v13" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M47 177 h29 v31 h-11 M47 177 v31 h10" fill="none" stroke="#8b7e5d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="303" y="130" width="22" height="25" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M314.0 130 v25" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="346" y="130" width="33" height="23" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M362.5 130 v23" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="303" y="167" width="22" height="25" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M314.0 167 v25" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="346" y="167" width="33" height="23" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M362.5 167 v23" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="303" y="204" width="22" height="25" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M314.0 204 v25" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="346" y="204" width="33" height="23" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M362.5 204 v23" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="303" y="242" width="22" height="25" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M314.0 242 v25" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="346" y="242" width="33" height="23" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M362.5 242 v23" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="390" y="135" width="51" height="43" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M415.5 135 v43" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="396" y="221" width="48" height="33" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M420.0 221 v33" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="391" y="264" width="61" height="34" fill="#bfc0ad" />
+<path d="M398 269 v22" fill="none" stroke="#eeeece" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M408 269 v22" fill="none" stroke="#eeeece" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M418 269 v22" fill="none" stroke="#eeeece" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M428 269 v22" fill="none" stroke="#eeeece" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M438 269 v22" fill="none" stroke="#eeeece" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="563" y="191" width="96" height="53" fill="#c1cdab" />
+<rect x="550" y="175" width="23" height="74" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M561.5 175 v74" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="573" y="175" width="76" height="20" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M611.0 175 v20" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="589" y="207" width="55" height="28" fill="#9bab88" stroke="#e8e4ce"/>
+<rect x="675" y="134" width="37" height="38" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M693.5 134 v38" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="681" y="222" width="45" height="28" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M703.5 222 v28" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="545" y="387" width="61" height="18" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M575.5 387 v18" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="541" y="427" width="18" height="64" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M550.0 427 v64" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="635" y="391" width="18" height="64" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M644.0 391 v64" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="568" y="510" width="66" height="19" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M601.0 510 v19" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="577" y="433" width="48" height="56" fill="#b8c696" rx="7"/>
+<path d="M806 175 L973 187 970 357 837 357 M817 342 L799 303 806 175" fill="none" stroke="#65746b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 2"/>
+<rect x="842" y="199" width="67" height="43" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M875.5 199 v43" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="915" y="267" width="42" height="57" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M936.0 267 v57" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="845" y="259" width="54" height="66" fill="#c9bba0" />
+<rect x="850" y="275" width="12" height="8" fill="#8d8070" />
+<rect x="850" y="294" width="12" height="8" fill="#8d8070" />
+<rect x="867" y="275" width="12" height="8" fill="#8d8070" />
+<rect x="867" y="294" width="12" height="8" fill="#8d8070" />
+<rect x="884" y="275" width="12" height="8" fill="#8d8070" />
+<rect x="884" y="294" width="12" height="8" fill="#8d8070" />
+<path d="M43 773 L149 743 161 808 49 841 Z" fill="#b4b678" stroke="#729277" stroke-width="1.5"/>
+<path d="M167 741 L239 720 256 792 183 823 Z" fill="#b4b678" stroke="#729277" stroke-width="1.5"/>
+<path d="M52 863 L173 834 194 910 50 951 Z" fill="#b4b678" stroke="#729277" stroke-width="1.5"/>
+<path d="M55 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M68 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M81 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M94 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M107 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M120 790 l12 36" fill="none" stroke="#929b5b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="204" y="852" width="24" height="18" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M216.0 852 v18" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="206" y="895" width="42" height="24" fill="#b88766" stroke="#785f4c" stroke-width="1"/>
+<path d="M227.0 895 v24" fill="none" stroke="#ead6ba" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+<circle cx="97" cy="565" r="10" fill="#699061" opacity=".65"/>
+<circle cx="912" cy="642" r="6" fill="#699061" opacity=".65"/>
+<circle cx="825" cy="646" r="12" fill="#699061" opacity=".65"/>
+<circle cx="912" cy="760" r="7" fill="#699061" opacity=".65"/>
+<circle cx="865" cy="669" r="7" fill="#699061" opacity=".65"/>
+<circle cx="701" cy="831" r="11" fill="#699061" opacity=".65"/>
+<circle cx="854" cy="715" r="7" fill="#699061" opacity=".65"/>
+<circle cx="819" cy="921" r="11" fill="#699061" opacity=".65"/>
+<circle cx="918" cy="593" r="7" fill="#699061" opacity=".65"/>
+<circle cx="902" cy="523" r="9" fill="#699061" opacity=".65"/>
+<circle cx="983" cy="514" r="6" fill="#699061" opacity=".65"/>
+<circle cx="97" cy="482" r="10" fill="#699061" opacity=".65"/>
+<circle cx="947" cy="706" r="7" fill="#699061" opacity=".65"/>
+<circle cx="29" cy="502" r="9" fill="#699061" opacity=".65"/>
+<circle cx="879" cy="893" r="12" fill="#699061" opacity=".65"/>
+<circle cx="980" cy="678" r="6" fill="#699061" opacity=".65"/>
+<circle cx="822" cy="882" r="9" fill="#699061" opacity=".65"/>
+<circle cx="736" cy="834" r="10" fill="#699061" opacity=".65"/>
+<circle cx="917" cy="803" r="12" fill="#699061" opacity=".65"/>
+<circle cx="978" cy="862" r="10" fill="#699061" opacity=".65"/>
+<circle cx="830" cy="753" r="10" fill="#699061" opacity=".65"/>
+<circle cx="754" cy="799" r="6" fill="#699061" opacity=".65"/>
+<circle cx="92" cy="608" r="9" fill="#699061" opacity=".65"/>
+<circle cx="861" cy="722" r="11" fill="#699061" opacity=".65"/>
+<circle cx="842" cy="629" r="8" fill="#699061" opacity=".65"/>
+<circle cx="877" cy="998" r="12" fill="#699061" opacity=".65"/>
+<circle cx="815" cy="715" r="8" fill="#699061" opacity=".65"/>
+<circle cx="1005" cy="790" r="7" fill="#699061" opacity=".65"/>
+<circle cx="801" cy="857" r="7" fill="#699061" opacity=".65"/>
+<circle cx="123" cy="469" r="7" fill="#699061" opacity=".65"/>
+<circle cx="791" cy="1001" r="6" fill="#699061" opacity=".65"/>
+<circle cx="797" cy="500" r="10" fill="#699061" opacity=".65"/>
+<circle cx="801" cy="550" r="11" fill="#699061" opacity=".65"/>
+<circle cx="171" cy="569" r="9" fill="#699061" opacity=".65"/>
+<circle cx="797" cy="524" r="7" fill="#699061" opacity=".65"/>
+<circle cx="892" cy="851" r="9" fill="#699061" opacity=".65"/>
+<g id="paths">
+<path d="M86 340 Q149 373 234 372 L287 411 Q350 451 421 439 L478 429 541 446 L596 463" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M206 153 L207 330 Q243 349 286 343 L286 293 V131 L303 131" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M377 129 L383 284 468 299 526 297 L673 290 749 327 817 342" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M590 163 V174 M660 222 L673 290 M596 463 L659 491 722 506 Q775 523 817 575" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M287 411 Q312 379 368 381 Q422 389 439 430 Q426 499 352 515 Q296 499 287 411" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M383 284 L377 338 368 381" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M111 310 L86 340" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M287 481 Q222 510 166 580 L231 673" fill="none" stroke="#f5ecc5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<path d="M232 673 Q221 735 227 813 L216 862 V895" fill="none" stroke="#cbb58e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M244 593 Q367 609 475 608 Q612 593 722 624 L817 575" fill="none" stroke="#cbb58e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M817 575 Q946 669 827 736 Q701 753 653 853 L582 883" fill="none" stroke="#cbb58e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M227 813 Q282 836 326 835" fill="none" stroke="#cbb58e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M582 883 Q631 946 738 955" fill="none" stroke="#cbb58e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M165 580 Q106 530 91 449" fill="none" stroke="#eadfb6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 5"/>
+</g>
+<ellipse cx="381" cy="469" rx="24" ry="15" fill="#87b4b4"/>
+<rect x="803" y="571" width="16" height="12" fill="#b09067" />
+<g id="labels">
+<rect x="99" y="4" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="106" y="24" font-size="16" fill="#253d35" >起始区</text>
+<text x="106" y="41" font-size="10" fill="#253d35" >保留原坐标与现有入口</text>
+<rect x="24" y="350" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="31" y="370" font-size="16" fill="#253d35" >01 老住宅区</text>
+<text x="31" y="387" font-size="10" fill="#253d35" >短街 · 后院缺口 · 死胡同</text>
+<rect x="276" y="87" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="283" y="107" font-size="16" fill="#253d35" >02 商业街</text>
+<text x="283" y="124" font-size="10" fill="#253d35" >紧凑店铺 · 后巷 · 卸货场</text>
+<rect x="531" y="71" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="538" y="91" font-size="16" fill="#253d35" >03 公共服务</text>
+<text x="538" y="108" font-size="10" fill="#253d35" >校园步道 · 诊所小院</text>
+<rect x="797" y="119" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="804" y="139" font-size="16" fill="#253d35" >04 工业区</text>
+<text x="804" y="156" font-size="10" fill="#253d35" >厂房 · 堆场 · 侧门</text>
+<rect x="285" y="527" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="292" y="547" font-size="16" fill="#253d35" >05 公园</text>
+<text x="292" y="564" font-size="10" fill="#253d35" >环形步道 · 水池 · 开放草地</text>
+<rect x="527" y="564" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="534" y="584" font-size="16" fill="#253d35" >06 公寓院落</text>
+<text x="534" y="601" font-size="10" fill="#253d35" >楼间通道 · 公共庭院</text>
+<rect x="38" y="687" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="45" y="707" font-size="16" fill="#253d35" >07 农庄</text>
+<text x="45" y="724" font-size="10" fill="#253d35" >田埂 · 土路 · 谷仓</text>
+<rect x="782" y="449" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="789" y="469" font-size="16" fill="#253d35" >08 林间露营地</text>
+<text x="789" y="486" font-size="10" fill="#253d35" >小径分岔 · 林中空地</text>
+<rect x="364" y="980" width="140" height="43" fill="#f8f5e8" rx="5" opacity=".95"/>
+<text x="371" y="1000" font-size="16" fill="#253d35" >09 湖岸</text>
+<text x="371" y="1017" font-size="10" fill="#253d35" >沿岸探索 · 林地连接</text>
+</g>
+<circle cx="86" cy="340" r="5" fill="#fff1b5" stroke="#6b744c" stroke-width="1.5"/>
+<circle cx="286" cy="293" r="5" fill="#fff1b5" stroke="#6b744c" stroke-width="1.5"/>
+<circle cx="817" cy="342" r="5" fill="#fff1b5" stroke="#6b744c" stroke-width="1.5"/>
+<circle cx="541" cy="446" r="5" fill="#fff1b5" stroke="#6b744c" stroke-width="1.5"/>
+<path d="M847 988 H947" fill="none" stroke="#2b4439" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M847 982 V994 M947 982 V994" fill="none" stroke="#2b4439" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+<text x="875" y="978" font-size="13" fill="#253d35" >50 米</text>
+</g></svg>

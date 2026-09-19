@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "visual_system": "ash_district_isometric_interior",
+  "engine": "Godot 4.7",
+  "projection": "orthographic 2:1 isometric",
+  "tile_pixels": [64, 32],
+  "cell_meters": 0.5,
+  "viewport": [1280, 720],
+  "default_zoom": 0.44,
+  "light_direction": "upper-left to lower-right",
+  "generation_note": "Original AI-generated source art; normalized and validated in engine before approval",
+  "reuse_policy": {
+    "base_asset_limit": 48,
+    "target_house_layouts": 6,
+    "palette_variants": ["light", "walnut", "aged_dark"],
+    "condition_variants": ["clean", "used", "abandoned"],
+    "variation_method": ["layout", "facing", "shader_palette", "condition_overlay", "sparse_clutter"],
+    "duplicate_files_per_building": false,
+    "arbitrary_scale_variation": false
+  },
+  "families": {
+    "structure": ["wall_straight", "wall_corner", "wall_low", "doorway", "window_bay", "baseboard"],
+    "surfaces": ["wood_floor", "old_carpet", "kitchen_lino", "bathroom_tile", "painted_wall", "wallpaper"],
+    "kitchen": ["fridge", "stove", "sink_cabinet", "cabinet", "corner_cabinet", "wall_cabinet", "dining_table", "chair", "trashcan"],
+    "living": ["sofa", "armchair", "coffee_table", "television", "tv_stand", "bookcase", "side_table", "floor_lamp"],
+    "bedroom": ["single_bed", "double_bed", "nightstand", "wardrobe", "dresser", "table_lamp", "curtains"],
+    "bath_utility": ["toilet", "bathroom_sink", "shower", "mirror_cabinet", "towel_rack", "washer", "utility_shelf", "box"]
+  },
+  "required_facings": {
+    "large_asymmetric": ["NE", "SE", "SW", "NW"],
+    "wall_aligned": ["SE", "SW"],
+    "small_symmetric": ["SE"]
+  },
+  "approval_gates": [
+    "transparent RGBA",
+    "physical scale verified",
+    "projection and lighting match approved target",
+    "anchor and collision recorded",
+    "native zoom preview accepted",
+    "source and generation history recorded"
+  ],
+  "style_target": "art/style_targets/blue-house-interior-target-v1.png",
+  "style_target_record": "art/style_targets/blue-house-interior-target-v1.md",
+  "status": "style_target_pending_approval"
+}

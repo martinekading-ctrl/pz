@@ -1,0 +1,11 @@
+{
+  "tool": "OpenAI built-in image_gen",
+  "record_type": "Generation briefs reconstructed from the task record; not verbatim tool prompts",
+  "reference": "cedar-lane.png: preserve detailed isometric view, muted grey-green vegetation, rust-brown decay and consistent scale",
+  "briefs": {
+    "junction.png": "1536x1024 abandoned suburban crossroads, intersecting diagonal walkable roads, overgrown fenced corners, wrecks away from the main route; no people, UI or markers",
+    "store.png": "1536x1024 roofless abandoned convenience store with open tiled shop floor, road access at front and service door at rear; leave space for separate furniture sprites; no people, UI or markers",
+    "alley.png": "1536x1024 warehouse back alley, weathered brick walls and service doors, broad traversable street and small yard, vegetation at the boundaries; no people, UI or markers",
+    "shop-props.png": "Four isolated isometric objects on genuinely transparent background in a 2x2 atlas: stocked shelf, chest freezer, checkout counter, stacked wooden crates. Match the existing ruined district style; no UI or labels"
+  }
+}

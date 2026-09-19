@@ -1,0 +1,35 @@
+{
+  "family": "residential_b01_furniture_v011",
+  "engine": "Godot 4.7.2",
+  "projection": "2D isometric, matching the approved prop-v08 family",
+  "world_scale": "1 cell = 0.5 m; uniform sprite scaling from physical footprint",
+  "reused_assets": {
+    "paths": [
+      "res://art/house_blue/prop-v08-0.png",
+      "res://art/house_blue/prop-v08-1.png",
+      "res://art/house_blue/prop-v08-2.png",
+      "res://art/house_blue/prop-v08-3.png",
+      "res://art/house_blue/prop-v08-4.png",
+      "res://art/house_blue/prop-v08-5.png"
+    ],
+    "source_record": "res://docs/asset-manifest-v08.json"
+  },
+  "generated_extensions": {
+    "files": [
+      "sofa-v011.png",
+      "shower-v011.png",
+      "toilet-v011.png",
+      "bathroom-sink-v011.png"
+    ],
+    "tool": "OpenAI built-in image generation",
+    "date": "2026-09-12",
+    "references": "prop-v08-0 through prop-v08-4",
+    "prompt_summary": "single transparent isometric household object; match approved projection, realistic proportions, material detail, restrained outline and upper-left lighting",
+    "runtime_edits": "alpha preserved; bottom-center ground anchor; uniform meter-based scale"
+  },
+  "rejected_candidate": {
+    "name": "Kenney Furniture Kit 2.0",
+    "reason": "CC0 license was valid, but its low-poly visual language did not match the approved prop-v08 family and it is no longer referenced by B01"
+  },
+  "approval": "integrated_revision_pending_user_visual_review"
+}

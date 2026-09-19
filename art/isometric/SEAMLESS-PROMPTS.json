@@ -1,0 +1,12 @@
+{
+  "tool": "OpenAI built-in image_gen",
+  "prompts": {
+    "waste-ground": "Create a seamless tileable game ground texture, square 1024x1024. Detailed muted olive brown dead grass, moss, small gravel and fallen leaves on dark soil. Flat evenly lit surface with subtle grain, no perspective horizon, no trees, no objects, no paths, no patches of very different brightness. For a grim isometric zombie survival game, realistic painted pixel fine detail, low contrast. Texture fills entire canvas and all four edges seamlessly repeat.",
+    "worn-asphalt": "Create a seamless tileable square 1024x1024 asphalt ground texture for a detailed isometric zombie survival game. Dark desaturated grey-brown old asphalt with thin branching cracks, subtle tiny gravel and occasional dusty moss in cracks. Even subdued daylight, no road markings, no curbs, no cars, no horizon, no shadows or perspective gradient. Low contrast, fine realistic painted texture, edges tile seamlessly."
+  },
+  "assets": [
+    "waste-ground.png",
+    "worn-asphalt.png"
+  ],
+  "usage": "Repeated terrain and road Polygon2D textures with mipmaps, edge blending and world-space navigation"
+}

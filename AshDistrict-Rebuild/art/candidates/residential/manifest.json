@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Modular House",
+    "author": "Keith / Fertile Soil Productions",
+    "url": "https://opengameart.org/content/modular-house-3d-models",
+    "license": "CC0",
+    "file": "modular-house.zip",
+    "decision": "优先评估墙、窗、独立门和厨卫OBJ；需要渲染与材质统一。",
+    "sha256": "1f603fb3501d96ec9db3f4383ce48400ed53456ce33eed18b6ee6aa28b3ef439"
+  },
+  {
+    "name": "Building Kit",
+    "author": "Kenney",
+    "url": "https://kenney.nl/assets/building-kit",
+    "license": "CC0",
+    "file": "building-kit.zip",
+    "decision": "备选门窗与结构模块；已核对包内License.txt。",
+    "sha256": "2740ef5772fb5fb3d7aab881db22d129f6b68afe711b1a79e6d5e9e19cf3eec6"
+  },
+  {
+    "name": "Furniture Kit",
+    "author": "Kenney",
+    "url": "https://kenney.nl/assets/furniture-kit",
+    "license": "CC0",
+    "file": "furniture-kit.zip",
+    "decision": "备选独立椅子、卫浴、沙发；风格偏简洁，不能直接认定符合当前美术。",
+    "sha256": "e67652d0932cee41683f74711c03d3e192a2af9979ef8e6b237711f5482d46b0"
+  }
+]

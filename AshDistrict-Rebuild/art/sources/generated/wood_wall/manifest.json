@@ -1,0 +1,90 @@
+{
+  "family": "wood_wall_v1",
+  "generated_on": "2026-09-13",
+  "generator": "Codex built-in image generation",
+  "prompt_record": "res://docs/WOOD-WALL-ASSET-SPEC-v1.md",
+  "technical_frame": {
+    "engine": "Godot 4.7",
+    "view": "front orthographic source, projected to isometric in engine",
+    "world_scale": "1 logical cell = 0.5 m",
+    "residential_wall_height_m": 2.7,
+    "player_height_m": 1.75
+  },
+  "assets": [
+    {
+      "id": "wood_house_brown_base",
+      "source": "res://art/sources/generated/wood_wall/01_base/wood_house_brown_base-source.png",
+      "role": "tileable exterior wall candidate",
+      "size": [1254, 1254],
+      "alpha": false,
+      "status": "candidate_needs_repeat_validation"
+    },
+    {
+      "id": "wood_house_blue_base",
+      "source": "res://art/sources/generated/wood_wall/01_base/wood_house_blue_base-source.png",
+      "role": "tileable exterior wall candidate",
+      "size": [1254, 1254],
+      "alpha": false,
+      "status": "candidate_needs_repeat_validation"
+    },
+    {
+      "id": "wood_damage_peel_a",
+      "source": "res://art/sources/generated/wood_wall/02_damage/wood_damage_peel_a-source.png",
+      "role": "cosmetic wall decal",
+      "pivot": "center",
+      "alpha": true,
+      "status": "source_accepted_needs_normalization"
+    },
+    {
+      "id": "wood_damage_crack_a",
+      "source": "res://art/sources/generated/wood_wall/02_damage/wood_damage_crack_a-source.png",
+      "role": "cosmetic wall decal",
+      "pivot": "center",
+      "alpha": true,
+      "status": "source_accepted_needs_normalization"
+    },
+    {
+      "id": "wood_damage_stain_a",
+      "source": "res://art/sources/generated/wood_wall/02_damage/wood_damage_stain_a-source.png",
+      "role": "cosmetic wall decal",
+      "pivot": "center",
+      "alpha": true,
+      "status": "source_accepted_needs_normalization"
+    },
+    {
+      "id": "wood_door_a",
+      "source": "res://art/sources/generated/wood_wall/03_doors/wood_door_a-source.png",
+      "role": "0.9 x 2.1 m swing-door leaf",
+      "pivot": "bottom_left_hinge",
+      "alpha": true,
+      "status": "source_accepted_needs_padding"
+    },
+    {
+      "id": "wood_window_a",
+      "source": "res://art/sources/generated/wood_wall/04_windows/wood_window_a-source.png",
+      "role": "1.2 x 1.1 m double window",
+      "pivot": "center",
+      "alpha": true,
+      "status": "source_accepted_needs_padding"
+    },
+    {
+      "id": "wood_barricade_a",
+      "source": "res://art/sources/generated/wood_wall/05_barricades/wood_barricade_a-source.png",
+      "role": "1.2 x 2.4 m barricade panel",
+      "pivot": "bottom_center",
+      "alpha": true,
+      "status": "source_accepted_needs_padding"
+    }
+  ],
+  "qa": {
+    "contact_sheet": "res://build/wood-wall-generated-sources.png",
+    "alpha_checked": true,
+    "source_files_preserved": true,
+    "in_engine_checked": false,
+    "notes": [
+      "Transparent previews display black outside the object, but PNG alpha channels are present.",
+      "Generated opaque textures require a 3x3 repeat test before production use.",
+      "Door, window and barricade require deterministic crop, padding and alpha normalization before import."
+    ]
+  }
+}

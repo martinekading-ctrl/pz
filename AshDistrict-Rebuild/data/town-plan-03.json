@@ -1,0 +1,37 @@
+{
+  "status": "planning_not_runtime",
+  "supersedes": "town-plan-02",
+  "size_m": [
+    512,
+    512
+  ],
+  "existing_core_cells": [
+    0,
+    0,
+    96,
+    72
+  ],
+  "routes": {
+    "walking": [
+      "M86 340 Q149 373 234 372 L287 411 Q350 451 421 439 L478 429 541 446 L596 463",
+      "M206 153 L207 330 Q243 349 286 343 L286 293 V131 L303 131",
+      "M377 129 L383 284 468 299 526 297 L673 290 749 327 817 342",
+      "M590 163 V174 M660 222 L673 290 M596 463 L659 491 722 506 Q775 523 817 575",
+      "M287 411 Q312 379 368 381 Q422 389 439 430 Q426 499 352 515 Q296 499 287 411",
+      "M383 284 L377 338 368 381",
+      "M111 310 L86 340",
+      "M287 481 Q222 510 166 580 L231 673"
+    ],
+    "dirt": [
+      "M232 673 Q221 735 227 813 L216 862 V895",
+      "M244 593 Q367 609 475 608 Q612 593 722 624 L817 575",
+      "M817 575 Q946 669 827 736 Q701 753 653 853 L582 883",
+      "M227 813 Q282 836 326 835",
+      "M582 883 Q631 946 738 955"
+    ]
+  },
+  "notes": [
+    "Full SVG contains authored footprints, fences, roads and natural boundaries.",
+    "Coordinates match logical cells at 0.5 m per cell; building symbols await per-plot metrics validation."
+  ]
+}

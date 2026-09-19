@@ -1,0 +1,113 @@
+{
+  "version": 4,
+  "renderer": "Godot CanvasItem 2D, Camera2D, Y-sorted foreground polygons",
+  "source": "OpenAI built-in image_gen",
+  "reference": "User supplied 0064ebd0fee567f8dc8e2774cabb8b46.jpg, visual style reference only",
+  "assets": [
+    {
+      "file": "cedar-lane.png",
+      "role": "background and foreground polygon texture atlas",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": false,
+      "collision": "manually aligned walkable polygons and obstacle footprints in world.gd"
+    },
+    {
+      "file": "survivor.png",
+      "role": "survivor four-direction four-frame walking atlas",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha": true,
+      "pivot": "per-frame bottom center, normalized to 86 world pixels",
+      "slicing": "4 columns; transparent row gutter detection and alpha bounds in split_sheet"
+    },
+    {
+      "file": "infected.png",
+      "role": "infected four-direction four-frame walking atlas",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha": true,
+      "pivot": "per-frame bottom center, normalized to 86 world pixels",
+      "slicing": "same as survivor"
+    },
+    {
+      "file": "junction.png",
+      "role": "regional isometric background",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": false,
+      "collision": "district.gd walk polygons and world.gd obstacles"
+    },
+    {
+      "file": "store.png",
+      "role": "regional isometric background",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": false,
+      "collision": "district.gd walk polygons and world.gd obstacles"
+    },
+    {
+      "file": "alley.png",
+      "role": "regional isometric background",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": false,
+      "collision": "district.gd walk polygons and world.gd obstacles"
+    },
+    {
+      "file": "shop-props.png",
+      "role": "shelf freezer counter crates atlas",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": true,
+      "pivot": "cropped bottom center",
+      "slicing": "verified unequal atlas gutters in world.gd"
+    },
+    {
+      "file": "waste-ground.png",
+      "role": "continuous world tiling surface",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha": false,
+      "render": "4x world UV, linear mipmaps, faded road edges"
+    },
+    {
+      "file": "worn-asphalt.png",
+      "role": "continuous world tiling surface",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha": false,
+      "render": "4x world UV, linear mipmaps, faded road edges"
+    },
+    {
+      "file": "yard-props.png",
+      "role": "independent trees shrubs and fence textures",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha": true,
+      "prompt": "YARD-PROMPT.json"
+    }
+  ],
+  "validation": "Residential grass and full building perimeter traversed with WASD. Explicit walls, fences, trees and vehicles block movement. Closed front door isolates interior navigation. Gate input, persistent state and old saves verified.",
+  "restrictions": "Only residential district and inter-region bare ground rebuilt for free roaming. Other painted regions retain prior masks. No window climbing, fence vaulting, destruction or construction."
+}

@@ -1,0 +1,10 @@
+{
+  "tool": "OpenAI built-in image_gen",
+  "prompt": "Game asset sprite sheet on genuinely TRANSPARENT alpha background. 2x2 evenly separated grid, each object fully inside its quadrant with generous empty gutters. Top left: one complete medium mature leafy oak tree with visible trunk down to ground and muted dark olive green foliage, not enormous. Top right: one small low thorny shrub. Bottom left: one straight 4 meter weathered wooden picket fence segment, isometric diagonal going down-right, no ground. Bottom right: one straight 4 meter weathered wooden picket fence segment isometric diagonal going up-right, no ground. Detailed hand-painted realistic isometric 2.5D post apocalyptic zombie survival art, subdued grey brown moss green palette, natural soft overcast lighting, fine details like Project Zomboid but higher definition. No floor, no base, no labels, no UI, no contact shadow outside silhouettes. 1536x1536 square.",
+  "file": "yard-props.png",
+  "size": [
+    1254,
+    1254
+  ],
+  "note": "Transparent sprites. Individually verified atlas regions; tree and shrub sprites, fence texture mapped to collision segments."
+}

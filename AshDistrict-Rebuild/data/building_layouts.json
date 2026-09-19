@@ -1,0 +1,461 @@
+{
+  "version": 1,
+  "cell_m": 0.5,
+  "height_pixels_per_m": 64,
+  "buildings": {
+    "blue_house": {
+      "origin": [
+        16,
+        43
+      ],
+      "size_m": [
+        6.5,
+        5
+      ],
+      "height_m": 2.7,
+      "entry_m": [
+        6.5,
+        3
+      ],
+      "items": [
+        {
+          "name": "床",
+          "cell": 0,
+          "position_m": [
+            0.15,
+            1.6
+          ],
+          "size_m": [
+            2,
+            1.5
+          ],
+          "height_m": 0.8,
+          "front": "east",
+          "wall": "west",
+          "clearance_m": 0.8,
+          "loot": {
+            "bandage": 1
+          }
+        },
+        {
+          "name": "冰箱",
+          "cell": 1,
+          "position_m": [
+            5.45,
+            0.2
+          ],
+          "size_m": [
+            0.7,
+            0.7
+          ],
+          "height_m": 1.8,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 0.8,
+          "loot": {
+            "food": 2,
+            "water": 1
+          }
+        },
+        {
+          "name": "厨房橱柜",
+          "cell": 2,
+          "position_m": [
+            3.25,
+            0.15
+          ],
+          "size_m": [
+            2.1,
+            0.6
+          ],
+          "height_m": 0.9,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 0.8,
+          "loot": {
+            "food": 1
+          }
+        },
+        {
+          "name": "餐桌",
+          "cell": 3,
+          "position_m": [
+            3.35,
+            3.35
+          ],
+          "size_m": [
+            1.2,
+            0.9
+          ],
+          "height_m": 0.78,
+          "front": "north",
+          "wall": "",
+          "clearance_m": 0.8,
+          "loot": {
+            "water": 1
+          }
+        },
+        {
+          "name": "衣柜",
+          "cell": 4,
+          "position_m": [
+            1.85,
+            0.15
+          ],
+          "size_m": [
+            1.2,
+            0.6
+          ],
+          "height_m": 2,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 0.8,
+          "loot": {
+            "bandage": 1,
+            "parts": 1
+          }
+        },
+        {
+          "name": "储物柜",
+          "cell": 4,
+          "position_m": [
+            0.15,
+            3.6
+          ],
+          "size_m": [
+            0.6,
+            1.2
+          ],
+          "height_m": 1.3,
+          "front": "east",
+          "wall": "west",
+          "clearance_m": 0.8,
+          "loot": {
+            "parts": 2
+          },
+          "asset_cell": 5
+        }
+      ]
+    },
+    "residential_b01": {
+      "origin": [
+        53,
+        128
+      ],
+      "size_m": [
+        8.5,
+        6.5
+      ],
+      "height_m": 2.7,
+      "entry_m": [
+        5.65,
+        6.5
+      ],
+      "items": [
+        {
+          "name": "双人床",
+          "cell": 0,
+          "position_m": [
+            0.2,
+            0.2
+          ],
+          "size_m": [
+            1.5,
+            2.0
+          ],
+          "height_m": 0.65,
+          "front": "east",
+          "wall": "west",
+          "clearance_m": 0.8,
+          "asset": "res://art/house_blue/prop-v08-0.png",
+          "asset_scale": 0.66,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "bandage": 1
+          }
+        },
+        {
+          "name": "卧室衣柜",
+          "cell": 0,
+          "position_m": [
+            2.5,
+            1.6
+          ],
+          "size_m": [
+            0.6,
+            1.2
+          ],
+          "height_m": 1.9,
+          "front": "west",
+          "wall": "east",
+          "clearance_m": 0.8,
+          "asset": "res://art/house_blue/prop-v08-4.png",
+          "asset_scale": 0.48,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "bandage": 1,
+            "parts": 1
+          }
+        },
+        {
+          "name": "浴室柜",
+          "cell": 0,
+          "position_m": [
+            3.45,
+            1.8
+          ],
+          "size_m": [
+            0.6,
+            0.55
+          ],
+          "height_m": 0.86,
+          "front": "east",
+          "wall": "west",
+          "clearance_m": 0.6,
+          "asset": "res://art/residential_b01/bathroom-sink-v011.png",
+          "asset_scale": 0.9,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "bandage": 1
+          }
+        },
+        {
+          "name": "厨房橱柜",
+          "cell": 0,
+          "position_m": [
+            5.85,
+            0.15
+          ],
+          "size_m": [
+            1.7,
+            0.6
+          ],
+          "height_m": 0.9,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 1.0,
+          "asset": "res://art/house_blue/prop-v08-2.png",
+          "asset_scale": 0.82,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "food": 2,
+            "water": 1
+          }
+        },
+        {
+          "name": "冰箱",
+          "cell": 0,
+          "position_m": [
+            7.65,
+            0.15
+          ],
+          "size_m": [
+            0.7,
+            0.7
+          ],
+          "height_m": 1.8,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 1.0,
+          "asset": "res://art/house_blue/prop-v08-1.png",
+          "asset_scale": 0.59,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "food": 3,
+            "water": 2
+          }
+        },
+        {
+          "name": "客厅沙发",
+          "cell": 0,
+          "position_m": [
+            0.2,
+            4.1
+          ],
+          "size_m": [
+            0.8,
+            1.9
+          ],
+          "height_m": 0.85,
+          "front": "east",
+          "wall": "west",
+          "clearance_m": 0.9,
+          "asset": "res://art/residential_b01/sofa-v011.png",
+          "asset_scale": 0.82,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "bandage": 1
+          }
+        },
+        {
+          "name": "餐桌",
+          "cell": 0,
+          "position_m": [
+            3.1,
+            4.35
+          ],
+          "size_m": [
+            1.2,
+            0.8
+          ],
+          "height_m": 0.78,
+          "front": "west",
+          "wall": "",
+          "clearance_m": 0.8,
+          "asset": "res://art/house_blue/prop-v08-3.png",
+          "asset_scale": 0.82,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "food": 1
+          }
+        },
+        {
+          "name": "储物柜",
+          "cell": 0,
+          "position_m": [
+            7.75,
+            4.25
+          ],
+          "size_m": [
+            0.6,
+            1.2
+          ],
+          "height_m": 1.8,
+          "front": "west",
+          "wall": "east",
+          "clearance_m": 0.9,
+          "asset": "res://art/house_blue/prop-v08-5.png",
+          "asset_scale": 0.78,
+          "desaturate": 0.0,
+          "tint": "ffffff",
+          "loot": {
+            "parts": 3,
+            "food": 1
+          }
+        }
+      ]
+    },
+    "store": {
+      "origin": [
+        57,
+        15
+      ],
+      "size_m": [
+        8,
+        6
+      ],
+      "height_m": 3,
+      "entry_m": [
+        3.5,
+        6
+      ],
+      "items": [
+        {
+          "name": "饮用水冷柜",
+          "cell": 0,
+          "position_m": [
+            0.3,
+            0.15
+          ],
+          "size_m": [
+            1.4,
+            0.75
+          ],
+          "height_m": 2,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 1.5,
+          "loot": {
+            "water": 5,
+            "food": 1
+          }
+        },
+        {
+          "name": "饮料冷柜",
+          "cell": 0,
+          "position_m": [
+            1.8,
+            0.15
+          ],
+          "size_m": [
+            1.4,
+            0.75
+          ],
+          "height_m": 2,
+          "front": "south",
+          "wall": "north",
+          "clearance_m": 1.5,
+          "loot": {
+            "water": 3
+          }
+        },
+        {
+          "name": "罐头货架",
+          "cell": 1,
+          "position_m": [
+            0.4,
+            2.45
+          ],
+          "size_m": [
+            2,
+            0.8
+          ],
+          "height_m": 1.5,
+          "front": "south",
+          "wall": "",
+          "clearance_m": 1.2,
+          "loot": {
+            "food": 4
+          }
+        },
+        {
+          "name": "食品货架",
+          "cell": 1,
+          "position_m": [
+            4.1,
+            2.45
+          ],
+          "size_m": [
+            2,
+            0.8
+          ],
+          "height_m": 1.5,
+          "front": "south",
+          "wall": "",
+          "clearance_m": 1.2,
+          "loot": {
+            "food": 3,
+            "water": 2
+          }
+        },
+        {
+          "name": "收银台",
+          "cell": 2,
+          "position_m": [
+            5.1,
+            4.7
+          ],
+          "size_m": [
+            1.8,
+            0.65
+          ],
+          "height_m": 0.95,
+          "front": "north",
+          "wall": "",
+          "clearance_m": 1.0,
+          "loot": {
+            "bandage": 1,
+            "food": 1
+          }
+        }
+      ]
+    }
+  }
+}

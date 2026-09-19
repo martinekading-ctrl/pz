@@ -1,0 +1,37 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>住宅户型库 · 第一批六套</title>
+<style>*{box-sizing:border-box}body{margin:0;background:#eeeae0;color:#283b37;font:16px "Microsoft YaHei",sans-serif}header,footer{padding:30px 4vw;background:#243a34;color:#eeeadd}h1{margin:0 0 14px;font-size:30px}p{line-height:1.8}main{padding:25px 4vw;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}article{background:#fffdf6;border:1px solid #cbc6b6;border-radius:10px;padding:20px}h2{font-size:21px;margin:0 0 8px}.meta{color:#736347;font-size:14px}svg{width:100%;height:365px}small{display:block;line-height:1.8}footer{background:#ded9ca;color:#283b37}@media(max-width:1000px){main{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){main{grid-template-columns:1fr}}@media print{main{grid-template-columns:repeat(3,1fr)}svg{height:250px}article{break-inside:avoid}}</style>
+<header><h1>住宅户型库 · 第一批六套</h1><p>布局草案 v1｜房屋尺寸以米计｜北向上、入口在下侧｜同一套家具与门窗模块，形成不同轮廓和生活动线。</p><small>深灰：墙体　蓝线：窗户　橙线：门洞　棕色：家具占地示意　浅绿：公共通行区域。门洞是位置提案，尚未验证开门弧线。</small></header><main id="plans"></main>
+<footer><h2>以后怎样扩充，减少重复工作</h2><p>先固定这 6 种户型结构；每种提供 2 套合理的家具布局、3 套外墙配色，最多形成 36 个基础组合。再按街区分配屋顶、门廊、院落与维护状态。组合数量不等于独立户型数量；相邻房屋避免同户型、同朝向、同配色连续出现。</p><p>原有床、冰箱、柜体和桌子继续复用。新增素材只补缺项；不为每栋房子重新生成图片。建筑使用数据模板，墙面使用室内抹灰、室外挂板或砖墙，转角和门楣作为独立模块。</p><p>统一约束：层高 2.7 米，外墙 0.2 米、隔墙 0.12 米；主通道至少 1.1 米，住宅入口净宽 1 米。床头靠实墙，高柜避窗，柜门前留 0.8 米。家具精灵、实际占地与搜索区必须一起校准，不能只缩图留下过大的隐形碰撞。</p><p>实施顺序：先用 H01 验证墙厚、门洞和遮挡，再制作 H02、H04。H03、H05、H06 复用验证后的模块。每种模板落地前检查所有房间和搜索点连通；这张图是设计草案，不代表游戏已完成这些建筑。</p></footer>
+<script>
+const designs=[{"id":"H01","name":"紧凑独居屋","w":6.5,"h":6,"roof":"双坡屋顶","facade":"灰绿挂板","note":"一卧一卫，进门就是客餐厅；适合旧街小地块。","rooms":[["卧室",0,0,3.5,3.2],["卫浴",3.5,0,3,3.2],["客餐厨",0,3.2,6.5,2.8]],"entry":4.8},{"id":"H02","name":"两卧家庭屋","w":9,"h":8,"roof":"四坡屋顶","facade":"米白抹灰","note":"两间卧室并列，客厅与厨房分居两侧；适合普通住宅区。","rooms":[["主卧",0,0,3.5,3.5],["次卧",3.5,0,3,3.5],["卫浴",6.5,0,2.5,3.5],["客厅",0,4.7,4.5,3.3],["餐厨",4.5,4.7,4.5,3.3]],"entry":4},{"id":"H03","name":"狭长排屋","w":5,"h":11,"roof":"前后双坡","facade":"红砖＋白窗框","note":"窄面宽、纵深长，右侧连续走廊通向后门；用于密集街道。","rooms":[["卧室",0,0,3.8,3.5],["卫浴",0,3.5,3.8,2.5],["餐厨",0,6,3.8,2.5],["起居",0,8.5,3.8,2.5]],"entry":4.35,"side":true},{"id":"H04","name":"L形庭院屋","w":10,"h":8,"roof":"两段相交双坡","facade":"浅黄挂板","note":"缺角形成门廊与小庭院；卧室翼与起居翼分开。","rooms":[["主卧",0,0,3.5,3.4],["卫浴",3.5,0,2.5,3.4],["餐厨",6,0,4,3.4],["客厅",0,4.6,6,3.4]],"entry":4.6,"lshape":true},{"id":"H05","name":"车库家庭屋","w":12,"h":8,"roof":"住宅双坡＋低车库顶","facade":"灰砖＋木门","note":"车库有独立外门与室内连接门；工具物资集中在车库。","rooms":[["主卧",0,0,3.8,3.5],["卫浴",3.8,0,2.8,3.5],["储藏",6.6,0,1.6,3.5],["客餐厨",0,4.7,8.2,3.3],["车库",8.2,0,3.8,8]],"entry":5.4},{"id":"H06","name":"乡间农舍","w":11,"h":9,"roof":"深色双坡＋前廊顶","facade":"旧白木板","note":"较大的厨房、食品储藏间与前廊；用于田地和林缘。","rooms":[["主卧",0,0,4,3.6],["次卧",4,0,3.5,3.6],["卫浴",7.5,0,3.5,3.6],["客厅",0,4.8,4,4.2],["餐厨",4,4.8,4.5,4.2],["食品储藏",8.5,4.8,2.5,4.2]],"entry":3}];
+const ns='http://www.w3.org/2000/svg';
+function el(tag,attrs,text){const e=document.createElementNS(ns,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text)e.textContent=text;return e}
+for(const d of designs){
+ const card=document.createElement('article');card.innerHTML='<h2>'+d.id+' · '+d.name+'</h2><div class="meta">'+d.w+' × '+d.h+' 米 · '+d.facade+' · '+d.roof+'</div>';
+ const svg=el('svg',{viewBox:'-0.7 -0.8 '+(d.w+1.4)+' '+(d.h+2.1),role:'img','aria-label':d.name+'平面方案'});
+ const add=(t,a,s)=>svg.appendChild(el(t,a,s));
+ const shape=d.lshape?'M0 0 H10 V4.6 H6 V8 H0 Z':'M0 0 H'+d.w+' V'+d.h+' H0 Z';
+ add('path',{d:shape,fill:'#dbe6d6',stroke:'#334941','stroke-width':.2});
+ const line=(x1,y1,x2,y2,c,w)=>add('line',{x1,y1,x2,y2,stroke:c,'stroke-width':w});
+ const box=(x,y,w,h)=>add('rect',{x,y,width:w,height:h,rx:.05,fill:'#b39670',stroke:'#826b50','stroke-width':.025});
+ for(const [name,x,y,w,h] of d.rooms){
+ add('rect',{x:x+.06,y:y+.06,width:w-.12,height:h-.12,fill:name.includes('卫')?'#e1e8e8':name==='车库'?'#d4d4cd':'#f0e5cf',stroke:'#68776b','stroke-width':.12});
+ let dx=x+w*.72,dy=y+h;
+ if(d.side){line(x+w, y+h*.65,x+w,y+h*.65+1,'#fffdf6',.23);line(x+w,y+h*.65,x+w,y+h*.65+1,'#b97937',.05)}
+ else if(y===0 && name!=='车库'){line(dx-.5,dy,dx+.5,dy,'#fffdf6',.25);line(dx-.5,dy,dx+.5,dy,'#b97937',.05)}
+ else if(name==='车库'){line(x,5.4,x,6.4,'#b97937',.23);line(x+.4,d.h,x+w-.4,d.h,'#b97937',.25)}
+ else {line(dx-.5,y,dx+.5,y,'#fffdf6',.23);line(dx-.5,y,dx+.5,y,'#b97937',.05)}
+ if(name.includes('卧')){box(x+.25,y+.2,1.5,2);add('rect',{x:x+.35,y:y+.3,width:1.3,height:.35,fill:'#f7f4e9'});box(x+w-.85,y+.2,.6,1.2)}
+ else if(name.includes('卫')){box(x+.2,y+.2,.9,.9);box(x+w-.85,y+.2,.65,.8);box(x+.2,y+h-.8,.6,.55)}
+ else if(name.includes('藏')){box(x+.2,y+.2,.6,Math.min(1.6,h-1))}
+ else if(name==='车库'){add('rect',{x:x+.65,y:y+2,width:2,height:4.5,rx:.3,fill:'#8099a4'});box(x+.2,y+.2,2,.6)}
+ else {box(x+.2,y+.35,.8,Math.min(1.7,h-.65));if(name.includes('厨')){box(x+w-2,y+.2,1.1,.6);box(x+w-.8,y+.2,.6,.7)}}
+ add('text',{x:x+w/2,y:y+h-.32,'text-anchor':'middle','font-size':.30,fill:'#35473e'},name);
+ if(y===0)line(x+w*.55,0,x+w*.55+.65,0,'#559ca5',.12);
+ }
+ line(d.entry-.5,d.h,d.entry+.5,d.h,'#fffdf6',.3);line(d.entry-.5,d.h,d.entry+.5,d.h,'#b97937',.08);
+ add('text',{x:d.entry,y:d.h+.6,'text-anchor':'middle','font-size':.32,fill:'#a1672b'},'↑ 主入口');
+ add('text',{x:0,y:-.35,'font-size':.28},'北 ↑');
+ card.appendChild(svg);const note=document.createElement('p');note.textContent=d.note;card.appendChild(note);document.getElementById('plans').appendChild(card);
+}
+</script></html>
