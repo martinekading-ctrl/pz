@@ -18,6 +18,8 @@ var attack_committed := false
 var alerted := false
 var wander_target := Vector2.ZERO
 var tint := Color("8f9976")
+var shirt_color := Color("6d735e")
+var pants_color := Color("4e5148")
 var visual_flash := 0.0
 var spawn_index := 0
 var investigate_target := Vector2.ZERO
@@ -48,6 +50,8 @@ func setup(owner: Node2D, map: Node2D, player: Node2D, logical_position: Vector2
 	if dormant:
 		change_state(State.SLEEPING)
 	tint = [Color("8f9976"), Color("90907b"), Color("7f8c78"), Color("9a8875")][index % 4]
+	shirt_color = [Color("69735c"), Color("6b6259"), Color("596a70"), Color("76615a")][index % 4]
+	pants_color = [Color("444942"), Color("514a43"), Color("414a50"), Color("4c4b3f")][int(index / 2) % 4]
 	wander_target = logical_position + Vector2(3.0 if index % 2 == 0 else -3.0, 2.0)
 	queue_redraw()
 
@@ -279,14 +283,43 @@ func set_corpse_highlight(value: bool) -> void:
 func state_label() -> String:
 	return ["idle", "wander", "chase", "attack", "stagger", "dead", "investigate", "sleeping", "breach", "climb"][state]
 
+func attack_phase() -> String:
+	if state not in [State.ATTACK, State.BREACH]:
+		return "none"
+	var duration := 0.82
+	var progress := clampf(state_time / duration, 0.0, 1.0)
+	if progress < 0.42:
+		return "windup"
+	if progress < 0.66:
+		return "impact"
+	return "recover"
+
+func presentation_state() -> String:
+	if state == State.DEAD:
+		return "dead"
+	if state == State.STAGGER:
+		return "stagger"
+	if state in [State.ATTACK, State.BREACH]:
+		return "attack_" + attack_phase()
+	if state == State.CLIMB:
+		return "climb"
+	if state == State.SLEEPING:
+		return "sleeping"
+	if state in [State.WANDER, State.CHASE, State.INVESTIGATE]:
+		return "walk"
+	return "idle"
+
 func _draw() -> void:
 	if state == State.DEAD:
 		if corpse_highlight:
 			draw_arc(Vector2(0, 5), 48.0, 0.0, TAU, 32, Color("e8cd72"), 4.0, true)
-		draw_flat_ellipse(Vector2(0, 4), Vector2(43, 13), Color(0.0, 0.0, 0.0, 0.25))
-		draw_line(Vector2(-28, -5), Vector2(24, 5), Color("695d50"), 18.0, true)
-		draw_circle(Vector2(34, 8), 11.0, Color("7f8168"))
-		draw_line(Vector2(-6, 0), Vector2(-32, 16), Color("4e5148"), 8.0, true)
+		draw_flat_ellipse(Vector2(0, 5), Vector2(43, 13), Color(0.0, 0.0, 0.0, 0.27))
+		var fall_side := -1.0 if spawn_index % 2 == 0 else 1.0
+		draw_line(Vector2(-29 * fall_side, -5), Vector2(23 * fall_side, 5), pants_color, 17.0, true)
+		draw_colored_polygon(PackedVector2Array([Vector2(-19 * fall_side, -13), Vector2(20 * fall_side, -5), Vector2(17 * fall_side, 12), Vector2(-22 * fall_side, 5)]), shirt_color.darkened(0.12))
+		draw_circle(Vector2(33 * fall_side, 8), 11.0, Color("7f8168"))
+		draw_line(Vector2(-5 * fall_side, 0), Vector2(-31 * fall_side, 16), shirt_color.darkened(0.28), 8.0, true)
+		draw_circle(Vector2(2 * fall_side, 2), 5.0, Color("6f2f2b"))
 		return
 	if state == State.SLEEPING:
 		draw_flat_ellipse(Vector2(0, 5), Vector2(34, 11), Color(0.0, 0.0, 0.0, 0.24))
@@ -294,25 +327,56 @@ func _draw() -> void:
 		draw_circle(Vector2(27, 5), 10.0, Color("83876e"))
 		draw_line(Vector2(-5, -2), Vector2(-25, 11), Color("4e5148"), 8.0, true)
 		return
-	draw_flat_ellipse(Vector2(0, 5), Vector2(18, 7), Color(0.0, 0.0, 0.0, 0.28))
-	var stride := sin(gait) * 7.0 if state in [State.WANDER, State.CHASE] else 0.0
-	var body_color := Color.WHITE if visual_flash > 0.0 else tint
-	var hip := Vector2(0, -43)
+	draw_flat_ellipse(Vector2(0, 5), Vector2(19, 7), Color(0.0, 0.0, 0.0, 0.29))
+	var walking := state in [State.WANDER, State.CHASE, State.INVESTIGATE]
+	var stride := sin(gait) * (9.0 if state == State.CHASE else 6.0) if walking else 0.0
+	var bob := absf(sin(gait * 2.0)) * 1.8 if walking else 0.0
+	var flash_color := Color.WHITE if visual_flash > 0.0 else shirt_color
+	var attack_progress := clampf(state_time / 0.82, 0.0, 1.0) if state in [State.ATTACK, State.BREACH] else 0.0
+	var stagger_progress := clampf(state_time / 0.22, 0.0, 1.0) if state == State.STAGGER else 0.0
+	var lean_offset := facing * (4.0 if state == State.CHASE else 1.5)
+	var rotation_offset := 0.0
+	if state == State.STAGGER:
+		lean_offset = -facing * sin(stagger_progress * PI) * 12.0
+		rotation_offset = -facing.x * sin(stagger_progress * PI) * 0.12
+	elif state in [State.ATTACK, State.BREACH]:
+		lean_offset = facing * sin(attack_progress * PI) * 7.0
+	draw_set_transform(lean_offset, rotation_offset, Vector2.ONE)
+	var hip := Vector2(0, -43 - bob)
+	var chest := Vector2(facing.x * 4.0, -77 - bob)
+	var side_vector := Vector2(-facing.y, facing.x)
 	for side: float in [-1.0, 1.0]:
-		var foot := Vector2(side * 7.0 + stride * side, 0)
-		draw_line(hip + Vector2(side * 4.0, 0), foot, Color("504f48"), 8.0, true)
-	var chest := Vector2(0, -78)
-	draw_line(hip, chest, body_color.darkened(0.18), 20.0, true)
-	var head := Vector2(facing.x * 4.0, -99)
-	draw_circle(head, 11.0, Color("83876e") if visual_flash <= 0.0 else Color.WHITE)
-	var striking:=state in [State.ATTACK,State.BREACH]
-	var reach := 35.0 if striking else 17.0
-	var arm_direction := facing.normalized() if striking else Vector2(facing.x * 0.45, 1.0).normalized()
+		var foot := Vector2(side * 7.0, 0.0) + facing * stride * side
+		var knee := hip.lerp(foot, 0.52) + side_vector * side * 2.0
+		draw_line(hip + side_vector * side * 4.0, knee, pants_color, 9.0, true)
+		draw_line(knee, foot, pants_color.darkened(0.12), 8.0, true)
+		draw_line(foot - side_vector * 4.0, foot + facing * 5.0 + side_vector * 4.0, Color("292d2a"), 6.0, true)
+	draw_colored_polygon(PackedVector2Array([
+		chest + Vector2(-13, -9), chest + Vector2(13, -9),
+		hip + Vector2(11, 5), hip + Vector2(-11, 5)
+	]), flash_color.darkened(0.05))
+	draw_polyline(PackedVector2Array([chest + Vector2(-13, -9), chest + Vector2(13, -9), hip + Vector2(11, 5), hip + Vector2(-11, 5), chest + Vector2(-13, -9)]), Color("3e433b"), 2.0, true)
+	draw_line(chest + Vector2(-9, 2), chest + Vector2(8, 10), Color("713832"), 3.0, true)
+	var head := Vector2(facing.x * 6.0, -100 - bob)
+	draw_circle(head, 12.0, Color.WHITE if visual_flash > 0.0 else tint)
+	draw_arc(head + Vector2(0, -2), 11.0, PI, TAU, 14, Color("4b4a3f"), 5.0, true)
+	if facing.y >= -0.2:
+		draw_circle(head + facing * 7.0 - side_vector * 3.5, 1.8, Color("d2c45a"))
+		draw_circle(head + facing * 7.0 + side_vector * 3.5, 1.8, Color("d2c45a"))
+		draw_line(head + facing * 9.0 - side_vector * 4.0, head + facing * 9.0 + side_vector * 4.0, Color("62342f"), 2.0)
+	var striking := state in [State.ATTACK, State.BREACH]
+	var reach := 18.0
+	if striking:
+		reach = lerpf(15.0, 41.0, clampf(attack_progress / 0.55, 0.0, 1.0)) if attack_progress < 0.55 else lerpf(41.0, 18.0, (attack_progress - 0.55) / 0.45)
+	var arm_direction := facing.normalized() if striking else Vector2(facing.x * 0.38, 1.0).normalized()
 	for side: float in [-1.0, 1.0]:
-		var shoulder := chest + Vector2(side * 10.0, 3.0)
-		var hand := shoulder + arm_direction * reach + Vector2(side * 5.0, 0)
-		draw_line(shoulder, hand, body_color.darkened(0.25), 7.0, true)
-		draw_circle(hand, 4.0, Color("7b7d67"))
+		var shoulder := chest + side_vector * side * 11.0 + Vector2(0, 3)
+		var hand := shoulder + arm_direction * reach + side_vector * side * 4.0
+		if not striking:
+			hand -= facing * stride * side * 0.45
+		draw_line(shoulder, hand, flash_color.darkened(0.23), 7.0, true)
+		draw_circle(hand, 4.2, Color.WHITE if visual_flash > 0.0 else Color("7b7d67"))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if alerted or health < 68:
 		draw_rect(Rect2(-20, -121, 40, 4), Color(0.05, 0.06, 0.05, 0.82))
 		draw_rect(Rect2(-19, -120, 38.0 * float(health) / 68.0, 2), Color("b9685d"))

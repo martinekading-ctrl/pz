@@ -6,11 +6,13 @@
 
 项目已经冻结为**简易版 PZ 风格单人手机生存游戏**：保留进入建筑、搜索、战斗、生存、治疗、安全屋和存档的核心循环，不追求完整 PZ 的系统与内容规模。多人、模组、农业和动物不纳入本项目；上线前也不开发高层、复杂车辆、海量枪械、体温疾病和自由建造。
 
-当前 0.32 按简易版上架标准约完成 **69%**，核心玩法系统约完成 **94%**。详细边界、计算口径和完成定义见 `docs/simplified-mobile-scope-v1.md`，后续版本顺序见 `docs/vertical-slice-roadmap-v1.md`。
+当前 0.33 按简易版上架标准约完成 **70%**，核心玩法系统约完成 **94%**。详细边界、计算口径和完成定义见 `docs/simplified-mobile-scope-v1.md`，后续版本顺序见 `docs/vertical-slice-roadmap-v1.md`。
 
 ## 当前阶段
 
-最新版本为 0.32：加入晴朗、阴天、雨天和雾天的轻量天气循环。天气随游戏时间平滑切换，只改变环境颜色、雾层、低成本雨线和 HUD 天气文字，不增加体温、潮湿、生病或服装数值。说明见 `docs/weather-cycle-v1.md`。
+最新版本为 0.33：重做玩家与僵尸的程序角色表现，增加带服装和背包的身体结构、走跑重心、近战前摇/命中/后摇、枪械后坐、僵尸扑击/受击硬直/倒地姿态，以及命中血点、冲击波、轻微镜头震动和原创近战音效。说明见 `docs/combat-presentation-v1.md`。
+
+0.32 加入晴朗、阴天、雨天和雾天的轻量天气循环。天气随游戏时间平滑切换，只改变环境颜色、雾层、低成本雨线和 HUD 天气文字，不增加体温、潮湿、生病或服装数值。说明见 `docs/weather-cycle-v1.md`。
 
 0.31 职业与特质：新游戏增加幸存者创建页面，提供普通幸存者、消防员、护理员和维修工四种职业，以及六项正负特质和点数平衡。职业决定初始技能与物资，特质实际影响战斗、体力、搜索、口渴、声音和经验；身份完整进入存档。说明见 `docs/character-creation-v1.md`。
 
@@ -103,6 +105,8 @@
 - 幸存者创建页面截图：`Godot --path . -- --character-capture`
 - 轻量天气循环验证：`Godot --headless --path . -- --weather-test`
 - 雨天画面截图：`Godot --path . -- --weather-capture`
+- 角色与战斗表现验证：`Godot --headless --path . -- --presentation-test`
+- 角色与战斗表现截图：`Godot --path . -- --presentation-capture`
 - 产品外壳验证：`Godot --headless --path . -- --product-test`
 - 主菜单、存档槽和设置截图：`Godot --path . -- --product-capture`
 - 正常启动菜单预览：`Godot --path . -- --product-preview`

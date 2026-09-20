@@ -1,6 +1,7 @@
 extends Node2D
 
 signal melee_impact(origin: Vector2, direction: Vector2)
+signal melee_started(origin: Vector2, direction: Vector2)
 
 var world_map: Node2D
 var controls: Node
@@ -26,7 +27,10 @@ var weapon_is_firearm := false
 var firearm_cooldown_seconds := 0.26
 var firearm_cooldown := 0.0
 var muzzle_flash := 0.0
+var firearm_recoil := 0.0
 var aim_visible := false
+var dead := false
+var hurt_recoil := Vector2.ZERO
 var traversal_active := false
 var traversal_elapsed := 0.0
 var traversal_duration := 0.65
@@ -39,6 +43,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	firearm_cooldown = maxf(0.0, firearm_cooldown - delta)
 	muzzle_flash = maxf(0.0, muzzle_flash - delta)
+	firearm_recoil = maxf(0.0, firearm_recoil - delta)
 	if traversal_active:
 		update_traversal(delta)
 		hurt_flash=maxf(0.0,hurt_flash-delta)
@@ -101,6 +106,7 @@ func try_firearm(aiming: bool) -> bool:
 		return false
 	firearm_cooldown = firearm_cooldown_seconds
 	muzzle_flash = 0.09
+	firearm_recoil = 0.13
 	queue_redraw()
 	return true
 
@@ -109,6 +115,7 @@ func start_melee() -> bool:
 		return false
 	swing_remaining=weapon_swing_seconds
 	impact_pending=true
+	melee_started.emit(position, facing)
 	queue_redraw()
 	return true
 
@@ -173,50 +180,129 @@ func update_depth() -> void:
 func receive_hit(source_world: Vector2) -> void:
 	hurt_flash=0.14
 	var away:=(position-source_world).normalized()
+	hurt_recoil=away
 	if away.length_squared()>0.01:
 		move_world(away*5.0)
 	queue_redraw()
 
+func set_dead_pose(value: bool) -> void:
+	dead = value
+	moving = false
+	running = false
+	queue_redraw()
+
+func attack_phase() -> String:
+	if swing_remaining <= 0.0:
+		return "none"
+	var progress := 1.0 - swing_remaining / maxf(0.01, weapon_swing_seconds)
+	if progress < 0.28:
+		return "windup"
+	if progress < 0.62:
+		return "impact"
+	return "recover"
+
+func presentation_state() -> String:
+	if dead:
+		return "dead"
+	if traversal_active:
+		return "climb"
+	if hurt_flash > 0.0:
+		return "hurt"
+	if swing_remaining > 0.0:
+		return "melee_" + attack_phase()
+	if firearm_recoil > 0.0:
+		return "fire"
+	if crouching:
+		return "crouch_walk" if moving else "crouch_idle"
+	if moving:
+		return "run" if running else "walk"
+	return "aim" if aim_visible else "idle"
 
 func _draw() -> void:
-	var active:=moving and is_physics_processing()
-	var stride:=sin(gait)*(14.0 if running else 9.0) if active else 0.0
-	var bob:=absf(sin(gait))*3.0 if active else 0.0
-	var lower:=25.0 if crouching else 0.0
-	var hip:=Vector2(0,-43+lower*.6-bob)
-	var chest:=Vector2(facing.x*3,-79+lower-bob)
-	var head:=Vector2(facing.x*4,-99+lower-bob)
-	draw_actor_shadow(Vector2(0,3),Vector2(17,7),Color(0,0,0,.3))
-	for side in [-1,1]:
-		var foot: Vector2=Vector2(side*7,0)+facing*stride*side
-		var knee: Vector2=(hip+foot)*.5+Vector2(facing.x*5,0)
-		draw_polyline(PackedVector2Array([hip+Vector2(side*5,0),knee,foot]),Color("343a40"),9,true)
-		draw_line(foot-Vector2(4,0),foot+Vector2(6,0),Color("202629"),7,true)
-	draw_line(hip,chest,Color.WHITE if hurt_flash>0.0 else Color("516049"),25,true)
-	var attack:=1.0-swing_remaining/maxf(0.01,weapon_swing_seconds)
-	for side in [-1,1]:
-		var shoulder:=chest+Vector2(side*13,4)
-		var hand: Vector2=hip+Vector2(side*17,0)-facing*stride*side*.65
-		if side==1 and weapon_is_firearm:
-			hand = chest + facing * 29.0 + Vector2(side * 3.0, 2.0)
-			if weapon_visual_length > 0.0:
-				draw_line(hand - facing * 7.0, hand + facing * weapon_visual_length, weapon_visual_color, 7, true)
-		elif side==1 and swing_remaining>0:
-			var arc:=facing.rotated(lerpf(-1.4,1.3,sin(attack*PI*.5)))
-			hand=chest+arc*35
-			if weapon_visual_length>0.0:
-				draw_line(hand,hand+arc*weapon_visual_length,weapon_visual_color,5,true)
-		draw_line(shoulder,hand,Color("45513e"),8,true)
-		draw_circle(hand,4,Color("bd9c78"))
-		if side==1 and not weapon_is_firearm and swing_remaining<=0.0 and weapon_visual_length>0.0:
-			var rest_direction:=facing.rotated(-0.18)
-			draw_line(hand,hand+rest_direction*weapon_visual_length,weapon_visual_color,5,true)
-	draw_circle(head,11,Color("bd9c78"))
-	draw_arc(head,11,PI,TAU,12,Color("39382e"),5,true)
-	if facing.y>=0:
-		draw_circle(head+facing*6+Vector2(3,-1),1.6,Color("242722"))
-	else:
-		draw_line(chest+Vector2(0,8),hip+Vector2(0,-4),Color("786e51"),17,true)
+	draw_actor_shadow(Vector2(0, 4), Vector2(19, 8), Color(0, 0, 0, 0.32))
+	if dead:
+		draw_dead_pose()
+		return
+	var active := moving and is_physics_processing()
+	var step_wave := sin(gait) if active else 0.0
+	var stride := step_wave * (15.0 if running else 10.0)
+	var bob := absf(sin(gait * 2.0)) * (3.2 if running else 2.0) if active else 0.0
+	var crouch_drop := 22.0 if crouching else 0.0
+	var attack_progress := 1.0 - swing_remaining / maxf(0.01, weapon_swing_seconds)
+	var recoil_amount := firearm_recoil / 0.13 if firearm_recoil > 0.0 else 0.0
+	var body_offset := -hurt_recoil * (hurt_flash / 0.14) * 7.0 if hurt_flash > 0.0 else Vector2.ZERO
+	var lean := facing.angle() * 0.0
+	if running and active:
+		lean = clampf(facing.x * 0.055, -0.055, 0.055)
+	elif hurt_flash > 0.0:
+		lean = -hurt_recoil.x * 0.09
+	draw_set_transform(body_offset, lean, Vector2.ONE)
+	var hip := Vector2(0, -43 + crouch_drop * 0.55 - bob)
+	var chest := Vector2(facing.x * 3.0, -78 + crouch_drop - bob)
+	var head := Vector2(facing.x * 5.0, -101 + crouch_drop - bob)
+	var side_vector := Vector2(-facing.y, facing.x)
+	# Backpack reads clearly from both front and rear while staying behind the arms.
+	var pack_center := chest - facing * 5.0 + Vector2(0, 5)
+	draw_colored_polygon(PackedVector2Array([
+		pack_center + Vector2(-12, -12), pack_center + Vector2(12, -12),
+		pack_center + Vector2(14, 14), pack_center + Vector2(-14, 14)
+	]), Color("514b37"))
+	draw_line(pack_center + Vector2(-9, -7), pack_center + Vector2(-9, 10), Color("80755a"), 2.0)
+	draw_line(pack_center + Vector2(9, -7), pack_center + Vector2(9, 10), Color("80755a"), 2.0)
+	# Feet plant on alternating frames; knees bend instead of sliding as a single stick.
+	for side: float in [-1.0, 1.0]:
+		var foot := Vector2(side * 7.0, 0.0) + facing * stride * side
+		if crouching:
+			foot += side_vector * side * 4.0
+		var knee := hip.lerp(foot, 0.5) + side_vector * side * 3.0 - facing * absf(stride) * 0.16
+		draw_line(hip + side_vector * side * 5.0, knee, Color("39434a"), 10.0, true)
+		draw_line(knee, foot, Color("2f383e"), 9.0, true)
+		draw_line(foot - facing * 3.0 - side_vector * 4.0, foot + facing * 5.0 + side_vector * 4.0, Color("222729"), 7.0, true)
+	# Jacket has a readable torso shape, collar and center seam.
+	var jacket := Color.WHITE if hurt_flash > 0.0 else Color("52624d")
+	draw_colored_polygon(PackedVector2Array([
+		chest + Vector2(-14, -10), chest + Vector2(14, -10),
+		hip + Vector2(11, 4), hip + Vector2(-11, 4)
+	]), jacket)
+	draw_polyline(PackedVector2Array([chest + Vector2(-14, -10), chest + Vector2(14, -10), hip + Vector2(11, 4), hip + Vector2(-11, 4), chest + Vector2(-14, -10)]), Color("2d372d"), 2.5, true)
+	draw_line(chest + Vector2(0, -7), hip + Vector2(0, 2), Color("84907b"), 2.0)
+	var weapon_direction := facing.rotated(-0.18)
+	if swing_remaining > 0.0:
+		var swing_angle: float
+		if attack_progress < 0.28:
+			swing_angle = lerpf(-1.55, -1.15, attack_progress / 0.28)
+		elif attack_progress < 0.62:
+			swing_angle = lerpf(-1.15, 0.75, (attack_progress - 0.28) / 0.34)
+		else:
+			swing_angle = lerpf(0.75, -0.18, (attack_progress - 0.62) / 0.38)
+		weapon_direction = facing.rotated(swing_angle)
+		if attack_phase() == "impact" and weapon_visual_length > 0.0:
+			var trail_color := Color(0.94, 0.86, 0.63, 0.38)
+			draw_arc(chest, 50.0 + weapon_visual_length * 0.35, facing.angle() - 1.0, weapon_direction.angle(), 16, trail_color, 4.0, true)
+	for side: float in [-1.0, 1.0]:
+		var shoulder := chest + side_vector * side * 13.0 + Vector2(0, 3)
+		var hand := hip + side_vector * side * 16.0 - facing * stride * side * 0.55
+		if weapon_is_firearm:
+			hand = chest + facing * (28.0 - recoil_amount * 6.0) + side_vector * side * 4.0
+		elif side > 0.0 and swing_remaining > 0.0:
+			hand = chest + weapon_direction * 34.0
+		draw_line(shoulder, hand, jacket.darkened(0.12), 8.0, true)
+		draw_circle(hand, 4.0, Color("bd9c78"))
+		if side > 0.0 and weapon_visual_length > 0.0:
+			if weapon_is_firearm:
+				draw_line(hand - facing * 6.0, hand + facing * weapon_visual_length, weapon_visual_color, 7.0, true)
+			elif swing_remaining > 0.0:
+				draw_line(hand, hand + weapon_direction * weapon_visual_length, weapon_visual_color, 6.0, true)
+			else:
+				draw_line(hand, hand + weapon_direction * weapon_visual_length, weapon_visual_color, 5.0, true)
+	# Head, hair, ear and face marker give direction without oversized arrows.
+	draw_circle(head, 12.0, Color.WHITE if hurt_flash > 0.0 else Color("bd9c78"))
+	draw_arc(head + Vector2(0, -1), 11.5, PI * 0.92, TAU * 1.06, 16, Color("35362f"), 6.0, true)
+	draw_circle(head - side_vector * 10.0, 2.5, Color("a98768"))
+	if facing.y >= -0.25:
+		draw_circle(head + facing * 7.0 + side_vector * 3.2, 1.5, Color("202522"))
+		draw_line(head + facing * 8.0 - side_vector * 4.0, head + facing * 8.0 + side_vector * 4.0, Color("765449"), 1.4)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	if weapon_is_firearm and aim_visible:
 		var muzzle := chest + facing * (47.0 + weapon_visual_length)
 		draw_dashed_line(muzzle, muzzle + facing * 118.0, Color(0.92, 0.82, 0.5, 0.48), 2.0, 8.0, true)
@@ -228,6 +314,13 @@ func _draw() -> void:
 		var muzzle := chest + facing * (49.0 + weapon_visual_length)
 		draw_circle(muzzle, 8.0, Color(1.0, 0.76, 0.25, 0.9))
 		draw_circle(muzzle, 3.0, Color(1.0, 0.95, 0.68, 1.0))
+
+func draw_dead_pose() -> void:
+	draw_line(Vector2(-31, -4), Vector2(19, 7), Color("39434a"), 17.0, true)
+	draw_colored_polygon(PackedVector2Array([Vector2(-17, -17), Vector2(18, -10), Vector2(22, 9), Vector2(-19, 4)]), Color("52624d"))
+	draw_circle(Vector2(31, 8), 12.0, Color("bd9c78"))
+	draw_line(Vector2(-7, -3), Vector2(-30, 16), Color("45513e"), 8.0, true)
+	draw_line(Vector2(8, -1), Vector2(31, -12), Color("45513e"), 8.0, true)
 
 func draw_actor_shadow(center: Vector2,radius: Vector2,color: Color) -> void:
 	var points := PackedVector2Array()

@@ -32,8 +32,13 @@ const VehicleRules = preload("res://scripts/vehicle_rules.gd")
 const CharacterRules = preload("res://scripts/character_rules.gd")
 const WeatherRules = preload("res://scripts/weather_rules.gd")
 const WeatherOverlay = preload("res://scripts/weather_overlay.gd")
+const CombatFX = preload("res://scripts/combat_fx.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
+const MELEE_SWING_SOUND = preload("res://art/audio/melee_swing.wav")
+const MELEE_HIT_SOUND = preload("res://art/audio/melee_hit.wav")
+const MELEE_KILL_SOUND = preload("res://art/audio/melee_kill.wav")
+const PLAYER_HURT_SOUND = preload("res://art/audio/player_hurt.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
 const DEFAULT_CAMERA_ZOOM := 0.68
 const SLEEP_DURATION_MINUTES := 480.0
@@ -56,6 +61,9 @@ var active_save_slot := 1
 var game_started := false
 var active_corpse: Node2D
 var camera: Camera2D
+var combat_fx: Node2D
+var camera_trauma := 0.0
+var camera_shake_time := 0.0
 var hud: CanvasLayer
 var header_panel: ColorRect
 var survival_panel: ColorRect
@@ -110,6 +118,10 @@ var reload_weapon_id := ""
 var shot_sequence := 0
 var pistol_audio_pool: Array[AudioStreamPlayer] = []
 var pistol_dry_player: AudioStreamPlayer
+var melee_swing_player: AudioStreamPlayer
+var melee_hit_player: AudioStreamPlayer
+var melee_kill_player: AudioStreamPlayer
+var player_hurt_audio: AudioStreamPlayer
 var stamina_recovery_delay := 0.0
 var footstep_noise_timer := 0.0
 var last_noise := {}
@@ -136,11 +148,12 @@ var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.dup
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 动态天气 0.32")
+	DisplayServer.window_set_title("余烬街区：重建版 · 角色与战斗表现 0.33")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
 	setup_firearm_audio()
+	setup_combat_audio()
 	SettingsStore.apply(SettingsStore.load_values(),DisplayServer.get_name() != "headless")
 	game_input = GameInput.new()
 	add_child(game_input)
@@ -165,8 +178,12 @@ func _ready() -> void:
 	InjuryRules.sync_needs(injuries, needs)
 	refresh_equipped_weapon()
 	player.melee_impact.connect(_on_player_melee_impact)
+	player.melee_started.connect(_on_player_melee_started)
 	if should_spawn_zombies():
 		spawn_zombies()
+	combat_fx = CombatFX.new()
+	combat_fx.name = "CombatFX"
+	add_child(combat_fx)
 	camera = Camera2D.new()
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = 7.0
@@ -237,6 +254,8 @@ func _ready() -> void:
 	if "--character-capture" in OS.get_cmdline_user_args(): call_deferred("character_capture")
 	if "--weather-test" in OS.get_cmdline_user_args(): call_deferred("run_weather_test")
 	if "--weather-capture" in OS.get_cmdline_user_args(): call_deferred("weather_capture")
+	if "--presentation-test" in OS.get_cmdline_user_args(): call_deferred("run_presentation_test")
+	if "--presentation-capture" in OS.get_cmdline_user_args(): call_deferred("presentation_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -253,7 +272,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.32"
+	title.text = "余烬街区 · 角色与战斗表现 0.33"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -430,6 +449,7 @@ func create_need_bar(parent: Control,key: String,title_text: String,y: float,col
 func _process(delta: float) -> void:
 	if world_map == null or player == null or world_map.blue_house == null:
 		return
+	update_camera_feedback(delta)
 	var simulation_delta:=0.0 if simulation_paused or int(needs.health)<=0 else delta
 	if simulation_delta>0.0:
 		update_firearm_reload(simulation_delta)
@@ -568,6 +588,7 @@ func update_exertion(real_delta: float) -> void:
 func update_player_condition_effects() -> void:
 	player.survival_speed_multiplier = Survival.movement_multiplier(needs) * Exertion.fatigue_speed_multiplier(needs) * InjuryRules.movement_multiplier(injuries, needs)
 	player.run_allowed = Survival.can_run(needs) and Exertion.can_run(needs)
+	player.set_dead_pose(int(needs.health) <= 0)
 	var stats := active_weapon_stats()
 	player.weapon_swing_seconds = float(stats.swing) * InjuryRules.attack_duration_multiplier(injuries, needs)
 
@@ -1080,6 +1101,39 @@ func setup_firearm_audio() -> void:
 	pistol_dry_player.volume_db = -8.0
 	add_child(pistol_dry_player)
 
+func setup_combat_audio() -> void:
+	melee_swing_player = make_sfx_player("MeleeSwing", MELEE_SWING_SOUND, -8.0)
+	melee_hit_player = make_sfx_player("MeleeHit", MELEE_HIT_SOUND, -5.0)
+	melee_kill_player = make_sfx_player("MeleeKill", MELEE_KILL_SOUND, -4.0)
+	player_hurt_audio = make_sfx_player("PlayerHurt", PLAYER_HURT_SOUND, -7.0)
+
+func make_sfx_player(node_name: String, stream: AudioStream, volume_db: float) -> AudioStreamPlayer:
+	var audio := AudioStreamPlayer.new()
+	audio.name = node_name
+	audio.stream = stream
+	audio.bus = "SFX"
+	audio.volume_db = volume_db
+	add_child(audio)
+	return audio
+
+func play_combat_sound(audio: AudioStreamPlayer, pitch: float = 1.0) -> void:
+	if not is_instance_valid(audio):
+		return
+	audio.pitch_scale = pitch
+	audio.play()
+
+func add_camera_trauma(amount: float) -> void:
+	camera_trauma = clampf(camera_trauma + amount, 0.0, 1.0)
+
+func update_camera_feedback(delta: float) -> void:
+	if not is_instance_valid(camera):
+		return
+	camera_trauma = maxf(0.0, camera_trauma - delta * 2.8)
+	camera_shake_time += delta * 32.0
+	var strength := camera_trauma * camera_trauma
+	camera.offset = Vector2(sin(camera_shake_time * 1.7) * 7.0, sin(camera_shake_time * 2.3) * 5.0) * strength
+	camera.rotation = sin(camera_shake_time * 1.15) * 0.012 * strength
+
 func play_pistol_shot_sound() -> void:
 	if pistol_audio_pool.is_empty():
 		return
@@ -1097,6 +1151,9 @@ func stop_firearm_audio() -> void:
 		audio.stop()
 	if is_instance_valid(pistol_dry_player):
 		pistol_dry_player.stop()
+	for audio: AudioStreamPlayer in [melee_swing_player, melee_hit_player, melee_kill_player, player_hurt_audio]:
+		if is_instance_valid(audio):
+			audio.stop()
 
 func active_firearm_loaded() -> int:
 	var item_id := active_weapon_id()
@@ -1181,10 +1238,13 @@ func try_fire_active_weapon(origin: Vector2, direction: Vector2, aiming: bool) -
 	shot_sequence += 1
 	var target_zombie := FirearmRules.first_target(world_map, origin, shot_direction, zombies, float(stats.range))
 	play_pistol_shot_sound()
+	add_camera_trauma(0.12)
 	var listeners := emit_world_sound(origin, float(stats.noise_radius), "gunshot")
 	damage_active_weapon()
 	if is_instance_valid(target_zombie):
 		target_zombie.take_hit(int(stats.damage), origin, float(stats.knockback))
+		if is_instance_valid(combat_fx):
+			combat_fx.spawn_impact(target_zombie.position + Vector2(0, -68), shot_direction, target_zombie.is_dead())
 		combat_message = ("击倒" if target_zombie.is_dead() else "命中") + " · 弹匣 %d/%d · 惊动 %d" % [int(firearm_loaded[item_id]), int(stats.mag_capacity), listeners]
 	else:
 		combat_message = "未命中 · 弹匣 %d/%d · 惊动 %d" % [int(firearm_loaded[item_id]), int(stats.mag_capacity), listeners]
@@ -1322,11 +1382,19 @@ func _on_player_melee_impact(origin: Vector2,direction: Vector2) -> void:
 	if target_zombie!=null:
 		var damage := roundi(float(weapon.damage)*SkillRules.melee_damage_multiplier(skill_level("melee"))*character_modifier("melee_damage"))
 		target_zombie.take_hit(damage,origin,float(weapon.knockback))
+		var lethal: bool = target_zombie.is_dead()
+		if is_instance_valid(combat_fx):
+			combat_fx.spawn_impact(target_zombie.position + Vector2(0, -65), direction, lethal)
+		add_camera_trauma(0.27 if lethal else 0.18)
+		play_combat_sound(melee_kill_player if lethal else melee_hit_player, 0.96 + float(target_zombie.spawn_index % 4) * 0.025)
 		gain_skill_xp("fitness",1)
-		gain_skill_xp("melee",17 if target_zombie.is_dead() else 5)
+		gain_skill_xp("melee",17 if lethal else 5)
 		var broken_weapon:=damage_active_weapon()
-		combat_message=broken_weapon+"损坏了" if not broken_weapon.is_empty() else ("击倒" if target_zombie.is_dead() else "命中")
+		combat_message=broken_weapon+"损坏了" if not broken_weapon.is_empty() else ("击倒" if lethal else "命中")
 		combat_message_time=0.45
+
+func _on_player_melee_started(_origin: Vector2, _direction: Vector2) -> void:
+	play_combat_sound(melee_swing_player, 0.98 + float(Time.get_ticks_msec() % 5) * 0.01)
 
 func damage_player(amount: int,source_world: Vector2) -> void:
 	if player_invulnerability>0.0 or int(needs.health)<=0:
@@ -1358,6 +1426,11 @@ func damage_player(amount: int,source_world: Vector2) -> void:
 	update_player_condition_effects()
 	player_invulnerability=0.55
 	player.receive_hit(source_world)
+	var hit_direction := (player.position - source_world).normalized()
+	if is_instance_valid(combat_fx):
+		combat_fx.spawn_impact(player.position + Vector2(0, -64), hit_direction, int(needs.health) <= 0, true)
+	add_camera_trauma(0.42 if int(needs.health) <= 0 else 0.3)
+	play_combat_sound(player_hurt_audio, 0.96 + injury_rng.randf_range(-0.035, 0.035))
 	if interrupted_search and int(needs.health)>0 and not is_instance_valid(backpack) and not is_instance_valid(loot_overlay):
 		refresh_player_control()
 	var damage_text := "受到 %d 点伤害" % amount
@@ -1368,6 +1441,7 @@ func damage_player(amount: int,source_world: Vector2) -> void:
 	combat_message="你倒下了" if int(needs.health)<=0 else damage_text
 	combat_message_time=0.8
 	if int(needs.health)<=0:
+		player.set_dead_pose(true)
 		show_game_over()
 
 func _input(event: InputEvent) -> void:
@@ -2291,6 +2365,9 @@ func run_character_test() -> void:
 func run_weather_test() -> void:
 	await preload("res://scripts/weather_test.gd").run(self)
 
+func run_presentation_test() -> void:
+	await preload("res://scripts/combat_presentation_test.gd").run(self)
+
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
 		return
@@ -2957,6 +3034,49 @@ func combat_capture() -> void:
 		zombies[i].queue_redraw()
 	await get_tree().create_timer(0.8).timeout
 	get_viewport().get_texture().get_image().save_png("res://build/combat-v013.png")
+	get_tree().quit()
+
+func presentation_capture() -> void:
+	player.set_physics_process(false)
+	camera.position_smoothing_enabled = false
+	camera.zoom = Vector2(0.9, 0.9)
+	camera.position = Vector2(0, -80)
+	player.position = world_map.map_to_world(Vector2(36, 49))
+	player.set_facing(Vector2(1.0, 0.18))
+	player.swing_remaining = player.weapon_swing_seconds * 0.5
+	player.impact_pending = false
+	var positions: Array[Vector2] = [Vector2(38.0, 49.3), Vector2(39.6, 51.0), Vector2(34.0, 47.0), Vector2(40.5, 47.0)]
+	for index: int in zombies.size():
+		var zombie: Node2D = zombies[index]
+		zombie.set_process(false)
+		if index >= positions.size():
+			zombie.visible = false
+			continue
+		zombie.position = world_map.map_to_world(positions[index])
+		zombie.facing = (player.position - zombie.position).normalized()
+		zombie.alerted = true
+		match index:
+			0:
+				zombie.change_state(zombie.State.STAGGER)
+				zombie.state_time = 0.08
+				zombie.visual_flash = 0.1
+			1:
+				zombie.change_state(zombie.State.ATTACK)
+				zombie.state_time = 0.46
+			2:
+				zombie.change_state(zombie.State.CHASE)
+				zombie.gait = 1.1
+			3:
+				zombie.change_state(zombie.State.DEAD)
+		zombie.queue_redraw()
+	combat_fx.spawn_impact(zombies[0].position + Vector2(0, -65), Vector2.RIGHT, false)
+	show_combat_message("新版动作：挥击前摇 / 命中 / 后摇 · 僵尸受击硬直与倒地", 4.0)
+	await get_tree().create_timer(0.12).timeout
+	await RenderingServer.frame_post_draw
+	var output := ProjectSettings.globalize_path("res://build/combat-presentation-v033.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("PRESENTATION CAPTURE PASS: build/combat-presentation-v033.png")
 	get_tree().quit()
 
 var catalog_index := 0

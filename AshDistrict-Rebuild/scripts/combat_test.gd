@@ -43,4 +43,6 @@ static func run(game: Node2D) -> void:
 	assert(int(game.needs.health)==73,"Player must remain vulnerable while searching")
 	assert(game.searching==-1 and game.player.is_physics_processing(),"A zombie hit must interrupt an active search")
 	print("COMBAT PASS: melee, damage, death, invulnerability and live combat during backpack/search UI")
+	game.stop_firearm_audio()
+	await game.get_tree().process_frame
 	game.get_tree().quit()
