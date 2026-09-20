@@ -1,9 +1,21 @@
 extends Node2D
 ## Live 3D model composited at its ground anchor into the existing isometric world.
+const PLAYER_RIG := preload("res://art/characters/quaternius_zombie_apocalypse/Characters_Matt.gltf")
+const ZOMBIE_RIG := preload("res://art/characters/quaternius_zombie_apocalypse/Zombie_Basic.gltf")
+const LOOPED_CLIPS := [&"Idle", &"Idle_Gun", &"Idle_Attack", &"Walk", &"Walk_Gun", &"Run", &"Run_Gun", &"Run_Arms"]
+const IMPORTED_WEAPONS := [&"Axe", &"Guitar", &"Knife", &"Pistol", &"Rifle", &"Shotgun", &"SMG", &"Spear", &"WoodenBat_Barbed", &"WoodenBat_Saw"]
+
 var kind := "player"
 var actor: Node2D
 var viewport: SubViewport
 var model: Node3D
+var rigged_character: Node3D
+var skeleton: Skeleton3D
+var animation_player: AnimationPlayer
+var rigged_mode := false
+var animation_state := ""
+var animation_clip := ""
+var imported_weapon_nodes := {}
 var torso: Node3D
 var arms: Array[Node3D] = []
 var elbows: Array[Node3D] = []
@@ -80,6 +92,37 @@ func _ready() -> void:
 	queue_redraw()
 
 func build_person() -> void:
+	if build_rigged_person():
+		return
+	build_procedural_person()
+
+func build_rigged_person() -> bool:
+	var packed: PackedScene = ZOMBIE_RIG if kind == "zombie" else PLAYER_RIG
+	if packed == null:
+		return false
+	rigged_character = packed.instantiate() as Node3D
+	if rigged_character == null:
+		return false
+	model.add_child(rigged_character)
+	animation_player = rigged_character.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	skeleton = rigged_character.find_child("Skeleton3D", true, false) as Skeleton3D
+	if animation_player == null or skeleton == null:
+		rigged_character.queue_free()
+		rigged_character = null
+		return false
+	for clip: StringName in LOOPED_CLIPS:
+		if animation_player.has_animation(clip):
+			animation_player.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+	if kind == "player":
+		for weapon_name: StringName in IMPORTED_WEAPONS:
+			var weapon_mesh := rigged_character.find_child(weapon_name, true, false) as GeometryInstance3D
+			if weapon_mesh != null:
+				weapon_mesh.visible = false
+				imported_weapon_nodes[weapon_name] = weapon_mesh
+	rigged_mode = true
+	return true
+
+func build_procedural_person() -> void:
 	var infected := kind == "zombie"
 	var skin := Color("87917c") if infected else Color("c59d7b")
 	var shirt: Color = actor.shirt_color if infected else Color("53684e")
@@ -124,6 +167,83 @@ func build_person() -> void:
 		box(pistol,Vector3(0,0,-0.09),Vector3(0.055,0.065,0.23),Color("383d40"))
 		box(pistol,Vector3(0,-0.05,-0.015),Vector3(0.05,0.12,0.06),Color("25292b"))
 
+func uses_skeletal_animation() -> bool:
+	return rigged_mode and skeleton != null and animation_player != null
+
+func set_imported_weapon_visibility() -> void:
+	for weapon_mesh: GeometryInstance3D in imported_weapon_nodes.values():
+		weapon_mesh.visible = false
+	var selected := &"Pistol" if actor.weapon_is_firearm else &"WoodenBat_Barbed"
+	var selected_mesh: GeometryInstance3D = imported_weapon_nodes.get(selected) as GeometryInstance3D
+	if selected_mesh != null:
+		selected_mesh.visible = actor.weapon_is_firearm or actor.weapon_visual_length > 0.0
+
+func desired_rig_animation() -> Dictionary:
+	var state: String = actor.presentation_state()
+	if kind == "zombie":
+		if state == "dead":
+			return {"state":"dead", "clip":&"Death", "speed":1.0, "blend":0.16}
+		if state == "sleeping":
+			return {"state":"sleeping", "clip":&"Death", "speed":1.0, "blend":0.0, "seek_end":true}
+		if state == "stagger":
+			return {"state":"stagger", "clip":&"HitReact", "speed":1.35, "blend":0.06}
+		if state.begins_with("attack_"):
+			return {"state":"attack", "clip":&"Punch", "speed":clip_speed(&"Punch", 0.82), "blend":0.07}
+		if state == "climb":
+			return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", 0.9), "blend":0.08}
+		if state == "walk":
+			var chase_speed := 1.0 if actor.state == actor.State.CHASE else 0.72
+			return {"state":"walk", "clip":&"Walk", "speed":chase_speed, "blend":0.16}
+		return {"state":"idle", "clip":&"Idle_Attack", "speed":0.82, "blend":0.18}
+	if state == "dead":
+		return {"state":"dead", "clip":&"Death", "speed":1.0, "blend":0.16}
+	if state == "hurt":
+		return {"state":"hurt", "clip":&"HitReact", "speed":1.35, "blend":0.06}
+	if state.begins_with("melee_"):
+		return {"state":"melee", "clip":&"Slash", "speed":clip_speed(&"Slash", actor.weapon_swing_seconds), "blend":0.06}
+	if state == "climb":
+		return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", actor.traversal_duration), "blend":0.08}
+	if state.begins_with("crouch_"):
+		return {"state":state, "clip":&"Duck", "speed":0.72, "blend":0.12}
+	var gun: bool = bool(actor.weapon_is_firearm)
+	if state == "run":
+		return {"state":"run_gun" if gun else "run", "clip":&"Run_Gun" if gun else &"Run", "speed":clampf(actor.velocity_mps.length() / 3.8, 0.72, 1.15), "blend":0.14}
+	if state == "walk":
+		return {"state":"walk_gun" if gun else "walk", "clip":&"Walk_Gun" if gun else &"Walk", "speed":clampf(actor.velocity_mps.length() / 1.6, 0.62, 1.08), "blend":0.16}
+	if state == "fire":
+		return {"state":"fire", "clip":&"Idle_Gun", "speed":1.0, "blend":0.05}
+	if state == "aim":
+		return {"state":"aim", "clip":&"Idle_Gun", "speed":0.9, "blend":0.14}
+	return {"state":"idle_gun" if gun else "idle", "clip":&"Idle_Gun" if gun else &"Idle", "speed":0.9, "blend":0.18}
+
+func clip_speed(clip: StringName, duration: float) -> float:
+	if animation_player == null or not animation_player.has_animation(clip):
+		return 1.0
+	return animation_player.get_animation(clip).length / maxf(0.05, duration)
+
+func update_rigged_person(delta: float) -> void:
+	model.rotation.z = 0.0
+	model.position.y = 0.0
+	var flash: float = actor.visual_flash if kind == "zombie" else actor.hurt_flash
+	sprite.modulate = Color(1.5,1.4,1.4) if flash > 0.0 else Color.WHITE
+	if kind == "player":
+		set_imported_weapon_visibility()
+	var target := desired_rig_animation()
+	var next_state := str(target.state)
+	var next_clip := StringName(target.clip)
+	if not animation_player.has_animation(next_clip):
+		next_clip = &"Idle"
+	var target_speed := float(target.speed)
+	if next_state != animation_state or str(next_clip) != animation_clip:
+		animation_state = next_state
+		animation_clip = str(next_clip)
+		animation_player.speed_scale = target_speed
+		animation_player.play(next_clip, float(target.blend), 1.0)
+		if bool(target.get("seek_end", false)):
+			animation_player.seek(animation_player.get_animation(next_clip).length, true)
+	else:
+		animation_player.speed_scale = lerpf(animation_player.speed_scale, target_speed, 1.0-exp(-delta*8.0))
+
 func build_vehicle() -> void:
 	var paint := Color("526e83")
 	box(model,Vector3(0,0.64,0),Vector3(1.72,0.52,4.25),paint)
@@ -160,6 +280,8 @@ func _process(delta: float) -> void:
 	var screen := actor.get_global_transform_with_canvas().origin
 	var visible_now := actor.is_visible_in_tree() and Rect2(Vector2(-300,-300),get_viewport_rect().size+Vector2(600,600)).has_point(screen)
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if visible_now else SubViewport.UPDATE_DISABLED
+	if animation_player != null:
+		animation_player.active = visible_now
 	if not visible_now: return
 	queue_redraw()
 	var heading: Vector2 = actor.heading_logical if kind == "vehicle" else actor.world_map.world_to_map(actor.facing).normalized()
@@ -169,6 +291,9 @@ func _process(delta: float) -> void:
 	if kind == "vehicle":
 		wheel_angle += actor.speed_mps * delta / 0.35
 		for wheel: Node3D in wheels: wheel.rotation.x = wheel_angle
+		return
+	if rigged_mode:
+		update_rigged_person(delta)
 		return
 	var infected := kind == "zombie"
 	var dead_now: bool = actor.is_dead() if infected else actor.dead

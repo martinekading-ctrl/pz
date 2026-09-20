@@ -1,0 +1,9 @@
+Zombie Apocalypse Kit by Quaternius
+Source: https://quaternius.com/packs/zombieapocalypsekit.html
+
+License: CC0 1.0 Universal (CC0 1.0)
+Public Domain Dedication
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The official pack page identifies the pack as CC0 and permits personal and
+commercial use. This project includes only the Matt and Zombie_Basic glTF files.

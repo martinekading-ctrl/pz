@@ -148,7 +148,7 @@ var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.dup
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 实时3D角色与车辆 0.33.1")
+	DisplayServer.window_set_title("余烬街区：重建版 · 骨骼动画角色 0.33.2")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -273,7 +273,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 实时3D角色与车辆 0.33.1"
+	title.text = "余烬街区 · 骨骼动画角色 0.33.2"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -3074,13 +3074,13 @@ func presentation_capture() -> void:
 				zombie.change_state(zombie.State.DEAD)
 		zombie.queue_redraw()
 	combat_fx.spawn_impact(zombies[0].position + Vector2(0, -65), Vector2.RIGHT, false)
-	show_combat_message("新版动作：挥击前摇 / 命中 / 后摇 · 僵尸受击硬直与倒地", 4.0)
-	await get_tree().create_timer(0.12).timeout
+	show_combat_message("骨骼动画：走 / 跑 / 挥击 / 受击 / 死亡平滑切换", 4.0)
+	await get_tree().create_timer(0.35).timeout
 	await RenderingServer.frame_post_draw
-	var output := ProjectSettings.globalize_path("res://build/live-3d-v0331.png")
+	var output := ProjectSettings.globalize_path("res://build/skeletal-animation-v0332.png")
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
-	print("PRESENTATION CAPTURE PASS: build/live-3d-v0331.png")
+	print("PRESENTATION CAPTURE PASS: build/skeletal-animation-v0332.png")
 	get_tree().quit()
 
 var catalog_index := 0
