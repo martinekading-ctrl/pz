@@ -144,7 +144,7 @@ func step_motion(direction: Vector2,delta: float) -> void:
 	move_world(world_map.map_to_world(velocity_mps/Metrics.CELL_METERS)*delta)
 	var traveled: float=world_map.world_to_map(position-before).length()*Metrics.CELL_METERS
 	moving=traveled>0.0001
-	if moving: gait+=traveled*TAU/(1.3 if running else 0.9)
+	if moving: gait+=traveled*TAU/(2.6 if running else 1.6)
 	else: velocity_mps=Vector2.ZERO
 	queue_redraw()
 

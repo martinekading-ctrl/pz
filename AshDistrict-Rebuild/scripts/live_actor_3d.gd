@@ -6,6 +6,9 @@ var viewport: SubViewport
 var model: Node3D
 var torso: Node3D
 var arms: Array[Node3D] = []
+var elbows: Array[Node3D] = []
+var locomotion_blend := 0.0
+var run_blend := 0.0
 var legs: Array[Node3D] = []
 var wheels: Array[Node3D] = []
 var pistol: Node3D
@@ -97,8 +100,10 @@ func build_person() -> void:
 	for side: float in [-1.0,1.0]:
 		box(torso,Vector3(side*0.065,0.73,-0.12),Vector3(0.025,0.025,0.012),Color("292929"))
 		var arm := joint(torso,Vector3(side*0.25,0.43,0))
-		box(arm,Vector3(0,-0.15,0),Vector3(0.14,0.32,0.16),shirt)
-		box(arm,Vector3(0,-0.37,-0.025),Vector3(0.11,0.19,0.12),skin)
+		box(arm,Vector3(0,-0.12,0),Vector3(0.14,0.25,0.16),shirt)
+		var elbow := joint(arm,Vector3(0,-0.25,0))
+		box(elbow,Vector3(0,-0.1,0),Vector3(0.11,0.2,0.12),skin)
+		elbows.append(elbow)
 		arms.append(arm)
 		var leg := joint(model,Vector3(side*0.105,0.9,0))
 		box(leg,Vector3(0,-0.22,0),Vector3(0.17,0.43,0.2),pants)
@@ -112,10 +117,10 @@ func build_person() -> void:
 		box(torso,Vector3(0,0.27,0.21),Vector3(0.32,0.38,0.21),Color("766a47"))
 		for side: float in [-1.0,1.0]:
 			box(torso,Vector3(side*0.13,0.27,-0.132),Vector3(0.04,0.42,0.03),Color("827754"))
-		weapon = joint(arms[1],Vector3(0,-0.44,0))
+		weapon = joint(elbows[1],Vector3(0,-0.2,0))
 		box(weapon,Vector3(0,0,-0.23),Vector3(0.035,0.035,0.52),Color("81766a"))
 		box(weapon,Vector3(0,0.04,-0.48),Vector3(0.035,0.1,0.035),Color("81766a"))
-		pistol = joint(arms[1],Vector3(0,-0.44,0))
+		pistol = joint(elbows[1],Vector3(0,-0.2,0))
 		box(pistol,Vector3(0,0,-0.09),Vector3(0.055,0.065,0.23),Color("383d40"))
 		box(pistol,Vector3(0,-0.05,-0.015),Vector3(0.05,0.12,0.06),Color("25292b"))
 
@@ -174,14 +179,25 @@ func _process(delta: float) -> void:
 	var flash: float = actor.visual_flash if infected else actor.hurt_flash
 	sprite.modulate = Color(1.5,1.4,1.4) if flash > 0.0 else Color.WHITE
 	var moving_now: bool = actor.state in [actor.State.WANDER,actor.State.CHASE,actor.State.INVESTIGATE] if infected else actor.moving
-	var stride := sin(float(actor.gait)) * (0.32 if infected else (0.65 if actor.running else 0.42)) if moving_now else 0.0
-	torso.position.y = 0.9 + (absf(sin(float(actor.gait)*2.0))*0.025 if moving_now else 0.0)
-	torso.rotation.x = -0.12 if infected else 0.0
+	var blend_weight := 1.0-exp(-delta*12.0)
+	locomotion_blend = lerpf(locomotion_blend,1.0 if moving_now else 0.0,blend_weight)
+	var wants_run: bool = not infected and actor.running and moving_now
+	run_blend = lerpf(run_blend,1.0 if wants_run else 0.0,blend_weight)
+	var gait_phase := float(actor.gait)
+	var amplitude := 0.3 if infected else lerpf(0.36,0.62,run_blend)
+	var bounce := (1.0-cos(gait_phase*2.0))*0.5*lerpf(0.018,0.045,run_blend)*locomotion_blend
+	# Move pelvis and torso together; recovery knee folds backward while the thigh lifts.
+	model.position.y = bounce
+	torso.position.y = 0.9
+	torso.rotation.x = -0.12 if infected else -0.12*run_blend
+	torso.rotation.z = sin(gait_phase)*0.025*locomotion_blend
 	for index: int in 2:
-		var sign_value := -1.0 if index == 0 else 1.0
-		legs[index].rotation.x = stride * sign_value
-		legs[index].get_child(1).rotation.x = maxf(0.0,-stride*sign_value)*0.65
-		arms[index].rotation.x = -stride * sign_value + (-0.35 if infected else 0.0)
+		var phase := gait_phase + float(index)*PI
+		var swing := sin(phase)
+		legs[index].rotation.x = swing*amplitude*locomotion_blend
+		legs[index].get_child(1).rotation.x = -(0.06+pow(maxf(0.0,swing),1.3)*lerpf(0.48,1.15,run_blend))*locomotion_blend
+		arms[index].rotation.x = -swing*lerpf(0.25,0.52,run_blend)*locomotion_blend+(-0.35 if infected else 0.0)
+		elbows[index].rotation.x = -lerpf(0.12,0.95,run_blend)
 	if infected:
 		if actor.state in [actor.State.ATTACK,actor.State.BREACH]:
 			var phase := fmod(float(actor.state_time),0.82)/0.82
@@ -195,7 +211,9 @@ func _process(delta: float) -> void:
 			torso.position.y -= 0.25
 			torso.rotation.x = -0.3
 		if actor.weapon_is_firearm:
-			for arm: Node3D in arms: arm.rotation.x = -1.35 + float(actor.firearm_recoil)*1.5
+			for index: int in 2:
+				arms[index].rotation.x = -1.15 + float(actor.firearm_recoil)*1.5
+				elbows[index].rotation.x = -0.2
 		elif actor.swing_remaining > 0.0:
 			var phase := 1.0-float(actor.swing_remaining)/maxf(0.01,float(actor.weapon_swing_seconds))
 			arms[1].rotation.x = -0.2-sin(phase*PI)*2.0
