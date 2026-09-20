@@ -24,6 +24,7 @@ const CraftingPanel = preload("res://scripts/crafting_panel.gd")
 const ProductShell = preload("res://scripts/product_shell.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const ClothingRules = preload("res://scripts/clothing_rules.gd")
+const UtilityRules = preload("res://scripts/utility_rules.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -54,6 +55,7 @@ var hint_label: Label
 var help_label: Label
 var inventory_label: Label
 var weapon_label: Label
+var utility_label: Label
 var clock_label: Label
 var condition_label: Label
 var health_status_button: Button
@@ -66,7 +68,7 @@ var search_building: Node2D
 var left_items := {}
 var searching := -1
 var search_time := 0.0
-var inventory := {"food":0,"water":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"baseball_cap":0,"motorcycle_helmet":0,"denim_jacket":0,"leather_jacket":0,"jeans":0,"cargo_pants":0,"sneakers":0,"work_boots":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
+var inventory := {"food":0,"water":0,"empty_bottle":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"baseball_cap":0,"motorcycle_helmet":0,"denim_jacket":0,"leather_jacket":0,"jeans":0,"cargo_pants":0,"sneakers":0,"work_boots":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
 const Backpack=preload("res://scripts/backpack.gd")
 var backpack: ColorRect
 var ground_items: Array[Dictionary]=[]
@@ -78,6 +80,8 @@ var combat_message:=""
 var combat_message_time:=0.0
 var game_time_minutes:=3380.0
 var fresh_food_expiry_minutes:=6980.0
+var power_cutoff_minutes := UtilityRules.DEFAULT_POWER_CUTOFF_MINUTES
+var water_cutoff_minutes := UtilityRules.DEFAULT_WATER_CUTOFF_MINUTES
 var time_multiplier:=1.0
 var simulation_paused:=false
 var game_over_overlay: ColorRect
@@ -115,7 +119,7 @@ var autosave_path_override := ""
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 服装与身体防护 0.27")
+	DisplayServer.window_set_title("余烬街区：重建版 · 供水停电与家电 0.28")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -202,6 +206,8 @@ func _ready() -> void:
 	if "--loot-capture" in OS.get_cmdline_user_args(): call_deferred("loot_capture")
 	if "--clothing-test" in OS.get_cmdline_user_args(): call_deferred("run_clothing_test")
 	if "--clothing-capture" in OS.get_cmdline_user_args(): call_deferred("clothing_capture")
+	if "--utility-test" in OS.get_cmdline_user_args(): call_deferred("run_utility_test")
+	if "--utility-capture" in OS.get_cmdline_user_args(): call_deferred("utility_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -217,7 +223,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.27"
+	title.text = "余烬街区 · 生存测试版 0.28"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -264,6 +270,16 @@ func create_hud() -> void:
 	weapon_label.add_theme_font_size_override("font_size",17)
 	weapon_label.add_theme_color_override("font_color",Color("d9c681"))
 	hud.add_child(weapon_label)
+	utility_label=Label.new()
+	utility_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	utility_label.offset_left=-440
+	utility_label.offset_top=170
+	utility_label.offset_right=-20
+	utility_label.offset_bottom=220
+	utility_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
+	utility_label.add_theme_font_size_override("font_size",15)
+	utility_label.add_theme_color_override("font_color",Color("a9c9c2"))
+	hud.add_child(utility_label)
 	survival_panel=ColorRect.new()
 	survival_panel.position=Vector2(20,108)
 	survival_panel.size=Vector2(330,202)
@@ -317,6 +333,7 @@ func apply_compact_mobile_hud() -> void:
 	status_label.visible = false
 	inventory_label.visible = false
 	weapon_label.visible = false
+	utility_label.visible = false
 	hint_label.offset_top = -150
 	hint_label.offset_bottom = -116
 	survival_panel.position = Vector2(18,18)
@@ -386,6 +403,7 @@ func _process(delta: float) -> void:
 			advance_survival(simulation_delta)
 		autosave_cooldown = maxf(0.0, autosave_cooldown - simulation_delta)
 	for building in world_map.interactive_buildings: building.update_player(player.position,delta)
+	update_world_lighting()
 	update_safehouse_entry()
 	player_invulnerability=maxf(0.0,player_invulnerability-simulation_delta)
 	combat_message_time=maxf(0.0,combat_message_time-simulation_delta)
@@ -428,13 +446,38 @@ func _process(delta: float) -> void:
 
 func advance_survival(real_delta: float) -> void:
 	var game_minutes:=real_delta*Survival.GAME_MINUTES_PER_REAL_SECOND*time_multiplier
-	game_time_minutes+=game_minutes
+	advance_world_time(game_minutes)
 	InjuryRules.advance(injuries, needs, game_minutes)
 	Survival.advance(needs,game_minutes,player.running and player.moving)
 	update_player_condition_effects()
-	world_tint.color=Survival.light_color(game_time_minutes)
 	if int(needs.health)<=0:
 		show_game_over()
+
+func power_available() -> bool:
+	return UtilityRules.power_on(game_time_minutes,power_cutoff_minutes)
+
+func water_available() -> bool:
+	return UtilityRules.water_on(game_time_minutes,water_cutoff_minutes)
+
+func advance_world_time(minutes: float) -> void:
+	if minutes <= 0.0:
+		return
+	var had_power := power_available()
+	var had_water := water_available()
+	game_time_minutes += minutes
+	if had_power and not power_available():
+		fresh_food_expiry_minutes = minf(fresh_food_expiry_minutes,game_time_minutes+UtilityRules.OUTAGE_FRESH_FOOD_GRACE_MINUTES)
+		show_combat_message("全区停电 · 冰箱停止制冷",2.8)
+	if had_water and not water_available():
+		show_combat_message("全区停水 · 水龙头已经干涸",2.8)
+	update_world_lighting()
+
+func update_world_lighting() -> void:
+	if not is_instance_valid(world_tint):
+		return
+	var base := Survival.light_color(game_time_minutes)
+	var inside := not current_player_building_id().is_empty()
+	world_tint.color = UtilityRules.darken_for_unpowered_interior(base,game_time_minutes,inside,power_available())
 
 func update_survival_hud() -> void:
 	if not is_instance_valid(clock_label):
@@ -448,6 +491,10 @@ func update_survival_hud() -> void:
 		need_bars[key].label.text=str(roundi(float(needs.get(key,100.0))))
 	var safehouse_text := "  ·  安全屋" if not safehouse_building_id.is_empty() and current_player_building_id() == safehouse_building_id else ""
 	condition_label.text=Survival.condition_text(needs) + safehouse_text + ("  ·  点击治疗" if is_instance_valid(mobile_controls) and mobile_controls.visible else "")
+	if is_instance_valid(mobile_controls) and mobile_controls.visible:
+		condition_label.text += " · 电%s 水%s" % ["✓" if power_available() else "×","✓" if water_available() else "×"]
+	if is_instance_valid(utility_label):
+		utility_label.text = UtilityRules.service_text("供电",power_available(),power_cutoff_minutes)+"\n"+UtilityRules.service_text("供水",water_available(),water_cutoff_minutes)
 	var condition_warning := minf(float(needs.food),float(needs.water))<25.0 or float(needs.get("fatigue",0.0))>=70.0 or float(needs.get("stamina",100.0))<=10.0
 	condition_label.add_theme_color_override("font_color",Color("e0786d") if float(needs.get("bleeding",0.0))>0.0 or float(needs.get("infection",0.0))>=60.0 else (Color("e0bd69") if condition_warning or float(needs.get("pain",0.0))>=40.0 else Color("b9c9b6")))
 
@@ -553,8 +600,7 @@ func update_sleep(real_delta: float) -> void:
 	Survival.sleep_step(needs, advanced)
 	InjuryRules.advance(injuries, needs, advanced)
 	sleep_elapsed_minutes += advanced
-	game_time_minutes += advanced
-	world_tint.color = Survival.light_color(game_time_minutes)
+	advance_world_time(advanced)
 	update_sleep_overlay()
 	update_survival_hud()
 	if int(needs.health) <= 0:
@@ -687,7 +733,7 @@ func should_spawn_zombies() -> bool:
 		"--injury-test", "--injury-capture", "--crafting-test", "--crafting-capture", "--crafting-preview",
 		"--product-test", "--product-capture", "--product-preview",
 		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
-		"--clothing-test", "--clothing-capture"
+		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -1689,12 +1735,40 @@ func use_inventory_item(item_id: String, preferred_part: String = "") -> Diction
 			result = Survival.use_item(needs, item_id, is_food_spoiled(item_id))
 	if bool(result.get("consumed", false)):
 		inventory[item_id] = maxi(0, int(inventory.get(item_id, 0)) - 1)
+		if item_id == "water":
+			inventory["empty_bottle"] = int(inventory.get("empty_bottle",0)) + 1
 	InjuryRules.sync_needs(injuries, needs)
 	update_player_condition_effects()
 	update_survival_hud()
 	if is_instance_valid(quickbar):
 		quickbar.force_refresh()
 	return result
+
+func drink_from_tap() -> Dictionary:
+	if not water_available():
+		return {"ok":false,"message":"供水已经中断，水龙头没有水"}
+	if float(needs.water) >= 100.0:
+		return {"ok":false,"message":"当前不需要饮水"}
+	var before := float(needs.water)
+	needs.water = minf(100.0,before+35.0)
+	update_survival_hud()
+	return {"ok":true,"message":"饮用了自来水，水分 +%d" % roundi(float(needs.water)-before)}
+
+func fill_water_bottles(requested: int = 999) -> Dictionary:
+	if not water_available():
+		return {"ok":false,"moved":0,"message":"供水已经中断，无法灌装"}
+	var moved := 0
+	while moved < requested and int(inventory.get("empty_bottle",0)) > 0:
+		var candidate := inventory.duplicate()
+		candidate.empty_bottle = int(candidate.get("empty_bottle",0))-1
+		if not Backpack.fits(candidate,"water",1):
+			break
+		inventory.empty_bottle = int(inventory.get("empty_bottle",0))-1
+		inventory.water = int(inventory.get("water",0))+1
+		moved += 1
+	if is_instance_valid(quickbar):
+		quickbar.force_refresh()
+	return {"ok":moved>0,"moved":moved,"message":"灌装了 %d 瓶饮用水" % moved if moved>0 else "没有空瓶，或背包容量不足"}
 
 func remove_injury_bandage(part: String) -> Dictionary:
 	var result: Dictionary = InjuryRules.remove_bandage(injuries, part)
@@ -1892,6 +1966,9 @@ func run_loot_test() -> void:
 
 func run_clothing_test() -> void:
 	await preload("res://scripts/clothing_test.gd").run(self)
+
+func run_utility_test() -> void:
+	await preload("res://scripts/utility_test.gd").run(self)
 
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
@@ -2319,6 +2396,32 @@ func clothing_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("CLOTHING CAPTURE PASS: build/clothing-protection-v027.png")
+	get_tree().quit()
+
+func utility_capture() -> void:
+	simulation_paused=true
+	power_cutoff_minutes=game_time_minutes+1440.0
+	water_cutoff_minutes=game_time_minutes+2880.0
+	inventory.empty_bottle=3
+	inventory.water=1
+	needs.water=42.0
+	var building: Node2D=world_map.blue_house
+	var sink_index:=-1
+	for index: int in building.furniture.size():
+		if UtilityRules.is_sink(str(building.furniture[index].title)):
+			sink_index=index
+			break
+	assert(sink_index>=0)
+	player.position=world_map.map_to_world((building.furniture[sink_index].use_zone as Rect2).get_center())
+	open_loot(sink_index,building)
+	loot_overlay.message="水龙头可直接饮水，也可把喝完留下的空瓶重新灌满。"
+	loot_overlay.rebuild()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output:=ProjectSettings.globalize_path("res://build/utilities-v028.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("UTILITY CAPTURE PASS: build/utilities-v028.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:

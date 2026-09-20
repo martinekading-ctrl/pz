@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 4
+const SAVE_VERSION := 5
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -9,6 +9,7 @@ const InjuryRules = preload("res://scripts/injury_rules.gd")
 const Population = preload("res://scripts/zombie_population.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const ClothingRules = preload("res://scripts/clothing_rules.gd")
+const UtilityRules = preload("res://scripts/utility_rules.gd")
 
 static func capture_state(game: Node2D) -> Dictionary:
 	var buildings: Array[Dictionary] = []
@@ -74,6 +75,8 @@ static func capture_state(game: Node2D) -> Dictionary:
 			"game_time_minutes": float(game.game_time_minutes),
 			"time_multiplier": float(game.time_multiplier),
 			"fresh_food_expiry_minutes": float(game.fresh_food_expiry_minutes),
+			"power_cutoff_minutes": float(game.power_cutoff_minutes),
+			"water_cutoff_minutes": float(game.water_cutoff_minutes),
 		},
 		"needs": game.needs.duplicate(true),
 		"injuries": game.injuries.duplicate(true),
@@ -127,6 +130,8 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.game_time_minutes = float(data.world.game_time_minutes)
 	game.time_multiplier = clampf(float(data.world.time_multiplier), 1.0, 4.0)
 	game.fresh_food_expiry_minutes = float(data.world.get("fresh_food_expiry_minutes", game.game_time_minutes + 3600.0))
+	game.power_cutoff_minutes = float(data.world.get("power_cutoff_minutes", UtilityRules.DEFAULT_POWER_CUTOFF_MINUTES))
+	game.water_cutoff_minutes = float(data.world.get("water_cutoff_minutes", UtilityRules.DEFAULT_WATER_CUTOFF_MINUTES))
 	var need_defaults := {"health":100.0, "food":100.0, "water":100.0, "stamina":100.0, "fatigue":0.0, "pain":0.0, "infection":0.0, "pain_relief":0.0}
 	for key: String in need_defaults:
 		var maximum := 180.0 if key == "pain_relief" else 100.0
@@ -238,7 +243,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.validate_equipment()
 	game.stamina_recovery_delay = 0.0
 	game.update_player_condition_effects()
-	game.world_tint.color = Survival.light_color(game.game_time_minutes)
+	game.update_world_lighting()
 	game.last_player_building_id = game.current_player_building_id()
 	game.refresh_player_control()
 	game.update_survival_hud()
@@ -313,6 +318,12 @@ static func migrate(source: Dictionary) -> Dictionary:
 		data["clothing_equipment"] = {"head":"", "torso":"", "legs":"", "feet":""}
 		data["clothing_durability"] = {}
 		data["version"] = 4
+		version = 4
+	if version == 4:
+		if typeof(data.get("world",{})) == TYPE_DICTIONARY:
+			data.world["power_cutoff_minutes"] = UtilityRules.DEFAULT_POWER_CUTOFF_MINUTES
+			data.world["water_cutoff_minutes"] = UtilityRules.DEFAULT_WATER_CUTOFF_MINUTES
+		data["version"] = 5
 	return data
 
 static func validate(data: Dictionary) -> bool:
@@ -338,7 +349,7 @@ static func validate(data: Dictionary) -> bool:
 		return false
 	if not valid_pair(data.player.get("logical_position", [])):
 		return false
-	if not data.world.has("game_time_minutes") or not data.world.has("time_multiplier"):
+	if not data.world.has("game_time_minutes") or not data.world.has("time_multiplier") or not data.world.has("power_cutoff_minutes") or not data.world.has("water_cutoff_minutes"):
 		return false
 	if typeof(data.buildings) != TYPE_ARRAY or typeof(data.zombies) != TYPE_ARRAY or typeof(data.ground_items) != TYPE_ARRAY:
 		return false

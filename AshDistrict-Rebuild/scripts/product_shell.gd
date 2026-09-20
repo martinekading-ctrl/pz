@@ -66,7 +66,7 @@ func rebuild() -> void:
 	var brand := make_label("余烬街区",38,Color("f0e8d0"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(brand)
-	var version := make_label("0.27  生存测试版",17,Color("b7c7be"))
+	var version := make_label("0.28  生存测试版",17,Color("b7c7be"))
 	version.custom_minimum_size.x = 190
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -242,6 +242,9 @@ WASD 或左摇杆移动；Shift 奔跑；C 蹲伏。奔跑更快，但消耗体�
 
 服装与防护
 背包中选择服装即可穿戴。头部、上身、腿部和脚部装备会降低对应伤口概率，承受攻击后逐渐磨损。
+
+供水与供电
+厨房和浴室水龙头可直接饮水或灌装空瓶。供水与供电会按世界时间中断；停电后冰箱停止制冷，夜间室内会明显变暗。
 
 制作与封窗
 K 或手机“制作”按钮打开制作页。靠近住宅窗户按 E，可使用木板、钉子和木工锤加固。

@@ -3,6 +3,7 @@ extends "res://scripts/backpack.gd"
 var building: Node2D
 var index: int
 const Rules=preload("res://scripts/container_rules.gd")
+const UtilityRules=preload("res://scripts/utility_rules.gd")
 
 func valid_target() -> bool:
 	return is_instance_valid(building) and building.nearest_furniture(game.player.position)==index
@@ -54,6 +55,19 @@ func rebuild() -> void:
 			button(actions,"拿取该类" if from_container else "放回该类",move_item.bind(key,int(items[key]),from_container))
 		if not any: label(rows,"容器已空" if from_container else "背包为空",18)
 	button(column,"拿取所有装得下的物品",take_all)
+	var fixture_title := str(item.title)
+	if UtilityRules.is_refrigerator(fixture_title):
+		var cooling := label(column,"冰箱制冷正常 · 鲜食保持冷藏" if game.power_available() else "冰箱已断电 · 鲜食将在短时间内变质",17)
+		cooling.add_theme_color_override("font_color",Color("8fd1c5") if game.power_available() else Color("dc8a72"))
+	if UtilityRules.is_sink(fixture_title):
+		var water_row:=HBoxContainer.new()
+		water_row.add_theme_constant_override("separation",10)
+		column.add_child(water_row)
+		var water_state:=label(water_row,"自来水正常" if game.water_available() else "已经停水",17)
+		water_state.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+		water_state.add_theme_color_override("font_color",Color("8fc7db") if game.water_available() else Color("dc8a72"))
+		button(water_row,"直接饮水",drink_tap).disabled=not game.water_available()
+		button(water_row,"灌装全部空瓶",fill_bottles).disabled=not game.water_available() or int(game.inventory.get("empty_bottle",0))<=0
 	if "床" in str(item.title):
 		if game.is_safehouse(building):
 			var safehouse_label := label(column,"安全屋床位 · 进入住宅与睡醒后自动保存",17)
@@ -109,6 +123,22 @@ func claim_safehouse() -> void:
 		return
 	var result: Dictionary = game.claim_safehouse_at_bed()
 	message = str(result.message)
+	rebuild()
+
+func drink_tap() -> void:
+	if not valid_target():
+		game.close_loot()
+		return
+	var result: Dictionary=game.drink_from_tap()
+	message=str(result.message)
+	rebuild()
+
+func fill_bottles() -> void:
+	if not valid_target():
+		game.close_loot()
+		return
+	var result: Dictionary=game.fill_water_bottles()
+	message=str(result.message)
 	rebuild()
 
 func transfer_weapon_durability(item: Dictionary,key: String,count: int,from_container: bool) -> void:
