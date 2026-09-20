@@ -1,5 +1,7 @@
 extends Node2D
 
+var live_visual: Node2D
+
 const Rules = preload("res://scripts/vehicle_rules.gd")
 const Metrics = preload("res://scripts/player_metrics.gd")
 
@@ -38,6 +40,9 @@ func reset_default() -> void:
 	update_pose()
 
 func _ready() -> void:
+	live_visual = preload("res://scripts/live_actor_3d.gd").new()
+	live_visual.kind = "vehicle"
+	add_child(live_visual)
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
@@ -127,10 +132,12 @@ func advance_hit_cooldowns(delta: float) -> void:
 
 func update_pose() -> void:
 	var world_direction: Vector2=world_map.map_to_world(heading_logical)-world_map.map_to_world(Vector2.ZERO)
-	rotation=world_direction.angle()
+	rotation=0.0 # Facing belongs to the 3D model, never the screen plane.
 	z_index=roundi(position.y*0.2)
 
 func _draw() -> void:
+	if is_instance_valid(live_visual):
+		return
 	var body:=Color("496a78") if condition>30.0 else Color("665e58")
 	draw_colored_polygon(PackedVector2Array([Vector2(-112,-38),Vector2(100,-38),Vector2(116,-23),Vector2(116,23),Vector2(100,38),Vector2(-112,38)]),body)
 	draw_polyline(PackedVector2Array([Vector2(-112,-38),Vector2(100,-38),Vector2(116,-23),Vector2(116,23),Vector2(100,38),Vector2(-112,38),Vector2(-112,-38)]),Color("ced6cf"),3.0,true)

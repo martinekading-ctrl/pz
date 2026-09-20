@@ -1,5 +1,7 @@
 extends Node2D
 
+var live_visual: Node2D
+
 const Metrics = preload("res://scripts/player_metrics.gd")
 const Combat = preload("res://scripts/combat_rules.gd")
 
@@ -310,6 +312,8 @@ func presentation_state() -> String:
 	return "idle"
 
 func _draw() -> void:
+	if is_instance_valid(live_visual):
+		return
 	if state == State.DEAD:
 		if corpse_highlight:
 			draw_arc(Vector2(0, 5), 48.0, 0.0, TAU, 32, Color("e8cd72"), 4.0, true)
@@ -389,3 +393,8 @@ func draw_flat_ellipse(center: Vector2, radius: Vector2, color: Color) -> void:
 	for i: int in 24:
 		points.append(center + Vector2(cos(float(i) * TAU / 24.0) * radius.x, sin(float(i) * TAU / 24.0) * radius.y))
 	draw_colored_polygon(points, color)
+
+func _ready() -> void:
+	live_visual = preload("res://scripts/live_actor_3d.gd").new()
+	live_visual.kind = "zombie"
+	add_child(live_visual)

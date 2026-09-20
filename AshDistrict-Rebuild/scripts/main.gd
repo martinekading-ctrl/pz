@@ -148,7 +148,7 @@ var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.dup
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 角色与战斗表现 0.33")
+	DisplayServer.window_set_title("余烬街区：重建版 · 实时3D角色与车辆 0.33.1")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -254,6 +254,7 @@ func _ready() -> void:
 	if "--character-capture" in OS.get_cmdline_user_args(): call_deferred("character_capture")
 	if "--weather-test" in OS.get_cmdline_user_args(): call_deferred("run_weather_test")
 	if "--weather-capture" in OS.get_cmdline_user_args(): call_deferred("weather_capture")
+	if "--live-3d-test" in OS.get_cmdline_user_args(): call_deferred("run_live_3d_test")
 	if "--presentation-test" in OS.get_cmdline_user_args(): call_deferred("run_presentation_test")
 	if "--presentation-capture" in OS.get_cmdline_user_args(): call_deferred("presentation_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
@@ -272,7 +273,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 角色与战斗表现 0.33"
+	title.text = "余烬街区 · 实时3D角色与车辆 0.33.1"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -2365,6 +2366,9 @@ func run_character_test() -> void:
 func run_weather_test() -> void:
 	await preload("res://scripts/weather_test.gd").run(self)
 
+func run_live_3d_test() -> void:
+	await preload("res://scripts/live_3d_test.gd").run(self)
+
 func run_presentation_test() -> void:
 	await preload("res://scripts/combat_presentation_test.gd").run(self)
 
@@ -3073,10 +3077,10 @@ func presentation_capture() -> void:
 	show_combat_message("新版动作：挥击前摇 / 命中 / 后摇 · 僵尸受击硬直与倒地", 4.0)
 	await get_tree().create_timer(0.12).timeout
 	await RenderingServer.frame_post_draw
-	var output := ProjectSettings.globalize_path("res://build/combat-presentation-v033.png")
+	var output := ProjectSettings.globalize_path("res://build/live-3d-v0331.png")
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
-	print("PRESENTATION CAPTURE PASS: build/combat-presentation-v033.png")
+	print("PRESENTATION CAPTURE PASS: build/live-3d-v0331.png")
 	get_tree().quit()
 
 var catalog_index := 0

@@ -1,5 +1,7 @@
 extends Node2D
 
+var live_visual: Node2D
+
 signal melee_impact(origin: Vector2, direction: Vector2)
 signal melee_started(origin: Vector2, direction: Vector2)
 
@@ -38,6 +40,9 @@ var traversal_start := Vector2.ZERO
 var traversal_end := Vector2.ZERO
 
 func _ready() -> void:
+	live_visual = preload("res://scripts/live_actor_3d.gd").new()
+	live_visual.kind = "player"
+	add_child(live_visual)
 	queue_redraw()
 
 func _physics_process(delta: float) -> void:
@@ -187,8 +192,9 @@ func receive_hit(source_world: Vector2) -> void:
 
 func set_dead_pose(value: bool) -> void:
 	dead = value
-	moving = false
-	running = false
+	if value:
+		moving = false
+		running = false
 	queue_redraw()
 
 func attack_phase() -> String:
@@ -219,6 +225,8 @@ func presentation_state() -> String:
 	return "aim" if aim_visible else "idle"
 
 func _draw() -> void:
+	if is_instance_valid(live_visual):
+		return
 	draw_actor_shadow(Vector2(0, 4), Vector2(19, 8), Color(0, 0, 0, 0.32))
 	if dead:
 		draw_dead_pose()
