@@ -148,7 +148,7 @@ var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.dup
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 骨骼动画角色 0.33.2")
+	DisplayServer.window_set_title("余烬街区：重建版 · 人形角色修正 0.33.3")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -255,6 +255,7 @@ func _ready() -> void:
 	if "--weather-test" in OS.get_cmdline_user_args(): call_deferred("run_weather_test")
 	if "--weather-capture" in OS.get_cmdline_user_args(): call_deferred("weather_capture")
 	if "--live-3d-test" in OS.get_cmdline_user_args(): call_deferred("run_live_3d_test")
+	if "--human-capture" in OS.get_cmdline_user_args(): call_deferred("human_capture")
 	if "--presentation-test" in OS.get_cmdline_user_args(): call_deferred("run_presentation_test")
 	if "--presentation-capture" in OS.get_cmdline_user_args(): call_deferred("presentation_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
@@ -273,7 +274,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 骨骼动画角色 0.33.2"
+	title.text = "余烬街区 · 人形角色修正 0.33.3"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -3039,6 +3040,38 @@ func combat_capture() -> void:
 	await get_tree().create_timer(0.8).timeout
 	get_viewport().get_texture().get_image().save_png("res://build/combat-v013.png")
 	get_tree().quit()
+
+func human_capture() -> void:
+	player.set_physics_process(false)
+	camera.position_smoothing_enabled=false
+	camera.zoom=Vector2(1.15,1.15)
+	camera.position=Vector2(0,-65)
+	player.position=world_map.map_to_world(Vector2(36,49))
+	player.set_facing(world_map.map_to_world(Vector2(0,1)))
+	player.moving=false
+	for index in zombies.size():
+		var zombie: Node2D=zombies[index]
+		zombie.set_process(false)
+		zombie.visible=index==0
+		if index==0:
+			zombie.position=player.position+Vector2(95,80)
+			zombie.facing=player.facing
+			zombie.change_state(zombie.State.IDLE)
+	await get_tree().create_timer(0.7).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("res://build/human-idle-v0333.png")
+	player.moving=true
+	player.running=true
+	player.velocity_mps=Vector2(3.8,0)
+	zombies[0].change_state(zombies[0].State.CHASE)
+	await get_tree().create_timer(0.3).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("res://build/human-run-v0333.png")
+	print("HUMAN CAPTURE PASS")
+	# Release the render scene before ending the capture process.
+	var scene_tree := get_tree()
+	queue_free()
+	scene_tree.create_timer(0.3).timeout.connect(scene_tree.quit)
 
 func presentation_capture() -> void:
 	player.set_physics_process(false)

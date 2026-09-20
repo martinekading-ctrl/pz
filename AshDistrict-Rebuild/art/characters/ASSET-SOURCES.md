@@ -1,5 +1,17 @@
 # Character asset sources
 
+## Current runtime: Universal Base Characters + Universal Animation Library
+
+- Creator: Quaternius; both free Standard downloads use CC0 1.0.
+- Model source: https://quaternius.com/packs/universalbasecharacters.html
+- Animation source: https://quaternius.com/packs/universalanimationlibrary.html
+- Download pages: https://quaternius.itch.io/universal-base-characters and https://quaternius.itch.io/universal-animation-library
+- Original licenses: `human_base/License_Standard.txt` and `human_base/License_Animation.txt`.
+- Source meshes: Superhero_Male_FullBody and Hair_SimpleParted; source motions: UAL1_Standard.glb.
+- Project modifications: adult height normalization, narrower torso, skinned clothing shell, recoloring, hair and backpack attachments, animation retargeting and armed upper-body poses.
+- Generated runtime scenes: `human_base/survivor.scn` and `human_base/infected.scn`, rebuilt by `tools/build_human_characters.gd`.
+- The older Zombie Apocalypse models below are retained for rollback/reference, not current player/zombie runtime rendering.
+
 ## Quaternius Zombie Apocalypse Kit
 
 - Source: https://quaternius.com/packs/zombieapocalypsekit.html

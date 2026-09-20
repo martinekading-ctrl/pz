@@ -1,0 +1,200 @@
+extends SceneTree
+## Reproducible adaptation of CC0 human base, clothes and retargeted animation.
+const BASE = preload("res://art/characters/human_base/Superhero_Male_FullBody.gltf")
+const MOTION = preload("res://art/characters/human_base/UAL1_Standard.glb")
+const HAIR = preload("res://art/characters/human_base/Hair_SimpleParted.gltf")
+const CLIPS = {"Idle":"Idle", "Idle_Gun":"Pistol_Idle", "Idle_Attack":"Idle", "Walk":"Walk", "Walk_Gun":"Walk", "Run":"Jog_Fwd", "Run_Gun":"Jog_Fwd", "Slash":"Sword_Attack", "Punch":"Punch_Cross", "HitReact":"Hit_Chest", "Jump":"Jump", "Death":"Death01", "Crouch_Walk":"Crouch_Fwd", "Crouch_Idle":"Crouch_Idle", "Shoot":"Pistol_Shoot"}
+
+func _initialize() -> void:
+	call_deferred("build_all")
+
+func own_children(node: Node, scene: Node) -> void:
+	for child in node.get_children():
+		child.owner = scene
+		own_children(child, scene)
+
+func material(color: Color) -> StandardMaterial3D:
+	var result := StandardMaterial3D.new()
+	result.albedo_color = color
+	result.roughness = 0.95
+	return result
+
+func attach(skeleton: Skeleton3D, bone: String, label: String) -> Node3D:
+	var node := BoneAttachment3D.new()
+	node.name = label
+	node.bone_name = bone
+	skeleton.add_child(node)
+	# Author accessories in the same rest coordinate system as the body.
+	var rest_space := Node3D.new()
+	node.add_child(rest_space)
+	rest_space.transform = skeleton.get_bone_global_rest(skeleton.find_bone(bone)).affine_inverse()
+	return rest_space
+
+func box(parent: Node3D, at: Vector3, size: Vector3, color: Color, label: String) -> MeshInstance3D:
+	var node := MeshInstance3D.new()
+	node.name = label
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	node.mesh = mesh
+	node.material_override = material(color)
+	parent.add_child(node)
+	node.position = at
+	return node
+
+func clothing_shader(infected: bool) -> ShaderMaterial:
+	var shader := Shader.new()
+	shader.code = """
+shader_type spatial;
+render_mode cull_disabled;
+uniform vec4 jacket : source_color;
+uniform vec4 trousers : source_color;
+uniform bool infected = false;
+varying vec3 rest;
+void vertex(){rest=VERTEX;}
+void fragment(){
+ float x=abs(rest.x); float y=rest.y; float z=rest.z;
+ float weave=sin(rest.x*570.0)*sin(rest.y*570.0)*0.018;
+ float wear=sin(rest.x*41.0+rest.y*28.0)*sin(rest.z*63.0+rest.y*17.0)*0.045;
+ vec3 c=jacket.rgb;
+ if(y<1.03){c=trousers.rgb;}
+ if(y<0.17){c=vec3(0.16,0.125,0.09);}
+ if(y>0.99 && y<1.025){c=vec3(0.14,0.11,0.08);}
+ if(y>1.025 && y<1.51 && x<0.044 && z>0.035){c=vec3(0.28,0.29,0.27);}
+ // Front placket, paired chest pockets and cuffs remain legible at game scale.
+ if(y>1.08 && y<1.49 && abs(x-0.048)<0.007 && z>0.07){c*=0.64;}
+ if(y>1.28 && y<1.36 && x>0.073 && x<0.155 && z>0.085){c*=0.79;}
+ if(x>0.635 && x<0.66 && y>1.1){c*=0.64;}
+ if(infected && x>0.46 && y>1.3 && sin(rest.x*27.0+rest.y*13.0+z*21.0)>0.65){c=mix(c,vec3(0.19,0.09,0.065),0.58);}
+ ALBEDO=clamp(c+vec3(weave+wear),vec3(0.02),vec3(1.0));ROUGHNESS=0.97;
+}
+"""
+	var result := ShaderMaterial.new()
+	result.shader = shader
+	result.set_shader_parameter("jacket", Color("697375") if infected else Color("535b40"))
+	result.set_shader_parameter("trousers", Color("514939") if infected else Color("35414b"))
+	result.set_shader_parameter("infected", infected)
+	return result
+
+func dress(body: MeshInstance3D, infected: bool) -> void:
+	var source := body.mesh
+	var garment := MeshInstance3D.new()
+	garment.name = "Clothes"
+	garment.skeleton = body.skeleton
+	garment.skin = body.skin
+	var mesh := ArrayMesh.new()
+	for surface in source.get_surface_count():
+		var arrays := source.surface_get_arrays(surface)
+		var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+		var chosen := PackedInt32Array()
+		for offset in range(0, indices.size(), 3):
+			var center := (vertices[indices[offset]]+vertices[indices[offset+1]]+vertices[indices[offset+2]])/3.0
+			if center.y < 1.54 and absf(center.x) < 0.665:
+				for i in 3: chosen.append(indices[offset+i])
+		for i in vertices.size():
+			# Give cloth an actual shell and looser silhouette instead of painting skin.
+			var p := vertices[i]
+			var thickness := 0.022 if p.y>1.03 else 0.018
+			if p.y<0.14: thickness=0.014
+			vertices[i] += normals[i]*thickness
+			if p.y>1.05 and p.y<1.44 and absf(p.x)<0.23:
+				# A loose jacket hangs off the rib cage, covering abdominal definition.
+				var outline := 0.13*sqrt(maxf(0.0,1.0-pow(p.x/0.235,2.0)))
+				vertices[i].z=lerpf(vertices[i].z,signf(p.z+0.012)*maxf(absf(vertices[i].z),outline),0.85)
+			if p.y<0.04: vertices[i].y=maxf(0.006,vertices[i].y)
+		arrays[Mesh.ARRAY_VERTEX] = vertices
+		arrays[Mesh.ARRAY_INDEX] = chosen
+		if not chosen.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	garment.mesh = mesh
+	garment.material_override = clothing_shader(infected)
+	body.get_parent().add_child(garment)
+	# Preserve facial UV detail while bringing skin into a restrained palette.
+	var skin_shader := Shader.new()
+	skin_shader.code = """
+shader_type spatial;
+uniform sampler2D skin_map : source_color;
+uniform vec4 skin_color : source_color;
+void fragment(){vec3 t=texture(skin_map,UV).rgb; float d=dot(t,vec3(0.3,0.59,0.11)); ALBEDO=skin_color.rgb*clamp(d*2.8,0.48,1.22); ROUGHNESS=0.9;}
+"""
+	var skin_mat := ShaderMaterial.new()
+	skin_mat.shader=skin_shader
+	var original := source.surface_get_material(0) as StandardMaterial3D
+	skin_mat.set_shader_parameter("skin_map", original.albedo_texture)
+	skin_mat.set_shader_parameter("skin_color",Color("999388") if infected else Color("b28e73"))
+	body.material_override=skin_mat
+
+func build_all() -> void:
+	var motion: Node3D=MOTION.instantiate()
+	root.add_child(motion)
+	var source_skeleton := motion.find_child("Skeleton3D",true,false) as Skeleton3D
+	var source_player := motion.find_child("AnimationPlayer",true,false) as AnimationPlayer
+	for infected in [false,true]:
+		var character: Node3D=BASE.instantiate()
+		character.name="Infected" if infected else "Survivor"
+		root.add_child(character)
+		var skeleton := character.find_child("Skeleton3D",true,false) as Skeleton3D
+		var body := character.find_child("SuperHero_Male",true,false) as MeshInstance3D
+		dress(body,infected)
+		var hair_root := attach(skeleton,"Head","HairAttachment")
+		var hair_source: Node3D=HAIR.instantiate()
+		for node in hair_source.find_children("*","MeshInstance3D",true,false):
+			var hair := MeshInstance3D.new()
+			hair.name="Hair"
+			hair.mesh=node.mesh
+			hair.transform=node.transform
+			hair.material_override=material(Color("353029"))
+			hair_root.add_child(hair)
+		hair_source.free()
+		if not infected:
+			var pack_root := attach(skeleton,"spine_03","BackpackAttachment")
+			box(pack_root,Vector3(0,1.32,-0.18),Vector3(0.27,0.34,0.15),Color("615b40"),"CanvasBackpack")
+			box(pack_root,Vector3(0,1.26,-0.265),Vector3(0.2,0.15,0.04),Color("4b4835"),"PackPocket")
+		var player := AnimationPlayer.new()
+		player.name="AnimationPlayer"
+		character.add_child(player)
+		var library := AnimationLibrary.new()
+		for alias in CLIPS:
+			var animation: Animation=source_player.get_animation(CLIPS[alias]).duplicate(true)
+			for track in range(animation.get_track_count()-1,-1,-1):
+				var path := animation.track_get_path(track)
+				if path.get_subname_count()==0:
+					animation.remove_track(track)
+					continue
+				var bone := str(path.get_subname(0))
+				var src_index := source_skeleton.find_bone(bone)
+				var dst_index := skeleton.find_bone(bone)
+				if src_index<0 or dst_index<0:
+					animation.remove_track(track)
+					continue
+				animation.track_set_path(track,NodePath("Armature/Skeleton3D:"+bone))
+				var src_rest := source_skeleton.get_bone_rest(src_index)
+				var dst_rest := skeleton.get_bone_rest(dst_index)
+				for key in animation.track_get_key_count(track):
+					if animation.track_get_type(track)==Animation.TYPE_POSITION_3D:
+						var p: Vector3=animation.track_get_key_value(track,key)
+						animation.track_set_key_value(track,key,dst_rest.origin+(p-src_rest.origin))
+					elif animation.track_get_type(track)==Animation.TYPE_ROTATION_3D:
+						var q: Quaternion=animation.track_get_key_value(track,key)
+						if alias in ["Walk_Gun","Run_Gun"] and (bone.contains("arm_") or bone.contains("hand_") or bone.begins_with("clavicle") or bone.begins_with("index_") or bone.begins_with("middle_") or bone.begins_with("ring_") or bone.begins_with("pinky_") or bone.begins_with("thumb_")):
+							var aim := source_player.get_animation("Pistol_Idle")
+							var aim_track := aim.find_track(path,Animation.TYPE_ROTATION_3D)
+							if aim_track>=0: q=aim.rotation_track_interpolate(aim_track,0.2)
+						q=dst_rest.basis.get_rotation_quaternion()*src_rest.basis.get_rotation_quaternion().inverse()*q
+						if infected and alias not in ["Death","Jump"] and bone=="spine_02": q=q*Quaternion(Vector3.RIGHT,0.18)
+						animation.track_set_key_value(track,key,q.normalized())
+			animation.loop_mode=Animation.LOOP_LINEAR if alias in ["Idle","Idle_Gun","Idle_Attack","Walk","Walk_Gun","Run","Run_Gun","Crouch_Walk","Crouch_Idle"] else Animation.LOOP_NONE
+			library.add_animation(alias,animation)
+		player.add_animation_library("",library)
+		# 1.75m adult, a narrower ordinary build; all equipment scales with the rig.
+		character.scale=Vector3(0.88,0.965,0.95)
+		character.rotation.y=PI
+		own_children(character,character)
+		var packed := PackedScene.new()
+		assert(packed.pack(character)==OK)
+		var path := "res://art/characters/human_base/"+("infected" if infected else "survivor")+".scn"
+		assert(ResourceSaver.save(packed,path)==OK)
+		print("BUILT ",path," bones=",skeleton.get_bone_count())
+		character.free()
+	motion.free()
+	quit()

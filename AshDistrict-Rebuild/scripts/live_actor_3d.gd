@@ -1,7 +1,7 @@
 extends Node2D
 ## Live 3D model composited at its ground anchor into the existing isometric world.
-const PLAYER_RIG := preload("res://art/characters/quaternius_zombie_apocalypse/Characters_Matt.gltf")
-const ZOMBIE_RIG := preload("res://art/characters/quaternius_zombie_apocalypse/Zombie_Basic.gltf")
+const PLAYER_RIG := preload("res://art/characters/human_base/survivor.scn")
+const ZOMBIE_RIG := preload("res://art/characters/human_base/infected.scn")
 const LOOPED_CLIPS := [&"Idle", &"Idle_Gun", &"Idle_Attack", &"Walk", &"Walk_Gun", &"Run", &"Run_Gun", &"Run_Arms"]
 const IMPORTED_WEAPONS := [&"Axe", &"Guitar", &"Knife", &"Pistol", &"Rifle", &"Shotgun", &"SMG", &"Spear", &"WoodenBat_Barbed", &"WoodenBat_Saw"]
 
@@ -16,6 +16,7 @@ var rigged_mode := false
 var animation_state := ""
 var animation_clip := ""
 var imported_weapon_nodes := {}
+var previous_attack_clock := 0.0
 var torso: Node3D
 var arms: Array[Node3D] = []
 var elbows: Array[Node3D] = []
@@ -114,6 +115,15 @@ func build_rigged_person() -> bool:
 		if animation_player.has_animation(clip):
 			animation_player.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
 	if kind == "player":
+		var grip := BoneAttachment3D.new()
+		grip.bone_name = "hand_r"
+		skeleton.add_child(grip)
+		weapon = joint(grip,Vector3(0,0.065,0))
+		weapon.name = "Crowbar"
+		box(weapon,Vector3(0,0,0.14),Vector3(0.018,0.018,0.62),Color("66524b"))
+		box(weapon,Vector3(0,0.035,0.44),Vector3(0.018,0.08,0.018),Color("66524b"))
+		pistol = joint(grip,Vector3(0,0.065,0))
+		box(pistol,Vector3(0,0,0.08),Vector3(0.045,0.065,0.22),Color("333638"))
 		for weapon_name: StringName in IMPORTED_WEAPONS:
 			var weapon_mesh := rigged_character.find_child(weapon_name, true, false) as GeometryInstance3D
 			if weapon_mesh != null:
@@ -171,6 +181,8 @@ func uses_skeletal_animation() -> bool:
 	return rigged_mode and skeleton != null and animation_player != null
 
 func set_imported_weapon_visibility() -> void:
+	weapon.visible = not actor.weapon_is_firearm and actor.weapon_visual_length > 0.0
+	pistol.visible = actor.weapon_is_firearm
 	for weapon_mesh: GeometryInstance3D in imported_weapon_nodes.values():
 		weapon_mesh.visible = false
 	var selected := &"Pistol" if actor.weapon_is_firearm else &"WoodenBat_Barbed"
@@ -204,14 +216,14 @@ func desired_rig_animation() -> Dictionary:
 	if state == "climb":
 		return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", actor.traversal_duration), "blend":0.08}
 	if state.begins_with("crouch_"):
-		return {"state":state, "clip":&"Duck", "speed":0.72, "blend":0.12}
+		return {"state":state, "clip":&"Crouch_Walk" if actor.moving else &"Crouch_Idle", "speed":0.85, "blend":0.12}
 	var gun: bool = bool(actor.weapon_is_firearm)
 	if state == "run":
 		return {"state":"run_gun" if gun else "run", "clip":&"Run_Gun" if gun else &"Run", "speed":clampf(actor.velocity_mps.length() / 3.8, 0.72, 1.15), "blend":0.14}
 	if state == "walk":
 		return {"state":"walk_gun" if gun else "walk", "clip":&"Walk_Gun" if gun else &"Walk", "speed":clampf(actor.velocity_mps.length() / 1.6, 0.62, 1.08), "blend":0.16}
 	if state == "fire":
-		return {"state":"fire", "clip":&"Idle_Gun", "speed":1.0, "blend":0.05}
+		return {"state":"fire", "clip":&"Shoot", "speed":1.0, "blend":0.05}
 	if state == "aim":
 		return {"state":"aim", "clip":&"Idle_Gun", "speed":0.9, "blend":0.14}
 	return {"state":"idle_gun" if gun else "idle", "clip":&"Idle_Gun" if gun else &"Idle", "speed":0.9, "blend":0.18}
@@ -234,7 +246,10 @@ func update_rigged_person(delta: float) -> void:
 	if not animation_player.has_animation(next_clip):
 		next_clip = &"Idle"
 	var target_speed := float(target.speed)
-	if next_state != animation_state or str(next_clip) != animation_clip:
+	var attack_clock: float = float(actor.state_time) if kind == "zombie" else float(actor.swing_remaining)
+	var restart_attack: bool = (next_state=="attack" and attack_clock<previous_attack_clock) if kind=="zombie" else (next_state=="melee" and attack_clock>previous_attack_clock+0.02)
+	previous_attack_clock=attack_clock
+	if next_state != animation_state or str(next_clip) != animation_clip or restart_attack:
 		animation_state = next_state
 		animation_clip = str(next_clip)
 		animation_player.speed_scale = target_speed

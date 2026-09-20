@@ -15,6 +15,11 @@ static func run(game: Node2D) -> void:
 		var character_visual: Node2D = character.live_visual
 		assert(character_visual.uses_skeletal_animation(), "Player and zombie must use imported skeletal animation")
 		assert(character_visual.skeleton.get_bone_count() >= 40, "Imported humanoid rig must retain its full skeleton")
+		var body: MeshInstance3D = character_visual.rigged_character.find_child("SuperHero_Male",true,false)
+		var clothes: MeshInstance3D = character_visual.rigged_character.find_child("Clothes",true,false)
+		assert(body != null and clothes != null and clothes.skin != null, "Human body and clothes must both be skinned")
+		var height: float = body.mesh.get_aabb().size.y*character_visual.rigged_character.scale.y
+		assert(height>1.7 and height<1.85,"Human height must follow the meter standard")
 	var vehicle: Node2D = actors[2]
 	vehicle.heading_logical = Vector2.DOWN
 	vehicle.update_pose()
@@ -29,6 +34,21 @@ static func run(game: Node2D) -> void:
 	game.player.velocity_mps = Vector2(1.6, 0.0)
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip == "Walk")
+	var rig_player: AnimationPlayer=game.player.live_visual.animation_player
+	var rig: Skeleton3D=game.player.live_visual.skeleton
+	rig_player.advance(0.2)
+	var thigh := rig.find_bone("thigh_l")
+	var first_pose := rig.get_bone_pose_rotation(thigh)
+	rig_player.advance(0.22)
+	assert(first_pose.angle_to(rig.get_bone_pose_rotation(thigh))>0.01,"Retargeted walk must actually move leg bones")
+	game.player.running=true
+	game.player.live_visual._process(0.1)
+	assert(game.player.live_visual.animation_clip=="Run")
+	game.player.running=false
+	game.player.crouching=true
+	game.player.live_visual._process(0.1)
+	assert(game.player.live_visual.animation_clip=="Crouch_Walk")
+	game.player.crouching=false
 	game.player.swing_remaining = game.player.weapon_swing_seconds
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip == "Slash")
