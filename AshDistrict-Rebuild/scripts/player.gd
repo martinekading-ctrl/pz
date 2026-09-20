@@ -143,8 +143,10 @@ func step_motion(direction: Vector2,delta: float) -> void:
 	var before:=position
 	move_world(world_map.map_to_world(velocity_mps/Metrics.CELL_METERS)*delta)
 	var traveled: float=world_map.world_to_map(position-before).length()*Metrics.CELL_METERS
+	# Animation follows resolved movement, including slowing against obstacles.
+	velocity_mps=world_map.world_to_map(position-before)*Metrics.CELL_METERS/maxf(delta,0.00001)
 	moving=traveled>0.0001
-	if moving: gait+=traveled*TAU/(2.6 if running else 1.6)
+	if moving: gait+=traveled*TAU/(Metrics.CROUCH_CYCLE_METERS if crouching else (Metrics.RUN_CYCLE_METERS if running else Metrics.WALK_CYCLE_METERS))
 	else: velocity_mps=Vector2.ZERO
 	queue_redraw()
 

@@ -1,6 +1,7 @@
 extends Node2D
 ## Live 3D model composited at its ground anchor into the existing isometric world.
 const PLAYER_RIG := preload("res://art/characters/human_base/survivor.scn")
+const Metrics := preload("res://scripts/player_metrics.gd")
 const ZOMBIE_RIG := preload("res://art/characters/human_base/infected.scn")
 const LOOPED_CLIPS := [&"Idle", &"Idle_Gun", &"Idle_Attack", &"Walk", &"Walk_Gun", &"Run", &"Run_Gun", &"Run_Arms"]
 const IMPORTED_WEAPONS := [&"Axe", &"Guitar", &"Knife", &"Pistol", &"Rifle", &"Shotgun", &"SMG", &"Spear", &"WoodenBat_Barbed", &"WoodenBat_Saw"]
@@ -216,17 +217,20 @@ func desired_rig_animation() -> Dictionary:
 	if state == "climb":
 		return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", actor.traversal_duration), "blend":0.08}
 	if state.begins_with("crouch_"):
-		return {"state":state, "clip":&"Crouch_Walk" if actor.moving else &"Crouch_Idle", "speed":0.85, "blend":0.12}
+		return {"state":state, "clip":&"Crouch_Walk" if actor.moving else &"Crouch_Idle", "speed":locomotion_speed(&"Crouch_Walk", Metrics.CROUCH_CYCLE_METERS) if actor.moving else 0.85, "blend":0.12}
 	var gun: bool = bool(actor.weapon_is_firearm)
 	if state == "run":
-		return {"state":"run_gun" if gun else "run", "clip":&"Run_Gun" if gun else &"Run", "speed":clampf(actor.velocity_mps.length() / 3.8, 0.72, 1.15), "blend":0.14}
+		return {"state":"run_gun" if gun else "run", "clip":&"Run_Gun" if gun else &"Run", "speed":locomotion_speed(&"Run", Metrics.RUN_CYCLE_METERS), "blend":0.20}
 	if state == "walk":
-		return {"state":"walk_gun" if gun else "walk", "clip":&"Walk_Gun" if gun else &"Walk", "speed":clampf(actor.velocity_mps.length() / 1.6, 0.62, 1.08), "blend":0.16}
+		return {"state":"walk_gun" if gun else "walk", "clip":&"Walk_Gun" if gun else &"Walk", "speed":locomotion_speed(&"Walk", Metrics.WALK_CYCLE_METERS), "blend":0.20}
 	if state == "fire":
 		return {"state":"fire", "clip":&"Shoot", "speed":1.0, "blend":0.05}
 	if state == "aim":
 		return {"state":"aim", "clip":&"Idle_Gun", "speed":0.9, "blend":0.14}
 	return {"state":"idle_gun" if gun else "idle", "clip":&"Idle_Gun" if gun else &"Idle", "speed":0.9, "blend":0.18}
+
+func locomotion_speed(clip: StringName, cycle_meters: float) -> float:
+	return animation_player.get_animation(clip).length * actor.velocity_mps.length() / cycle_meters
 
 func clip_speed(clip: StringName, duration: float) -> float:
 	if animation_player == null or not animation_player.has_animation(clip):

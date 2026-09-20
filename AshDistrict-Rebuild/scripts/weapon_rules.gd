@@ -1,7 +1,7 @@
 extends RefCounted
 
 const Catalog=preload("res://scripts/item_catalog.gd")
-const UNARMED := {"name":"徒手","damage":12,"range":0.82,"swing":0.44,"knockback":0.12,"durability":0.0,"wear":0.0,"visual_length":0.0,"visual_color":"bd9c78"}
+const UNARMED := {"name":"徒手","damage":12,"range":0.82,"swing":0.68,"knockback":0.12,"durability":0.0,"wear":0.0,"visual_length":0.0,"visual_color":"bd9c78"}
 
 static func stats(item_id: String) -> Dictionary:
 	return Catalog.item(item_id) if Catalog.is_weapon(item_id) else UNARMED

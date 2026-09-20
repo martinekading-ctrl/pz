@@ -14,14 +14,14 @@ static func run(game: Node2D) -> void:
 			assert(actor.facing_index==index)
 			for tick in hz: actor.step_motion(direction,1.0/hz)
 			var distance: float=game.world_map.world_to_map(actor.position).distance_to(start)*.5
-			assert(absf(distance-1.6)<.02,"Direction/FPS changed walking speed")
+			assert(absf(distance-1.35)<.02,"Direction/FPS changed walking speed")
 	for mode in ["run","crouch"]:
 		actor.position=game.world_map.map_to_world(start)
 		actor.running=mode=="run"
 		actor.crouching=mode=="crouch"
 		for tick in 60: actor.step_motion(Vector2.RIGHT,1.0/60)
 		var meters: float=game.world_map.world_to_map(actor.position).distance_to(start)*.5
-		assert(absf(meters-(3.8 if mode=="run" else .75))<.02)
+		assert(absf(meters-(3.2 if mode=="run" else .75))<.02)
 	actor.position=game.world_map.map_to_world(Vector2(15,48))
 	actor.move_world(game.world_map.map_to_world(Vector2(4,0)))
 	assert(game.world_map.world_to_map(actor.position).x<16,"Crossed solid house wall")
