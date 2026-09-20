@@ -205,8 +205,8 @@ func desired_rig_animation() -> Dictionary:
 		if state == "climb":
 			return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", 0.9), "blend":0.08}
 		if state == "walk":
-			var chase_speed := 1.0 if actor.state == actor.State.CHASE else 0.72
-			return {"state":"walk", "clip":&"Walk", "speed":chase_speed, "blend":0.16}
+			var shuffle_speed: float=animation_player.get_animation("ZombieShuffle").length*actor.movement_mps/actor.SHUFFLE_CYCLE_METERS
+			return {"state":"walk", "clip":&"ZombieShuffle", "speed":shuffle_speed, "blend":0.22}
 		return {"state":"idle", "clip":&"Idle_Attack", "speed":0.82, "blend":0.18}
 	if state == "dead":
 		return {"state":"dead", "clip":&"Death", "speed":1.0, "blend":0.16}

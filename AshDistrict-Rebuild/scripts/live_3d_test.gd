@@ -60,7 +60,17 @@ static func run(game: Node2D) -> void:
 	var test_zombie: Node2D = game.zombies[0]
 	test_zombie.change_state(test_zombie.State.CHASE)
 	test_zombie.live_visual._process(0.1)
-	assert(test_zombie.live_visual.animation_clip == "Walk")
+	assert(test_zombie.live_visual.animation_clip == "ZombieShuffle")
+	test_zombie.movement_mps=0.42
+	var slow_shuffle: float=test_zombie.live_visual.desired_rig_animation().speed
+	test_zombie.movement_mps=0.84
+	assert(is_equal_approx(float(test_zombie.live_visual.desired_rig_animation().speed),slow_shuffle*2.0))
+	test_zombie.movement_mps=0.0
+	assert(is_zero_approx(float(test_zombie.live_visual.desired_rig_animation().speed)),"Blocked infected must stop stepping")
+	var shuffle: Animation=test_zombie.live_visual.animation_player.get_animation("ZombieShuffle")
+	var left_track := shuffle.find_track(NodePath("Armature/Skeleton3D:thigh_l"),Animation.TYPE_ROTATION_3D)
+	assert(shuffle.rotation_track_interpolate(left_track,0.2).angle_to(shuffle.rotation_track_interpolate(left_track,0.8))>0.05)
+	assert(shuffle.rotation_track_interpolate(left_track,0.0).angle_to(shuffle.rotation_track_interpolate(left_track,shuffle.length))<0.01,"Shuffle loop must not snap")
 	test_zombie.change_state(test_zombie.State.ATTACK)
 	test_zombie.live_visual._process(0.1)
 	assert(test_zombie.live_visual.animation_clip=="GrabBite")

@@ -3064,6 +3064,7 @@ func human_capture() -> void:
 	player.running=true
 	player.velocity_mps=Vector2(3.8,0)
 	zombies[0].change_state(zombies[0].State.CHASE)
+	zombies[0].movement_mps=1.05
 	await get_tree().create_timer(0.3).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/human-run-v0333.png")

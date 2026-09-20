@@ -47,6 +47,42 @@ func own_children(node: Node, scene: Node) -> void:
 		child.owner = scene
 		own_children(child, scene)
 
+func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> Animation:
+	var clip := Animation.new()
+	clip.length=1.5
+	clip.loop_mode=Animation.LOOP_LINEAR
+	for track in source.get_track_count():
+		var type := source.track_get_type(track)
+		if type not in [Animation.TYPE_ROTATION_3D,Animation.TYPE_POSITION_3D]: continue
+		var path := source.track_get_path(track)
+		var name := str(path.get_subname(0))
+		var bone := skeleton.find_bone(name)
+		var rest := skeleton.get_bone_rest(bone)
+		var output := clip.add_track(type)
+		clip.track_set_path(output,path)
+		for key in 49:
+			var phase := float(key)/48.0
+			# Unequal stance times: one foot drags longer; endpoints still match.
+			var warped := phase*0.5/0.58 if phase<0.58 else 0.5+(phase-0.58)*0.5/0.42
+			var time := warped*source.length
+			if type==Animation.TYPE_POSITION_3D:
+				var value := source.position_track_interpolate(track,time)
+				clip.position_track_insert_key(output,phase*clip.length,rest.origin+(value-rest.origin)*0.3)
+			else:
+				var value := source.rotation_track_interpolate(track,time)
+				var neutral := rest.basis.get_rotation_quaternion()
+				if name.begins_with("thigh_"): value=neutral.slerp(value,0.62 if name.ends_with("l") else 0.48)
+				elif name.begins_with("calf_"): value=neutral.slerp(value,0.48 if name.ends_with("l") else 0.32)
+				elif name.begins_with("foot_") or name.begins_with("ball_"): value=neutral.slerp(value,0.45)
+				elif name.contains("arm_") or name.begins_with("hand_"):
+					var pose_track := grab.find_track(path,Animation.TYPE_ROTATION_3D)
+					value=grab.rotation_track_interpolate(pose_track,0.07)
+					value=value*Quaternion(Vector3.RIGHT,sin(phase*TAU)*0.035)
+				elif name=="spine_02": value=value*Quaternion(Vector3.RIGHT,0.10)*Quaternion(Vector3.FORWARD,sin(phase*TAU)*0.035)
+				elif name=="Head": value=neutral*Quaternion(Vector3.RIGHT,0.10)*Quaternion(Vector3.FORWARD,-0.06)
+				clip.rotation_track_insert_key(output,phase*clip.length,value.normalized())
+	return clip
+
 func material(color: Color) -> StandardMaterial3D:
 	var result := StandardMaterial3D.new()
 	result.albedo_color = color
@@ -222,6 +258,7 @@ func build_all() -> void:
 		if infected:
 			library.remove_animation("Punch")
 			library.add_animation("GrabBite",build_grab(skeleton))
+			library.add_animation("ZombieShuffle",build_shuffle(library.get_animation("Walk"),skeleton,library.get_animation("GrabBite")))
 		player.add_animation_library("",library)
 		# 1.75m adult, a narrower ordinary build; all equipment scales with the rig.
 		character.scale=Vector3(0.88,0.965,0.95)

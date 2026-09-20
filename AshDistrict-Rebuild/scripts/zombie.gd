@@ -14,6 +14,8 @@ var state: State = State.IDLE
 var health := 68
 var facing := Vector2.DOWN
 var gait := 0.0
+var movement_mps := 0.0
+const SHUFFLE_CYCLE_METERS := 0.85
 var state_time := 0.0
 var attack_cooldown := 0.0
 var attack_committed := false
@@ -58,6 +60,7 @@ func setup(owner: Node2D, map: Node2D, player: Node2D, logical_position: Vector2
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	movement_mps=0.0
 	if state == State.DEAD:
 		return
 	if game.gameplay_blocked():
@@ -214,7 +217,8 @@ func move_toward_world(destination: Vector2, speed_mps: float, delta: float) -> 
 		var step: Vector2 = world_velocity.rotated(angle).normalized() * distance
 		if can_stand(position + step):
 			position += step
-			gait += speed_mps * delta * TAU / 0.85
+			movement_mps=world_map.world_to_map(step).length()*Metrics.CELL_METERS/maxf(delta,0.00001)
+			gait += movement_mps * delta * TAU / SHUFFLE_CYCLE_METERS
 			z_index = roundi(position.y * 0.2) + 1
 			return
 
