@@ -24,7 +24,7 @@ static func run(game: Node2D) -> void:
 	var zombie: Node2D = game.zombies[0]
 	zombie.set_process(false)
 	zombie.change_state(zombie.State.ATTACK)
-	zombie.state_time = 0.46
+	zombie.state_time = 0.62
 	assert(zombie.presentation_state() == "attack_impact", "Zombie attack must expose its contact phase")
 	zombie.take_hit(1, game.player.position, 0.0)
 	assert(zombie.presentation_state() == "stagger", "A surviving zombie must visibly stagger")

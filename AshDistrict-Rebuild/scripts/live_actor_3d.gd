@@ -201,7 +201,7 @@ func desired_rig_animation() -> Dictionary:
 		if state == "stagger":
 			return {"state":"stagger", "clip":&"HitReact", "speed":1.35, "blend":0.06}
 		if state.begins_with("attack_"):
-			return {"state":"attack", "clip":&"Punch", "speed":clip_speed(&"Punch", 0.82), "blend":0.07}
+			return {"state":"attack", "clip":&"GrabBite", "speed":clip_speed(&"GrabBite", preload("res://scripts/combat_rules.gd").ZOMBIE_ATTACK_SECONDS), "blend":0.10}
 		if state == "climb":
 			return {"state":"climb", "clip":&"Jump", "speed":clip_speed(&"Jump", 0.9), "blend":0.08}
 		if state == "walk":

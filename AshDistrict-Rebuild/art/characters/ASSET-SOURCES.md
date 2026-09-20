@@ -10,6 +10,7 @@
 - Source meshes: Superhero_Male_FullBody and Hair_SimpleParted; source motions: UAL1_Standard.glb.
 - Project modifications: adult height normalization, narrower torso, skinned clothing shell, recoloring, hair and backpack attachments, animation retargeting and armed upper-body poses.
 - Generated runtime scenes: `human_base/survivor.scn` and `human_base/infected.scn`, rebuilt by `tools/build_human_characters.gd`.
+- Infected `GrabBite` is project-authored skeletal keyframing (open-handed reach, head contact, recovery); the infected scene no longer includes the source boxing clip.
 - The older Zombie Apocalypse models below are retained for rollback/reference, not current player/zombie runtime rendering.
 
 ## Quaternius Zombie Apocalypse Kit

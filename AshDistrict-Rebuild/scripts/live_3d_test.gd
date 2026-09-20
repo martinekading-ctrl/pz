@@ -61,6 +61,23 @@ static func run(game: Node2D) -> void:
 	test_zombie.change_state(test_zombie.State.CHASE)
 	test_zombie.live_visual._process(0.1)
 	assert(test_zombie.live_visual.animation_clip == "Walk")
+	test_zombie.change_state(test_zombie.State.ATTACK)
+	test_zombie.live_visual._process(0.1)
+	assert(test_zombie.live_visual.animation_clip=="GrabBite")
+	assert(not test_zombie.live_visual.animation_player.has_animation("Punch"),"Infected rig must not retain boxing attack")
+	game.needs.health=100
+	game.player_invulnerability=0.0
+	test_zombie.state_time=0.60
+	test_zombie.update_attack(0.5)
+	assert(game.needs.health==100 and not test_zombie.attack_committed)
+	test_zombie.state_time=0.63
+	test_zombie.update_attack(2.0)
+	assert(game.needs.health==100 and test_zombie.attack_committed,"Retreating out of reach must avoid grab damage")
+	test_zombie.update_attack(0.5)
+	assert(game.needs.health==100,"Missed grab cannot deal a delayed second hit")
+	test_zombie.state_time=1.31
+	test_zombie.update_attack(0.5)
+	assert(test_zombie.state==test_zombie.State.CHASE and test_zombie.attack_cooldown>0.0)
 	game.player.visible=false
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.viewport.render_target_update_mode==SubViewport.UPDATE_DISABLED)

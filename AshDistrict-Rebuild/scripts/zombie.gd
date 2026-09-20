@@ -131,10 +131,12 @@ func update_entry(entry: Dictionary,delta: float) -> bool:
 
 func attack_barrier(entry: Dictionary,delta: float) -> bool:
 	change_state_if_needed(State.BREACH)
-	barrier_attack_timer-=delta
-	if barrier_attack_timer>0.0:
+	if state_time>=Combat.ZOMBIE_ATTACK_SECONDS:
+		state_time=fmod(state_time,Combat.ZOMBIE_ATTACK_SECONDS)
+		attack_committed=false
+	if attack_committed or state_time<Combat.ZOMBIE_CONTACT_SECONDS:
 		return true
-	barrier_attack_timer=0.82
+	attack_committed=true
 	facing=(entry.position-position).normalized()
 	var result: Dictionary
 	if str(entry.type)=="door":
@@ -191,11 +193,11 @@ func hear_sound(source: Vector2, radius_meters: float) -> bool:
 
 func update_attack(distance: float) -> void:
 	facing = (target.position - position).normalized()
-	if not attack_committed and state_time >= 0.38:
+	if not attack_committed and state_time >= Combat.ZOMBIE_CONTACT_SECONDS:
 		attack_committed = true
 		if distance <= Combat.ZOMBIE_ATTACK_RANGE_METERS + 0.12 and has_line_of_sight(target.position):
 			game.damage_player(Combat.ZOMBIE_ATTACK_DAMAGE, position)
-	if state_time >= 0.82:
+	if state_time >= Combat.ZOMBIE_ATTACK_SECONDS:
 		attack_cooldown = 0.72
 		change_state(State.CHASE)
 
@@ -288,7 +290,7 @@ func state_label() -> String:
 func attack_phase() -> String:
 	if state not in [State.ATTACK, State.BREACH]:
 		return "none"
-	var duration := 0.82
+	var duration := Combat.ZOMBIE_ATTACK_SECONDS
 	var progress := clampf(state_time / duration, 0.0, 1.0)
 	if progress < 0.42:
 		return "windup"

@@ -3067,6 +3067,11 @@ func human_capture() -> void:
 	await get_tree().create_timer(0.3).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/human-run-v0333.png")
+	player.moving=false
+	zombies[0].change_state(zombies[0].State.ATTACK)
+	await get_tree().create_timer(0.62).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("res://build/zombie-grab-contact.png")
 	print("HUMAN CAPTURE PASS")
 	# Release the render scene before ending the capture process.
 	var scene_tree := get_tree()

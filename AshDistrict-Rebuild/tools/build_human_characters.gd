@@ -8,6 +8,40 @@ const CLIPS = {"Idle":"Idle", "Idle_Gun":"Pistol_Idle", "Idle_Attack":"Idle", "W
 func _initialize() -> void:
 	call_deferred("build_all")
 
+func build_grab(skeleton: Skeleton3D) -> Animation:
+	# Authored open-handed reach, forward head contact, then slow recovery.
+	# Global arm directions avoid dependence on the imported bone roll axes.
+	var clip := Animation.new()
+	clip.length=1.3
+	var times := [0.0,0.24,0.50,0.62,0.78,1.05,1.3]
+	var reaches := [0.0,0.30,1.0,1.0,0.86,0.35,0.0]
+	var leans := [0.10,0.13,0.23,0.34,0.30,0.17,0.10]
+	var tracks := []
+	for bone in skeleton.get_bone_count():
+		var track := clip.add_track(Animation.TYPE_ROTATION_3D)
+		clip.track_set_path(track,NodePath("Armature/Skeleton3D:"+skeleton.get_bone_name(bone)))
+		tracks.append(track)
+	for key in times.size():
+		var globals := []
+		for bone in skeleton.get_bone_count():
+			var parent := skeleton.get_bone_parent(bone)
+			var parent_basis: Basis=globals[parent] if parent>=0 else Basis.IDENTITY
+			var local := skeleton.get_bone_rest(bone).basis
+			var name := skeleton.get_bone_name(bone)
+			if name=="spine_02": local=local*Basis(Vector3.RIGHT,leans[key])
+			if name=="Head": local=local*Basis(Vector3.RIGHT,0.18 if key in [3,4] else -0.06)
+			if name.begins_with("upperarm_") or name.begins_with("lowerarm_"):
+				var side := 1.0 if name.ends_with("_l") else -1.0
+				var upper := name.begins_with("upperarm_")
+				var target := Vector3(side*0.22,-0.94,0.25).lerp(Vector3(side*0.18,-0.15,1.0) if upper else Vector3(-side*0.10,0.18,1.0),reaches[key]).normalized()
+				var child := skeleton.find_bone(("lowerarm_" if upper else "hand_")+("l" if side>0 else "r"))
+				var rest_global := skeleton.get_bone_global_rest(bone).basis
+				var rest_dir := (rest_global*skeleton.get_bone_rest(child).origin).normalized()
+				local=parent_basis.inverse()*Basis(Quaternion(rest_dir,target))*rest_global
+			globals.append(parent_basis*local)
+			clip.rotation_track_insert_key(tracks[bone],times[key],local.get_rotation_quaternion().normalized())
+	return clip
+
 func own_children(node: Node, scene: Node) -> void:
 	for child in node.get_children():
 		child.owner = scene
@@ -185,6 +219,9 @@ func build_all() -> void:
 						animation.track_set_key_value(track,key,q.normalized())
 			animation.loop_mode=Animation.LOOP_LINEAR if alias in ["Idle","Idle_Gun","Idle_Attack","Walk","Walk_Gun","Run","Run_Gun","Crouch_Walk","Crouch_Idle"] else Animation.LOOP_NONE
 			library.add_animation(alias,animation)
+		if infected:
+			library.remove_animation("Punch")
+			library.add_animation("GrabBite",build_grab(skeleton))
 		player.add_animation_library("",library)
 		# 1.75m adult, a narrower ordinary build; all equipment scales with the rig.
 		character.scale=Vector3(0.88,0.965,0.95)
