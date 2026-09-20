@@ -25,6 +25,8 @@ const ProductShell = preload("res://scripts/product_shell.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const ClothingRules = preload("res://scripts/clothing_rules.gd")
 const UtilityRules = preload("res://scripts/utility_rules.gd")
+const SkillRules = preload("res://scripts/skill_rules.gd")
+const SkillsPanel = preload("res://scripts/skills_panel.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -42,6 +44,7 @@ var mobile_settings_overlay: ColorRect
 var health_overlay: ColorRect
 var corpse_overlay: ColorRect
 var crafting_overlay: ColorRect
+var skills_overlay: ColorRect
 var product_shell: ColorRect
 var active_save_slot := 1
 var game_started := false
@@ -116,10 +119,12 @@ var sleep_clock_label: Label
 var sleep_progress: ProgressBar
 var autosave_cooldown := 0.0
 var autosave_path_override := ""
+var skills: Dictionary = SkillRules.fresh_state()
+var fitness_xp_seconds := 0.0
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 供水停电与家电 0.28")
+	DisplayServer.window_set_title("余烬街区：重建版 · 幸存者成长 0.29")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -208,6 +213,8 @@ func _ready() -> void:
 	if "--clothing-capture" in OS.get_cmdline_user_args(): call_deferred("clothing_capture")
 	if "--utility-test" in OS.get_cmdline_user_args(): call_deferred("run_utility_test")
 	if "--utility-capture" in OS.get_cmdline_user_args(): call_deferred("utility_capture")
+	if "--skill-test" in OS.get_cmdline_user_args(): call_deferred("run_skill_test")
+	if "--skill-capture" in OS.get_cmdline_user_args(): call_deferred("skill_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -223,7 +230,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.28"
+	title.text = "余烬街区 · 生存测试版 0.29"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -413,7 +420,7 @@ func _process(delta: float) -> void:
 			refresh_player_control()
 			return
 		search_time += simulation_delta
-		var duration: float=preload("res://scripts/container_rules.gd").duration(search_building.furniture[searching])
+		var duration: float=preload("res://scripts/container_rules.gd").duration(search_building.furniture[searching]) * SkillRules.search_duration_multiplier(skill_level("scavenging"))
 		hint_label.text = ("已暂停 · 空格继续" if simulation_paused else "正在搜索… %d%%  ·  Esc 取消" % mini(100,int(search_time/duration*100.0)))
 		if search_time >= duration:
 			var target := searching
@@ -500,7 +507,13 @@ func update_survival_hud() -> void:
 
 func update_exertion(real_delta: float) -> void:
 	var running_now: bool = bool(player.running and player.moving)
-	stamina_recovery_delay = Exertion.advance_stamina(needs, real_delta, running_now, stamina_recovery_delay)
+	var fitness_level := skill_level("fitness")
+	stamina_recovery_delay = Exertion.advance_stamina(needs, real_delta, running_now, stamina_recovery_delay, SkillRules.stamina_cost_multiplier(fitness_level), SkillRules.stamina_regen_multiplier(fitness_level))
+	if running_now:
+		fitness_xp_seconds += real_delta
+		while fitness_xp_seconds >= 4.0:
+			fitness_xp_seconds -= 4.0
+			gain_skill_xp("fitness",1)
 	update_player_condition_effects()
 
 func update_player_condition_effects() -> void:
@@ -512,7 +525,7 @@ func update_player_condition_effects() -> void:
 func try_spend_attack_stamina() -> bool:
 	var item_id := active_weapon_id()
 	var weight := float(Catalog.item(item_id).get("weight", 0.0)) if not item_id.is_empty() else 0.0
-	var cost := Exertion.attack_cost(weight) * InjuryRules.attack_stamina_multiplier(injuries)
+	var cost := Exertion.attack_cost(weight) * InjuryRules.attack_stamina_multiplier(injuries) * SkillRules.stamina_cost_multiplier(skill_level("fitness"))
 	if not Exertion.spend_attack(needs, cost):
 		combat_message = "体力不足"
 		combat_message_time = 0.8
@@ -687,7 +700,7 @@ func gameplay_blocked() -> bool:
 	return simulation_paused or int(needs.health)<=0
 
 func refresh_player_control() -> void:
-	var modal_open:=sleeping or is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
+	var modal_open:=sleeping or is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(skills_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
 	var gameplay_enabled := not simulation_paused and int(needs.health)>0 and not modal_open
 	player.set_physics_process(gameplay_enabled)
 	if not gameplay_enabled:
@@ -733,7 +746,8 @@ func should_spawn_zombies() -> bool:
 		"--injury-test", "--injury-capture", "--crafting-test", "--crafting-capture", "--crafting-preview",
 		"--product-test", "--product-capture", "--product-preview",
 		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
-		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture"
+		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture",
+		"--skill-test", "--skill-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -813,7 +827,7 @@ func repair_active_weapon_with_tape() -> Dictionary:
 	var current := float(states[0])
 	if current >= maximum - 0.01:
 		return {"consumed":false,"message":"当前武器无需修理"}
-	states[0] = minf(maximum, current + maximum * 0.2)
+	states[0] = minf(maximum, current + maximum * 0.2 * SkillRules.treatment_multiplier(skill_level("survival")))
 	weapon_durability[item_id] = states
 	return {"consumed":true,"message":"用强力胶带修补了%s，耐久恢复至 %s" % [item_name(item_id), weapon_condition_text(item_id)]}
 
@@ -1115,7 +1129,8 @@ func damage_active_weapon() -> String:
 	var states: Array=weapon_durability.get(item_id,[])
 	if states.is_empty():
 		states.append(WeaponRules.max_durability(item_id))
-	states[0]=WeaponRules.apply_wear(item_id,float(states[0]))
+	var wear := float(WeaponRules.stats(item_id).wear) * SkillRules.weapon_wear_multiplier(skill_level("survival"))
+	states[0]=maxf(0.0,float(states[0])-wear)
 	var broke:=float(states[0])<=0.0
 	if broke:
 		states.remove_at(0)
@@ -1233,7 +1248,10 @@ func _on_player_melee_impact(origin: Vector2,direction: Vector2) -> void:
 			nearest=distance
 			target_zombie=zombie
 	if target_zombie!=null:
-		target_zombie.take_hit(int(weapon.damage),origin,float(weapon.knockback))
+		var damage := roundi(float(weapon.damage)*SkillRules.melee_damage_multiplier(skill_level("melee")))
+		target_zombie.take_hit(damage,origin,float(weapon.knockback))
+		gain_skill_xp("fitness",1)
+		gain_skill_xp("melee",17 if target_zombie.is_dead() else 5)
 		var broken_weapon:=damage_active_weapon()
 		combat_message=broken_weapon+"损坏了" if not broken_weapon.is_empty() else ("击倒" if target_zombie.is_dead() else "命中")
 		combat_message_time=0.45
@@ -1322,6 +1340,11 @@ func _input(event: InputEvent) -> void:
 			if event.is_action_pressed("back"):
 				get_viewport().set_input_as_handled()
 				close_crafting()
+			return
+		if is_instance_valid(skills_overlay):
+			if event.is_action_pressed("back"):
+				get_viewport().set_input_as_handled()
+				close_skills_panel(true)
 			return
 		if is_instance_valid(corpse_overlay):
 			if event.is_action_pressed("back"):
@@ -1426,7 +1449,10 @@ func open_loot(index: int,building: Node2D = null) -> void:
 		loot_overlay.queue_free()
 	active_building=building
 	active_loot=index
+	var first_search := not bool(building.furniture[index].get("searched",false))
 	building.furniture[index]["searched"]=true
+	if first_search:
+		gain_skill_xp("scavenging",15)
 	player.set_physics_process(false)
 	var panel=preload("res://scripts/container_panel.gd").new()
 	panel.game=self
@@ -1471,7 +1497,10 @@ func open_corpse_loot(corpse: Node2D) -> void:
 	search_time = 0.0
 	search_building = null
 	active_corpse = corpse
+	var first_search := not bool(corpse.corpse_searched)
 	corpse.corpse_searched = true
+	if first_search:
+		gain_skill_xp("scavenging",8)
 	corpse.set_corpse_highlight(false)
 	corpse_overlay = CorpsePanel.new()
 	corpse_overlay.name = "CorpsePanel"
@@ -1508,6 +1537,7 @@ func take_corpse_item(corpse: Node2D, item_id: String, requested: int) -> int:
 	return moved
 
 func open_backpack() -> void:
+	close_skills_panel(false)
 	close_corpse_loot()
 	close_health_panel()
 	close_mobile_settings()
@@ -1525,6 +1555,43 @@ func close_backpack() -> void:
 		backpack.queue_free()
 	backpack=null
 	refresh_player_control()
+
+func open_skills_panel() -> void:
+	if int(needs.health)<=0 or is_instance_valid(skills_overlay):
+		return
+	if is_instance_valid(backpack):
+		close_backpack()
+	close_corpse_loot()
+	close_health_panel()
+	close_mobile_settings()
+	close_crafting()
+	close_loot()
+	searching=-1
+	search_time=0.0
+	search_building=null
+	skills_overlay=SkillsPanel.new()
+	skills_overlay.name="SkillsPanel"
+	skills_overlay.game=self
+	hud.add_child(skills_overlay)
+	refresh_player_control()
+
+func close_skills_panel(return_to_backpack: bool = false) -> void:
+	if is_instance_valid(skills_overlay):
+		skills_overlay.hide()
+		skills_overlay.queue_free()
+	skills_overlay=null
+	refresh_player_control()
+	if return_to_backpack and int(needs.health)>0:
+		call_deferred("open_backpack")
+
+func skill_level(skill_id: String) -> int:
+	return SkillRules.level(skills,skill_id)
+
+func gain_skill_xp(skill_id: String,amount: int) -> Dictionary:
+	var result:=SkillRules.add_xp(skills,skill_id,amount)
+	if bool(result.get("leveled",false)):
+		show_combat_message("%s提升至等级 %d" % [SkillRules.DEFINITIONS[skill_id].name,int(result.after)],2.2)
+	return result
 
 func toggle_crafting() -> void:
 	if int(needs.health) <= 0:
@@ -1569,6 +1636,7 @@ func craft_recipe(recipe_id: String) -> Dictionary:
 	var result := CraftingRules.craft(inventory,recipe_id)
 	if bool(result.ok):
 		emit_world_sound(player.position,2.5,"craft")
+		gain_skill_xp("survival",12)
 		if is_instance_valid(quickbar):
 			quickbar.force_refresh()
 	return result
@@ -1585,6 +1653,7 @@ func build_window_barricade(building: Node2D,index: int) -> Dictionary:
 		CraftingRules.apply_delta(inventory,CraftingRules.BARRICADE_COST,1)
 		return {"ok":false,"message":"施工失败，材料已退回"}
 	emit_world_sound(player.position,9.0,"construction")
+	gain_skill_xp("survival",16)
 	if is_instance_valid(quickbar):
 		quickbar.force_refresh()
 	return result
@@ -1601,6 +1670,7 @@ func remove_window_barricade(building: Node2D,index: int) -> Dictionary:
 		return {"ok":false,"message":"拆除失败"}
 	var result := CraftingRules.grant_recovered_materials(inventory)
 	emit_world_sound(player.position,8.0,"construction")
+	gain_skill_xp("survival",6)
 	if is_instance_valid(quickbar):
 		quickbar.force_refresh()
 	return result
@@ -1638,8 +1708,9 @@ func repair_window_barricade(building: Node2D,index: int) -> Dictionary:
 			return {"ok":false,"message":"外层木板不需要维修"}
 	var result:=CraftingRules.repair_barricade(inventory)
 	if not bool(result.ok): return result
-	building.repair_window(index,building.BARRICADE_LAYER_HP)
+	building.repair_window(index,building.BARRICADE_LAYER_HP*SkillRules.treatment_multiplier(skill_level("survival")))
 	emit_world_sound(player.position,7.0,"construction")
+	gain_skill_xp("survival",10)
 	if is_instance_valid(quickbar): quickbar.force_refresh()
 	return result
 
@@ -1726,15 +1797,17 @@ func use_inventory_item(item_id: String, preferred_part: String = "") -> Diction
 		"painkillers":
 			result = InjuryRules.take_painkillers(needs, injuries)
 		"disinfectant":
-			result = InjuryRules.disinfect_wound(injuries, preferred_part)
+			result = InjuryRules.disinfect_wound(injuries, preferred_part, SkillRules.treatment_multiplier(skill_level("survival")))
 		"antibiotics":
-			result = InjuryRules.take_antibiotics(injuries)
+			result = InjuryRules.take_antibiotics(injuries, SkillRules.treatment_multiplier(skill_level("survival")))
 		"duct_tape":
 			result = repair_active_weapon_with_tape()
 		_:
 			result = Survival.use_item(needs, item_id, is_food_spoiled(item_id))
 	if bool(result.get("consumed", false)):
 		inventory[item_id] = maxi(0, int(inventory.get(item_id, 0)) - 1)
+		if item_id in ["bandage","painkillers","disinfectant","antibiotics","duct_tape"]:
+			gain_skill_xp("survival",8)
 		if item_id == "water":
 			inventory["empty_bottle"] = int(inventory.get("empty_bottle",0)) + 1
 	InjuryRules.sync_needs(injuries, needs)
@@ -1827,6 +1900,9 @@ func show_game_over() -> void:
 	if is_instance_valid(crafting_overlay):
 		crafting_overlay.queue_free()
 		crafting_overlay=null
+	if is_instance_valid(skills_overlay):
+		skills_overlay.queue_free()
+		skills_overlay=null
 	if is_instance_valid(backpack):
 		backpack.queue_free()
 		backpack=null
@@ -1969,6 +2045,9 @@ func run_clothing_test() -> void:
 
 func run_utility_test() -> void:
 	await preload("res://scripts/utility_test.gd").run(self)
+
+func run_skill_test() -> void:
+	await preload("res://scripts/skill_test.gd").run(self)
 
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
@@ -2422,6 +2501,23 @@ func utility_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("UTILITY CAPTURE PASS: build/utilities-v028.png")
+	get_tree().quit()
+
+func skill_capture() -> void:
+	simulation_paused=true
+	skills=SkillRules.sanitize({
+		"fitness":{"xp":135},
+		"melee":{"xp":74},
+		"scavenging":{"xp":228},
+		"survival":{"xp":38},
+	})
+	open_skills_panel()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output:=ProjectSettings.globalize_path("res://build/skills-v029.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("SKILL CAPTURE PASS: build/skills-v029.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:

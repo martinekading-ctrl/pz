@@ -8,16 +8,16 @@ const MIN_RUN_STAMINA := 8.0
 const BASE_ATTACK_COST := 9.0
 const ATTACK_WEIGHT_COST := 2.3
 
-static func advance_stamina(needs: Dictionary, real_seconds: float, running: bool, recovery_delay: float) -> float:
+static func advance_stamina(needs: Dictionary, real_seconds: float, running: bool, recovery_delay: float, drain_multiplier: float = 1.0, regen_multiplier: float = 1.0) -> float:
 	var stamina := clampf(float(needs.get("stamina", MAX_STAMINA)), 0.0, MAX_STAMINA)
 	if running:
-		needs.stamina = maxf(0.0, stamina - RUN_DRAIN_PER_SECOND * real_seconds)
+		needs.stamina = maxf(0.0, stamina - RUN_DRAIN_PER_SECOND * maxf(0.0,drain_multiplier) * real_seconds)
 		return RECOVERY_DELAY_SECONDS
 	var remaining_delay := recovery_delay - real_seconds
 	if remaining_delay < 0.0:
 		var fatigue := clampf(float(needs.get("fatigue", 0.0)), 0.0, 100.0)
 		var fatigue_factor := lerpf(1.0, 0.42, fatigue / 100.0)
-		needs.stamina = minf(MAX_STAMINA, stamina + BASE_REGEN_PER_SECOND * fatigue_factor * -remaining_delay)
+		needs.stamina = minf(MAX_STAMINA, stamina + BASE_REGEN_PER_SECOND * fatigue_factor * maxf(0.0,regen_multiplier) * -remaining_delay)
 	return maxf(0.0, remaining_delay)
 
 static func attack_cost(weapon_weight: float) -> float:

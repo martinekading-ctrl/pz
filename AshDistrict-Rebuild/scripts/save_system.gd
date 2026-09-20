@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -10,6 +10,7 @@ const Population = preload("res://scripts/zombie_population.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const ClothingRules = preload("res://scripts/clothing_rules.gd")
 const UtilityRules = preload("res://scripts/utility_rules.gd")
+const SkillRules = preload("res://scripts/skill_rules.gd")
 
 static func capture_state(game: Node2D) -> Dictionary:
 	var buildings: Array[Dictionary] = []
@@ -80,6 +81,7 @@ static func capture_state(game: Node2D) -> Dictionary:
 		},
 		"needs": game.needs.duplicate(true),
 		"injuries": game.injuries.duplicate(true),
+		"skills": game.skills.duplicate(true),
 		"inventory": game.inventory.duplicate(true),
 		"equipment": game.equipment.duplicate(true),
 		"clothing_equipment": game.clothing_equipment.duplicate(true),
@@ -116,6 +118,8 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 		game.close_health_panel()
 	if is_instance_valid(game.crafting_overlay):
 		game.close_crafting()
+	if is_instance_valid(game.skills_overlay):
+		game.close_skills_panel(false)
 	if is_instance_valid(game.game_over_overlay):
 		game.game_over_overlay.queue_free()
 		game.game_over_overlay = null
@@ -138,6 +142,8 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 		game.needs[key] = clampf(float(data.needs.get(key, need_defaults[key])), 0.0, maximum)
 	game.needs["bleeding"] = maxf(0.0, float(data.needs.get("bleeding", 0.0)))
 	game.injuries = InjuryRules.sanitize(data.get("injuries", {})) if data.has("injuries") else InjuryRules.migrate_legacy_bleeding(float(game.needs.bleeding))
+	game.skills = SkillRules.sanitize(data.get("skills",{}))
+	game.fitness_xp_seconds = 0.0
 	InjuryRules.sync_needs(game.injuries, game.needs)
 
 	var restored_inventory := {}
@@ -324,17 +330,23 @@ static func migrate(source: Dictionary) -> Dictionary:
 			data.world["power_cutoff_minutes"] = UtilityRules.DEFAULT_POWER_CUTOFF_MINUTES
 			data.world["water_cutoff_minutes"] = UtilityRules.DEFAULT_WATER_CUTOFF_MINUTES
 		data["version"] = 5
+		version = 5
+	if version == 5:
+		data["skills"] = SkillRules.fresh_state()
+		data["version"] = 6
 	return data
 
 static func validate(data: Dictionary) -> bool:
 	if int(data.get("version", -1)) != SAVE_VERSION or str(data.get("map_schema", "")) != MAP_SCHEMA:
 		return false
-	for key in ["player", "world", "needs", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
+	for key in ["player", "world", "needs", "skills", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
 		if not data.has(key):
 			return false
 	if typeof(data.player) != TYPE_DICTIONARY or typeof(data.world) != TYPE_DICTIONARY:
 		return false
 	if data.has("injuries") and typeof(data.injuries) != TYPE_DICTIONARY:
+		return false
+	if typeof(data.skills) != TYPE_DICTIONARY:
 		return false
 	if data.has("population") and typeof(data.population) != TYPE_DICTIONARY:
 		return false

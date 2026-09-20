@@ -213,7 +213,7 @@ static func take_painkillers(needs: Dictionary, injuries: Dictionary) -> Diction
 	sync_needs(injuries, needs)
 	return {"consumed":true, "message":"服用了止痛药，约三小时内减轻疼痛"}
 
-static func disinfect_wound(injuries: Dictionary, preferred_part: String = "") -> Dictionary:
+static func disinfect_wound(injuries: Dictionary, preferred_part: String = "", effectiveness: float = 1.0) -> Dictionary:
 	var part := preferred_part if preferred_part in PARTS else most_infected_part(injuries)
 	if part.is_empty():
 		return {"consumed":false, "message":"没有需要消毒的感染伤口"}
@@ -221,13 +221,13 @@ static func disinfect_wound(injuries: Dictionary, preferred_part: String = "") -
 	if int(injury.get("severity",0)) <= 0 or not bool(injury.get("infected",false)):
 		return {"consumed":false, "message":PART_LABELS[part] + "没有感染伤口"}
 	var before := float(injury.get("infection",0.0))
-	injury["infection"] = maxf(0.0, before - 18.0)
+	injury["infection"] = maxf(0.0, before - 18.0 * maxf(0.0,effectiveness))
 	if str(injury.get("wound","none")) != "bite" and float(injury.infection) <= 0.0:
 		injury["infected"] = false
 	injuries[part] = injury
 	return {"consumed":true, "message":"已为%s消毒，感染 %.0f%% → %.0f%%" % [PART_LABELS[part],before,float(injury.infection)]}
 
-static func take_antibiotics(injuries: Dictionary) -> Dictionary:
+static func take_antibiotics(injuries: Dictionary, effectiveness: float = 1.0) -> Dictionary:
 	var treated := 0
 	var bite_present := false
 	for part: String in PARTS:
@@ -235,7 +235,7 @@ static func take_antibiotics(injuries: Dictionary) -> Dictionary:
 		if not bool(injury.get("infected",false)):
 			continue
 		var wound := str(injury.get("wound","none"))
-		var reduction := 10.0 if wound == "bite" else 35.0
+		var reduction := (10.0 if wound == "bite" else 35.0) * maxf(0.0,effectiveness)
 		injury["infection"] = maxf(0.0,float(injury.get("infection",0.0))-reduction)
 		if wound != "bite" and float(injury.infection) <= 0.0:
 			injury["infected"] = false

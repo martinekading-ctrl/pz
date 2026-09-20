@@ -118,6 +118,8 @@ func rebuild() -> void:
 		button(equip,slot_name+" · "+weapon_name+active,game.set_active_weapon_slot.bind(slot)).disabled=weapon_id.is_empty()
 	survivor_status_label=label(left,"生命 %d   饱食 %d   水分 %d" % [roundi(game.needs.health),roundi(game.needs.food),roundi(game.needs.water)],16)
 	condition_status_label=label(left,preload("res://scripts/survival_rules.gd").condition_text(game.needs),16)
+	var skills_button:=button(left,"查看技能与成长",game.open_skills_panel)
+	skills_button.custom_minimum_size.y=46
 	label(left,"负重  %.1f / %.0f kg" % [weight(game.inventory),MAX_WEIGHT],22)
 	var right:=VBoxContainer.new()
 	right.size_flags_horizontal=Control.SIZE_EXPAND_FILL
