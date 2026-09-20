@@ -68,9 +68,9 @@ static func make_wound(wound: String, bandaged: bool = false, infected: bool = f
 	}
 
 static func apply_zombie_hit(injuries: Dictionary, wound_roll: float, part_roll: float, infection_roll: float) -> Dictionary:
-	if wound_roll < 0.52:
+	var wound := wound_from_roll(wound_roll)
+	if wound == "none":
 		return {"wounded":false, "message":""}
-	var wound := "scratch" if wound_roll < 0.81 else ("laceration" if wound_roll < 0.95 else "bite")
 	var part := part_from_roll(part_roll)
 	var chance: float = float({"scratch":0.07, "laceration":0.18, "bite":1.0}[wound])
 	var new_infected: bool = infection_roll < chance
@@ -95,6 +95,15 @@ static func apply_zombie_hit(injuries: Dictionary, wound_roll: float, part_roll:
 		"wound":wound,
 		"message":"%s%s%s%s" % [PART_LABELS[part], verb,WOUND_LABELS[wound],suffix],
 	}
+
+static func wound_from_roll(value: float) -> String:
+	if value < 0.52:
+		return "none"
+	if value < 0.81:
+		return "scratch"
+	if value < 0.95:
+		return "laceration"
+	return "bite"
 
 static func apply_glass_scratch(injuries: Dictionary,part_roll: float) -> Dictionary:
 	var part:="arms" if part_roll<0.58 else "legs"

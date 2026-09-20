@@ -1,6 +1,6 @@
 extends RefCounted
 
-const REVISION := 1
+const REVISION := 2
 
 static func additions(building_id: String, title: String, index: int) -> Dictionary:
 	var loot := {}
@@ -23,11 +23,21 @@ static func additions(building_id: String, title: String, index: int) -> Diction
 		loot["disinfectant"] = 1
 		if roll in [0,2]:
 			loot["antibiotics"] = 1
+	elif "衣柜" in title or "衣物" in title:
+		loot["denim_jacket" if roll <= 2 else "leather_jacket"] = 1
+		loot["jeans" if roll % 2 == 0 else "cargo_pants"] = 1
+		loot["sneakers" if roll <= 2 else "work_boots"] = 1
+		if roll in [0,3]:
+			loot["baseball_cap"] = 1
 	elif "储物" in title or "工具" in title or "车库" in title:
 		loot["duct_tape"] = 1
+		if roll == 0:
+			loot["work_boots"] = 1
 	elif "收银" in title:
 		loot["energy_bar"] = 2
 		loot["soda"] = 1
+		if roll == 1:
+			loot["baseball_cap"] = 1
 	elif "餐桌" in title or "沙发" in title:
 		if roll <= 1:
 			loot["energy_bar"] = 1

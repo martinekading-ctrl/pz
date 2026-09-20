@@ -72,6 +72,8 @@ func move_item(key: String,amount: int,from_container: bool) -> void:
 	var moved: int=Rules.transfer(item.remaining if from_container else game.inventory,game.inventory if from_container else item.remaining,key,amount,MAX_WEIGHT if from_container else float(Rules.profile(item).capacity),MAX_SLOTS if from_container else 1000)
 	if moved>0 and Catalog.is_weapon(key):
 		transfer_weapon_durability(item,key,moved,from_container)
+	elif moved>0 and Catalog.is_clothing(key):
+		transfer_clothing_durability(item,key,moved,from_container)
 	message=("已拿取 " if from_container else "已放回 ")+str(moved)+" 件"+("，容量不足，余量保留" if moved<amount else "")
 	rebuild()
 
@@ -85,6 +87,8 @@ func take_all() -> void:
 		var count: int=Rules.transfer(item.remaining,game.inventory,key,999,MAX_WEIGHT,MAX_SLOTS)
 		if count>0 and Catalog.is_weapon(key):
 			transfer_weapon_durability(item,key,count,true)
+		elif count>0 and Catalog.is_clothing(key):
+			transfer_clothing_durability(item,key,count,true)
 		moved+=count
 	message="已拿取 %d 件；未转移的物品保留在容器内" % moved
 	rebuild()
@@ -131,3 +135,16 @@ func transfer_weapon_durability(item: Dictionary,key: String,count: int,from_con
 	if Catalog.is_firearm(key):
 		stored_firearms[key] = loaded_values
 		item["firearm_loaded"] = stored_firearms
+
+func transfer_clothing_durability(item: Dictionary,key: String,count: int,from_container: bool) -> void:
+	var stored: Dictionary=item.get("clothing_durability",{})
+	var values: Array=stored.get(key,[])
+	if from_container:
+		for _index: int in count:
+			var durability: float=float(values.pop_back()) if not values.is_empty() else ClothingRules.max_durability(key)
+			game.add_clothing_instances(key,1,durability)
+	else:
+		for durability: float in game.remove_clothing_instances(key,count):
+			values.append(durability)
+	stored[key]=values
+	item["clothing_durability"]=stored

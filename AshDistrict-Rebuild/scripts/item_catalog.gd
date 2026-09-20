@@ -13,6 +13,14 @@ const ITEMS := {
 	"disinfectant":{"name":"消毒剂","category":"consumable","weight":0.22,"stack":4,"icon":"✣","desc":"处理一个感染伤口；咬伤只能减缓感染。"},
 	"antibiotics":{"name":"抗生素","category":"consumable","weight":0.06,"stack":4,"icon":"✜","desc":"降低全身非咬伤感染；不能治愈僵尸咬伤。"},
 	"duct_tape":{"name":"强力胶带","category":"consumable","weight":0.18,"stack":5,"icon":"◎","desc":"修补当前装备的武器，恢复约 20% 最大耐久。"},
+	"baseball_cap":{"name":"棒球帽","category":"clothing","slot":"head","weight":0.18,"stack":1,"icon":"⌒","desc":"轻便帽子，只能提供少量头部防护。","scratch_protection":0.12,"laceration_protection":0.05,"bite_protection":0.02,"durability":40.0},
+	"motorcycle_helmet":{"name":"摩托车头盔","category":"clothing","slot":"head","weight":1.2,"stack":1,"icon":"◒","desc":"坚固的头部防护，重量较高。","scratch_protection":0.42,"laceration_protection":0.30,"bite_protection":0.16,"durability":85.0},
+	"denim_jacket":{"name":"牛仔夹克","category":"clothing","slot":"torso","weight":0.95,"stack":1,"icon":"♜","desc":"保护躯干与手臂的耐磨外套。","scratch_protection":0.28,"laceration_protection":0.18,"bite_protection":0.08,"durability":70.0},
+	"leather_jacket":{"name":"皮夹克","category":"clothing","slot":"torso","weight":1.35,"stack":1,"icon":"♛","desc":"厚实外套，对撕裂和咬伤有较好防护。","scratch_protection":0.40,"laceration_protection":0.31,"bite_protection":0.17,"durability":90.0},
+	"jeans":{"name":"牛仔裤","category":"clothing","slot":"legs","weight":0.8,"stack":1,"icon":"Ⅱ","desc":"结实的长裤，保护腿部。","scratch_protection":0.24,"laceration_protection":0.15,"bite_protection":0.06,"durability":65.0},
+	"cargo_pants":{"name":"工装裤","category":"clothing","slot":"legs","weight":1.0,"stack":1,"icon":"▥","desc":"厚实耐磨的工装长裤。","scratch_protection":0.32,"laceration_protection":0.22,"bite_protection":0.10,"durability":78.0},
+	"sneakers":{"name":"运动鞋","category":"clothing","slot":"feet","weight":0.55,"stack":1,"icon":"⌁","desc":"轻便鞋，提供少量腿脚防护。","scratch_protection":0.14,"laceration_protection":0.07,"bite_protection":0.02,"durability":45.0},
+	"work_boots":{"name":"工作靴","category":"clothing","slot":"feet","weight":1.15,"stack":1,"icon":"⌙","desc":"高帮工作靴，可与裤装共同保护腿部。","scratch_protection":0.30,"laceration_protection":0.20,"bite_protection":0.09,"durability":80.0},
 	"parts":{"name":"机械零件","category":"material","weight":0.25,"stack":10,"icon":"⚙","desc":"制作与修理材料，暂不能直接使用。"},
 	"bed_sheet":{"name":"旧床单","category":"material","weight":0.35,"stack":4,"icon":"▧","desc":"可撕成布条，用于制作简易绷带。"},
 	"ripped_cloth":{"name":"撕布","category":"material","weight":0.06,"stack":12,"icon":"≈","desc":"从旧床单撕下的布条，可制作简易绷带。"},
@@ -28,7 +36,9 @@ const ITEMS := {
 	"pistol":{"name":"9mm 手枪","category":"firearm","weight":0.95,"stack":1,"icon":"⌐","desc":"近距离自卫手枪。必须瞄准后射击，枪声会吸引远处僵尸。","damage":46,"range":12.0,"swing":0.26,"knockback":0.16,"durability":100.0,"wear":0.12,"visual_length":18.0,"visual_color":"646a6c","mag_capacity":12,"reload_seconds":1.55,"noise_radius":26.0,"ammo_item":"pistol_ammo","magazine_item":"pistol_magazine"}
 }
 
-const LOOT_EXPANSION_IDS := ["fresh_food","canned_soup","energy_bar","soda","coffee","disinfectant","antibiotics","duct_tape"]
+const FUNCTIONAL_ITEM_IDS := ["fresh_food","canned_soup","energy_bar","soda","coffee","disinfectant","antibiotics","duct_tape"]
+const CLOTHING_IDS := ["baseball_cap","motorcycle_helmet","denim_jacket","leather_jacket","jeans","cargo_pants","sneakers","work_boots"]
+const LOOT_EXPANSION_IDS := ["fresh_food","canned_soup","energy_bar","soda","coffee","disinfectant","antibiotics","duct_tape","baseball_cap","motorcycle_helmet","denim_jacket","leather_jacket","jeans","cargo_pants","sneakers","work_boots"]
 
 static func has(item_id: String) -> bool:
 	return ITEMS.has(item_id)
@@ -41,3 +51,6 @@ static func is_weapon(item_id: String) -> bool:
 
 static func is_firearm(item_id: String) -> bool:
 	return str(item(item_id).get("category", "")) == "firearm"
+
+static func is_clothing(item_id: String) -> bool:
+	return str(item(item_id).get("category", "")) == "clothing"

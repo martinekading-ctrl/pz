@@ -23,6 +23,7 @@ const CorpsePanel = preload("res://scripts/corpse_panel.gd")
 const CraftingPanel = preload("res://scripts/crafting_panel.gd")
 const ProductShell = preload("res://scripts/product_shell.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
+const ClothingRules = preload("res://scripts/clothing_rules.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -65,7 +66,7 @@ var search_building: Node2D
 var left_items := {}
 var searching := -1
 var search_time := 0.0
-var inventory := {"food":0,"water":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
+var inventory := {"food":0,"water":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"baseball_cap":0,"motorcycle_helmet":0,"denim_jacket":0,"leather_jacket":0,"jeans":0,"cargo_pants":0,"sneakers":0,"work_boots":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
 const Backpack=preload("res://scripts/backpack.gd")
 var backpack: ColorRect
 var ground_items: Array[Dictionary]=[]
@@ -84,6 +85,8 @@ var injury_rng:=RandomNumberGenerator.new()
 var survival_clock_enabled:=true
 var weapon_durability:={"crowbar":[100.0],"baseball_bat":[],"kitchen_knife":[],"hand_axe":[],"pistol":[]}
 var equipment:={"primary":"crowbar","secondary":""}
+var clothing_equipment := {"head":"", "torso":"", "legs":"", "feet":""}
+var clothing_durability := {"baseball_cap":[],"motorcycle_helmet":[],"denim_jacket":[],"leather_jacket":[],"jeans":[],"cargo_pants":[],"sneakers":[],"work_boots":[]}
 var active_weapon_slot:="primary"
 var firearm_loaded := {"pistol":0}
 var reload_remaining := 0.0
@@ -112,7 +115,7 @@ var autosave_path_override := ""
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 物品与战利品 0.26")
+	DisplayServer.window_set_title("余烬街区：重建版 · 服装与身体防护 0.27")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -197,6 +200,8 @@ func _ready() -> void:
 	if "--safehouse-capture" in OS.get_cmdline_user_args(): call_deferred("safehouse_capture")
 	if "--loot-test" in OS.get_cmdline_user_args(): call_deferred("run_loot_test")
 	if "--loot-capture" in OS.get_cmdline_user_args(): call_deferred("loot_capture")
+	if "--clothing-test" in OS.get_cmdline_user_args(): call_deferred("run_clothing_test")
+	if "--clothing-capture" in OS.get_cmdline_user_args(): call_deferred("clothing_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -212,7 +217,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.26"
+	title.text = "余烬街区 · 生存测试版 0.27"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -681,7 +686,8 @@ func should_spawn_zombies() -> bool:
 		"--mobile-test", "--mobile-capture", "--settings-capture",
 		"--injury-test", "--injury-capture", "--crafting-test", "--crafting-capture", "--crafting-preview",
 		"--product-test", "--product-capture", "--product-preview",
-		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture"
+		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
+		"--clothing-test", "--clothing-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -784,6 +790,79 @@ func remove_weapon_instances(item_id: String,count: int) -> Array[float]:
 	validate_equipment()
 	return removed
 
+func clothing_condition_value(item_id: String) -> float:
+	var states: Array = clothing_durability.get(item_id, [])
+	return float(states[0]) if not states.is_empty() else ClothingRules.max_durability(item_id)
+
+func clothing_condition_text(item_id: String) -> String:
+	return ClothingRules.condition_text(item_id, clothing_condition_value(item_id)) if Catalog.is_clothing(item_id) else ""
+
+func add_clothing_instances(item_id: String, count: int, durability: float = -1.0) -> void:
+	if not Catalog.is_clothing(item_id):
+		return
+	var states: Array = clothing_durability.get(item_id, [])
+	for _index: int in count:
+		states.append(ClothingRules.max_durability(item_id) if durability < 0.0 else clampf(durability, 0.0, ClothingRules.max_durability(item_id)))
+	clothing_durability[item_id] = states
+
+func remove_clothing_instances(item_id: String, count: int) -> Array[float]:
+	var removed: Array[float] = []
+	var states: Array = clothing_durability.get(item_id, [])
+	for _index: int in mini(count, states.size()):
+		removed.append(float(states.pop_back()))
+	clothing_durability[item_id] = states
+	validate_clothing_equipment()
+	return removed
+
+func equip_clothing(item_id: String) -> bool:
+	if not Catalog.is_clothing(item_id) or int(inventory.get(item_id, 0)) <= 0:
+		return false
+	var slot := ClothingRules.slot(item_id)
+	if slot not in ClothingRules.SLOTS:
+		return false
+	var states: Array = clothing_durability.get(item_id, [])
+	if states.is_empty():
+		add_clothing_instances(item_id, int(inventory.get(item_id, 0)))
+	clothing_equipment[slot] = item_id
+	return true
+
+func unequip_clothing(slot: String) -> void:
+	if slot in ClothingRules.SLOTS:
+		clothing_equipment[slot] = ""
+
+func validate_clothing_equipment() -> void:
+	for slot: String in ClothingRules.SLOTS:
+		var item_id := str(clothing_equipment.get(slot, ""))
+		if not Catalog.is_clothing(item_id) or ClothingRules.slot(item_id) != slot or int(inventory.get(item_id, 0)) <= 0:
+			clothing_equipment[slot] = ""
+
+func apply_clothing_protection(part: String, wound: String) -> Dictionary:
+	var protection := ClothingRules.combined_protection(part, wound, clothing_equipment, clothing_durability)
+	var blocked := injury_rng.randf() < protection
+	var damaged_names: Array[String] = []
+	var broken_names: Array[String] = []
+	for clothing_slot: String in ClothingRules.slots_for_part(part):
+		var item_id := str(clothing_equipment.get(clothing_slot, ""))
+		if not Catalog.is_clothing(item_id):
+			continue
+		var states: Array = clothing_durability.get(item_id, [])
+		if states.is_empty():
+			states.append(ClothingRules.max_durability(item_id))
+		states[0] = maxf(0.0, float(states[0]) - ClothingRules.wear_for(wound, blocked))
+		damaged_names.append(item_name(item_id))
+		if float(states[0]) <= 0.0:
+			states.pop_front()
+			inventory[item_id] = maxi(0, int(inventory.get(item_id, 0)) - 1)
+			clothing_equipment[clothing_slot] = ""
+			broken_names.append(item_name(item_id))
+		clothing_durability[item_id] = states
+	var message := ""
+	if blocked and not damaged_names.is_empty():
+		message = "服装挡住了%s" % InjuryRules.WOUND_LABELS[wound]
+	if not broken_names.is_empty():
+		message += (" · " if not message.is_empty() else "") + "%s损坏" % "、".join(broken_names)
+	return {"blocked":blocked,"protection":protection,"message":message}
+
 func validate_equipment() -> void:
 	for slot: String in ["primary","secondary"]:
 		var item_id: String=str(equipment[slot])
@@ -791,6 +870,7 @@ func validate_equipment() -> void:
 			equipment[slot]=""
 	if str(equipment.get(active_weapon_slot,"")).is_empty():
 		active_weapon_slot="secondary" if not str(equipment.secondary).is_empty() else "primary"
+	validate_clothing_equipment()
 	refresh_equipped_weapon()
 
 func equip_weapon(item_id: String,slot: String) -> bool:
@@ -1125,7 +1205,19 @@ func damage_player(amount: int,source_world: Vector2) -> void:
 	needs.health=maxf(0.0,float(needs.health)-float(amount))
 	var injury_result := {"wounded":false, "message":""}
 	if amount>=Combat.ZOMBIE_ATTACK_DAMAGE:
-		injury_result = InjuryRules.apply_zombie_hit(injuries, injury_rng.randf(), injury_rng.randf(), injury_rng.randf())
+		var wound_roll := injury_rng.randf()
+		var part_roll := injury_rng.randf()
+		var infection_roll := injury_rng.randf()
+		var wound := InjuryRules.wound_from_roll(wound_roll)
+		if wound != "none":
+			var part := InjuryRules.part_from_roll(part_roll)
+			var protection_result := apply_clothing_protection(part, wound)
+			if bool(protection_result.blocked):
+				injury_result = {"wounded":false,"message":str(protection_result.message)}
+			else:
+				injury_result = InjuryRules.apply_zombie_hit(injuries, wound_roll, part_roll, infection_roll)
+				if not str(protection_result.message).is_empty():
+					injury_result.message = str(injury_result.message) + " · " + str(protection_result.message)
 		InjuryRules.sync_needs(injuries, needs)
 	update_player_condition_effects()
 	player_invulnerability=0.55
@@ -1133,7 +1225,7 @@ func damage_player(amount: int,source_world: Vector2) -> void:
 	if interrupted_search and int(needs.health)>0 and not is_instance_valid(backpack) and not is_instance_valid(loot_overlay):
 		refresh_player_control()
 	var damage_text := "受到 %d 点伤害" % amount
-	if bool(injury_result.wounded):
+	if not str(injury_result.message).is_empty():
 		damage_text += " · " + str(injury_result.message)
 	if interrupted_search:
 		damage_text += " · 搜索中断"
@@ -1362,6 +1454,8 @@ func take_corpse_item(corpse: Node2D, item_id: String, requested: int) -> int:
 		corpse.corpse_inventory[item_id] = int(corpse.corpse_inventory.get(item_id, 0)) - 1
 		if Catalog.is_weapon(item_id):
 			add_weapon_instances(item_id, 1)
+		elif Catalog.is_clothing(item_id):
+			add_clothing_instances(item_id, 1)
 		moved += 1
 	if is_instance_valid(quickbar):
 		quickbar.force_refresh()
@@ -1796,6 +1890,9 @@ func run_product_test() -> void:
 func run_loot_test() -> void:
 	await preload("res://scripts/loot_item_test.gd").run(self)
 
+func run_clothing_test() -> void:
+	await preload("res://scripts/clothing_test.gd").run(self)
+
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
 		return
@@ -2200,6 +2297,28 @@ func loot_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("LOOT CAPTURE PASS: build/loot-items-v026.png")
+	get_tree().quit()
+
+func clothing_capture() -> void:
+	simulation_paused = true
+	for item_id: String in Catalog.ITEMS.keys():
+		inventory[item_id] = 0
+	for item_id: String in Catalog.CLOTHING_IDS:
+		inventory[item_id] = 1
+		clothing_durability[item_id] = [ClothingRules.max_durability(item_id)]
+	clothing_durability.leather_jacket = [63.0]
+	clothing_durability.work_boots = [54.0]
+	clothing_equipment = {"head":"motorcycle_helmet","torso":"leather_jacket","legs":"cargo_pants","feet":"work_boots"}
+	open_backpack()
+	backpack.selected = "leather_jacket"
+	backpack.message = "穿戴后仍计入背包负重；点击左侧已穿戴部位可脱下。"
+	backpack.rebuild()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output := ProjectSettings.globalize_path("res://build/clothing-protection-v027.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("CLOTHING CAPTURE PASS: build/clothing-protection-v027.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:

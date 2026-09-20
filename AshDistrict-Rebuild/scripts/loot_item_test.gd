@@ -8,7 +8,7 @@ const LootProfiles = preload("res://scripts/loot_profiles.gd")
 static func run(game: Node2D) -> void:
 	game.simulation_paused = true
 	game.player.set_physics_process(false)
-	for item_id: String in Catalog.LOOT_EXPANSION_IDS:
+	for item_id: String in Catalog.FUNCTIONAL_ITEM_IDS:
 		assert(Catalog.has(item_id), "Expanded loot item must exist: " + item_id)
 
 	var expanded_container_count := 0

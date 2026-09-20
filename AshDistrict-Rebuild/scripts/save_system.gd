@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -8,6 +8,7 @@ const Survival = preload("res://scripts/survival_rules.gd")
 const InjuryRules = preload("res://scripts/injury_rules.gd")
 const Population = preload("res://scripts/zombie_population.gd")
 const LootProfiles = preload("res://scripts/loot_profiles.gd")
+const ClothingRules = preload("res://scripts/clothing_rules.gd")
 
 static func capture_state(game: Node2D) -> Dictionary:
 	var buildings: Array[Dictionary] = []
@@ -19,6 +20,7 @@ static func capture_state(game: Node2D) -> Dictionary:
 				"searched": bool(item.get("searched", false)),
 				"weapon_durability": item.get("weapon_durability", {}).duplicate(true),
 				"firearm_loaded": item.get("firearm_loaded", {}).duplicate(true),
+				"clothing_durability": item.get("clothing_durability", {}).duplicate(true),
 			})
 		var doors := {"primary": door_state(building.door_component)}
 		if has_property(building, "second_door") and is_instance_valid(building.second_door):
@@ -77,6 +79,8 @@ static func capture_state(game: Node2D) -> Dictionary:
 		"injuries": game.injuries.duplicate(true),
 		"inventory": game.inventory.duplicate(true),
 		"equipment": game.equipment.duplicate(true),
+		"clothing_equipment": game.clothing_equipment.duplicate(true),
+		"clothing_durability": game.clothing_durability.duplicate(true),
 		"active_weapon_slot": str(game.active_weapon_slot),
 		"weapon_durability": game.weapon_durability.duplicate(true),
 		"firearm_loaded": game.firearm_loaded.duplicate(true),
@@ -141,6 +145,8 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	}
 	game.active_weapon_slot = str(data.active_weapon_slot) if str(data.active_weapon_slot) in ["primary", "secondary"] else "primary"
 	game.weapon_durability = restore_weapon_durability(game, data.weapon_durability)
+	game.clothing_durability = restore_clothing_durability(game, data.clothing_durability)
+	game.clothing_equipment = restore_clothing_equipment(game, data.clothing_equipment)
 	game.firearm_loaded = restore_firearm_loaded(game, data.get("firearm_loaded", {}))
 	game.shot_sequence = maxi(0, int(data.get("shot_sequence", 0)))
 	game.cancel_reload()
@@ -189,6 +195,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 			building.furniture[index]["searched"] = searched
 			building.furniture[index]["weapon_durability"] = containers[index].get("weapon_durability", {}).duplicate(true)
 			building.furniture[index]["firearm_loaded"] = containers[index].get("firearm_loaded", {}).duplicate(true)
+			building.furniture[index]["clothing_durability"] = containers[index].get("clothing_durability", {}).duplicate(true)
 		var doors: Dictionary = saved_building.doors
 		apply_door_state(building.door_component, doors.get("primary", {}))
 		if doors.has("second") and has_property(building, "second_door") and is_instance_valid(building.second_door):
@@ -301,12 +308,17 @@ static func migrate(source: Dictionary) -> Dictionary:
 		if typeof(data.get("world", {})) == TYPE_DICTIONARY and not data.world.has("fresh_food_expiry_minutes"):
 			data.world["fresh_food_expiry_minutes"] = float(data.world.get("game_time_minutes", 3380.0)) + 3600.0
 		data["version"] = 3
+		version = 3
+	if version == 3:
+		data["clothing_equipment"] = {"head":"", "torso":"", "legs":"", "feet":""}
+		data["clothing_durability"] = {}
+		data["version"] = 4
 	return data
 
 static func validate(data: Dictionary) -> bool:
 	if int(data.get("version", -1)) != SAVE_VERSION or str(data.get("map_schema", "")) != MAP_SCHEMA:
 		return false
-	for key in ["player", "world", "needs", "inventory", "equipment", "weapon_durability", "ground_items", "buildings", "zombies"]:
+	for key in ["player", "world", "needs", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
 		if not data.has(key):
 			return false
 	if typeof(data.player) != TYPE_DICTIONARY or typeof(data.world) != TYPE_DICTIONARY:
@@ -316,6 +328,8 @@ static func validate(data: Dictionary) -> bool:
 	if data.has("population") and typeof(data.population) != TYPE_DICTIONARY:
 		return false
 	if data.has("firearm_loaded") and typeof(data.firearm_loaded) != TYPE_DICTIONARY:
+		return false
+	if typeof(data.clothing_equipment) != TYPE_DICTIONARY or typeof(data.clothing_durability) != TYPE_DICTIONARY:
 		return false
 	if typeof(data.get("safehouse", {})) != TYPE_DICTIONARY:
 		return false
@@ -399,4 +413,26 @@ static func restore_firearm_loaded(game: Node2D, saved: Dictionary) -> Dictionar
 			continue
 		var amount := int(saved.get(item_id, 0)) if int(game.inventory.get(item_id, 0)) > 0 else 0
 		restored[item_id] = clampi(amount, 0, int(Catalog.item(item_id).mag_capacity))
+	return restored
+
+static func restore_clothing_durability(game: Node2D, saved: Dictionary) -> Dictionary:
+	var restored := {}
+	for item_id: String in Catalog.CLOTHING_IDS:
+		var states: Array = saved.get(item_id, [])
+		var valid_states: Array[float] = []
+		for value in states:
+			valid_states.append(clampf(float(value), 0.0, ClothingRules.max_durability(item_id)))
+		while valid_states.size() < int(game.inventory.get(item_id, 0)):
+			valid_states.append(ClothingRules.max_durability(item_id))
+		while valid_states.size() > int(game.inventory.get(item_id, 0)):
+			valid_states.pop_back()
+		restored[item_id] = valid_states
+	return restored
+
+static func restore_clothing_equipment(game: Node2D, saved: Dictionary) -> Dictionary:
+	var restored := {"head":"", "torso":"", "legs":"", "feet":""}
+	for slot: String in ClothingRules.SLOTS:
+		var item_id := str(saved.get(slot, ""))
+		if Catalog.is_clothing(item_id) and ClothingRules.slot(item_id) == slot and int(game.inventory.get(item_id, 0)) > 0:
+			restored[slot] = item_id
 	return restored

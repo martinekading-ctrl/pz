@@ -96,13 +96,13 @@ static func profile(logical: Vector2, zone: String, building_id: String, sleepin
 static func corpse_loot(index: int, zone: String) -> Dictionary:
 	var loot := {}
 	match index % 7:
-		0: loot = {"energy_bar":1}
+		0: loot = {"energy_bar":1, "baseball_cap":1} if zone == "commercial" else {"energy_bar":1}
 		1: loot = {"parts":1}
 		2: loot = {"bandage":1}
-		3: loot = {"soda":1}
+		3: loot = {"soda":1, "sneakers":1} if zone == "residential" else {"soda":1}
 		4: loot = {"painkillers":1, "disinfectant":1} if zone == "commercial" else {"painkillers":1}
 		5: loot = {"pistol_ammo":2} if zone in ["commercial", "road"] else {"food":1}
-		_: loot = {"duct_tape":1, "bandage":1} if zone == "commercial" else {}
+		_: loot = {"duct_tape":1, "denim_jacket":1} if zone == "commercial" else {}
 	return loot
 
 static func valid_spawn(world_map: Node2D, logical: Vector2, plan: Array[Dictionary], separation_cells: float) -> bool:

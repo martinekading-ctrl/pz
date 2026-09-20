@@ -2,6 +2,7 @@ extends ColorRect
 
 const Catalog=preload("res://scripts/item_catalog.gd")
 const WeaponRules=preload("res://scripts/weapon_rules.gd")
+const ClothingRules=preload("res://scripts/clothing_rules.gd")
 const ITEMS=Catalog.ITEMS
 const MAX_WEIGHT:=12.0
 const MAX_SLOTS:=24
@@ -102,9 +103,13 @@ func rebuild() -> void:
 	var equip:=GridContainer.new()
 	equip.columns=2
 	left.add_child(equip)
-	for slot in ["头部","护甲"]:
-		var empty:=button(equip,slot+" · 预留",func(): pass)
-		empty.disabled=true
+	for slot: String in ClothingRules.SLOTS:
+		var clothing_id: String=str(game.clothing_equipment.get(slot,""))
+		var clothing_name: String="空" if clothing_id.is_empty() else str(ITEMS[clothing_id].name)
+		var condition: String="" if clothing_id.is_empty() else "\n"+game.clothing_condition_text(clothing_id)
+		var clothing_button:=button(equip,str(ClothingRules.SLOT_LABELS[slot])+" · "+clothing_name+condition,unequip_clothing.bind(slot))
+		clothing_button.custom_minimum_size.y=54
+		clothing_button.disabled=clothing_id.is_empty()
 	for slot: String in ["primary","secondary"]:
 		var weapon_id: String=str(game.equipment[slot])
 		var slot_name: String="主武器" if slot=="primary" else "副武器"
@@ -131,11 +136,11 @@ func rebuild() -> void:
 		var remaining: int=game.inventory.get(key,0)
 		while remaining>0:
 			var amount:=mini(remaining,int(ITEMS[key].stack))
-			var condition: String=game.weapon_condition_text(key) if Catalog.is_weapon(key) else game.item_condition_text(key)
+			var condition: String=game.weapon_condition_text(key) if Catalog.is_weapon(key) else (game.clothing_condition_text(key) if Catalog.is_clothing(key) else game.item_condition_text(key))
 			var suffix: String="\n"+condition if not condition.is_empty() else ""
 			var cell:=button(grid,str(ITEMS[key].icon)+"  ×"+str(amount)+"\n"+str(ITEMS[key].name)+suffix,choose.bind(key))
 			cell.custom_minimum_size=Vector2(115,72)
-			cell.tooltip_text=str(ITEMS[key].desc)+("\n耐久 "+game.weapon_condition_text(key) if Catalog.is_weapon(key) else "")
+			cell.tooltip_text=str(ITEMS[key].desc)+("\n耐久 "+game.weapon_condition_text(key) if Catalog.is_weapon(key) else ("\n"+ClothingRules.protection_text(key) if Catalog.is_clothing(key) else ""))
 			remaining-=amount
 			count+=1
 	for i in maxi(0,MAX_SLOTS-count):
@@ -154,11 +159,17 @@ func rebuild() -> void:
 			label(right,"需要 %s · 装填 %.2f 秒 · 枪声半径 %.0f 米" % [Catalog.item(str(stats.magazine_item)).name,float(stats.reload_seconds),float(stats.noise_radius)],16)
 		else:
 			label(right,"伤害 %d   距离 %.2f 米   攻速 %.2f 秒   耐久 %s" % [stats.damage,stats.range,stats.swing,game.weapon_condition_text(selected)],16)
+	elif Catalog.is_clothing(selected):
+		label(right,"部位：%s   耐久 %s" % [ClothingRules.SLOT_LABELS[ClothingRules.slot(selected)],game.clothing_condition_text(selected)],16)
+		label(right,ClothingRules.protection_text(selected),16)
 	var actions:=HBoxContainer.new()
 	right.add_child(actions)
 	if Catalog.is_weapon(selected):
 		button(actions,"装备主武器",equip_weapon.bind("primary")).disabled=game.inventory.get(selected,0)<=0
 		button(actions,"装备副武器",equip_weapon.bind("secondary")).disabled=game.inventory.get(selected,0)<=0
+	elif Catalog.is_clothing(selected):
+		var worn: bool=str(game.clothing_equipment.get(ClothingRules.slot(selected),""))==selected
+		button(actions,"已穿戴" if worn else "穿戴",equip_clothing).disabled=game.inventory.get(selected,0)<=0 or worn
 	else:
 		button(actions,"使用 1 件",use_item).disabled=game.inventory.get(selected,0)<=0 or str(ITEMS[selected].category)!="consumable"
 	button(actions,"丢弃 1 件",drop_item).disabled=game.inventory.get(selected,0)<=0
@@ -182,6 +193,18 @@ func equip_weapon(slot: String) -> void:
 		message="背包中没有这件武器"
 	rebuild()
 
+func equip_clothing() -> void:
+	if game.equip_clothing(selected):
+		message="已穿戴 "+str(ITEMS[selected].name)
+	else:
+		message="无法穿戴该物品"
+	rebuild()
+
+func unequip_clothing(slot: String) -> void:
+	game.unequip_clothing(slot)
+	message="已脱下"+str(ClothingRules.SLOT_LABELS[slot])+"装备"
+	rebuild()
+
 func drop_item() -> void:
 	if game.inventory.get(selected,0)<=0: return
 	var firearm_rounds := int(game.firearm_loaded.get(selected, 0)) if Catalog.is_firearm(selected) else 0
@@ -194,6 +217,9 @@ func drop_item() -> void:
 			ground["loaded_ammo"] = firearm_rounds
 			if int(game.inventory.get(selected, 0)) <= 0:
 				game.firearm_loaded[selected] = 0
+	elif Catalog.is_clothing(selected):
+		var removed_clothing: Array[float]=game.remove_clothing_instances(selected,1)
+		ground["durability"]=removed_clothing[0] if not removed_clothing.is_empty() else ClothingRules.max_durability(selected)
 	game.ground_items.append(ground)
 	message="已放在脚边，可在附近拾回"
 	rebuild()
@@ -209,6 +235,8 @@ func pickup() -> void:
 			game.add_weapon_instances(item.key,1,float(item.get("durability",WeaponRules.max_durability(item.key))))
 			if Catalog.is_firearm(item.key) and int(game.inventory.get(item.key, 0)) == 1:
 				game.firearm_loaded[item.key] = clampi(int(item.get("loaded_ammo", 0)), 0, int(Catalog.item(item.key).mag_capacity))
+		elif Catalog.is_clothing(item.key):
+			game.add_clothing_instances(item.key,1,float(item.get("durability",ClothingRules.max_durability(item.key))))
 		game.ground_items.remove_at(i)
 		taken+=1
 	message="拾回 %d 件物品（仅拾取 1.2 米内且背包装得下的物品）" % taken
