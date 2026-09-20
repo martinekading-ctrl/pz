@@ -4,7 +4,9 @@
 
 ## 当前阶段
 
-最新版本为 0.31：新游戏增加幸存者创建页面，提供普通幸存者、消防员、护理员和维修工四种职业，以及六项正负特质和点数平衡。职业决定初始技能与物资，特质实际影响战斗、体力、搜索、口渴、声音和经验；身份完整进入存档。说明见 `docs/character-creation-v1.md`。
+最新版本为 0.32：加入晴朗、阴天、雨天和雾天的轻量天气循环。天气随游戏时间平滑切换，只改变环境颜色、雾层、低成本雨线和 HUD 天气文字，不增加体温、潮湿、生病或服装数值。说明见 `docs/weather-cycle-v1.md`。
+
+0.31 职业与特质：新游戏增加幸存者创建页面，提供普通幸存者、消防员、护理员和维修工四种职业，以及六项正负特质和点数平衡。职业决定初始技能与物资，特质实际影响战斗、体力、搜索、口渴、声音和经验；身份完整进入存档。说明见 `docs/character-creation-v1.md`。
 
 0.30 车辆与燃油：首辆旧旅行车已经进入住宅街块。靠近后可检查车况、油量和后备箱，转移普通物资、使用汽油桶加油并进入驾驶；车辆具有加速、倒车、转向、障碍碰撞、撞击感染者、噪声、燃油消耗和完整存档。说明见 `docs/vehicle-system-v1.md`。
 
@@ -93,6 +95,8 @@
 - 车辆外观与检查页面截图：`Godot --path . -- --vehicle-capture`
 - 职业、特质与创建流程验证：`Godot --headless --path . -- --character-test`
 - 幸存者创建页面截图：`Godot --path . -- --character-capture`
+- 轻量天气循环验证：`Godot --headless --path . -- --weather-test`
+- 雨天画面截图：`Godot --path . -- --weather-capture`
 - 产品外壳验证：`Godot --headless --path . -- --product-test`
 - 主菜单、存档槽和设置截图：`Godot --path . -- --product-capture`
 - 正常启动菜单预览：`Godot --path . -- --product-preview`

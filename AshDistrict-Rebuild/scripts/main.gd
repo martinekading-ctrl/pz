@@ -30,6 +30,8 @@ const SkillsPanel = preload("res://scripts/skills_panel.gd")
 const VehiclePanel = preload("res://scripts/vehicle_panel.gd")
 const VehicleRules = preload("res://scripts/vehicle_rules.gd")
 const CharacterRules = preload("res://scripts/character_rules.gd")
+const WeatherRules = preload("res://scripts/weather_rules.gd")
+const WeatherOverlay = preload("res://scripts/weather_overlay.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -68,6 +70,9 @@ var condition_label: Label
 var health_status_button: Button
 var need_bars := {}
 var world_tint: CanvasModulate
+var weather_canvas: CanvasLayer
+var weather_overlay: Control
+var weather_state: Dictionary=WeatherRules.sample(3380.0)
 var loot_overlay: ColorRect
 var active_loot := -1
 var active_building: Node2D
@@ -131,7 +136,7 @@ var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.dup
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 职业与特质 0.31")
+	DisplayServer.window_set_title("余烬街区：重建版 · 动态天气 0.32")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -169,6 +174,7 @@ func _ready() -> void:
 	camera.position = Vector2(0,-90)
 	player.add_child(camera)
 	create_hud()
+	create_weather_overlay()
 	create_mobile_controls()
 	var saved_settings := SettingsStore.load_values()
 	mobile_controls.apply_layout_preset(str(saved_settings.mobile_layout),false)
@@ -229,12 +235,15 @@ func _ready() -> void:
 	if "--vehicle-capture" in OS.get_cmdline_user_args(): call_deferred("vehicle_capture")
 	if "--character-test" in OS.get_cmdline_user_args(): call_deferred("run_character_test")
 	if "--character-capture" in OS.get_cmdline_user_args(): call_deferred("character_capture")
+	if "--weather-test" in OS.get_cmdline_user_args(): call_deferred("run_weather_test")
+	if "--weather-capture" in OS.get_cmdline_user_args(): call_deferred("weather_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
 func create_hud() -> void:
 	hud = CanvasLayer.new()
 	hud.name = "HUD"
+	hud.layer=10
 	add_child(hud)
 	header_panel = ColorRect.new()
 	header_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -244,7 +253,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.31"
+	title.text = "余烬街区 · 生存测试版 0.32"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -331,6 +340,16 @@ func create_hud() -> void:
 	health_status_button.pressed.connect(open_health_panel)
 	survival_panel.add_child(health_status_button)
 	update_survival_hud()
+
+func create_weather_overlay() -> void:
+	weather_canvas=CanvasLayer.new()
+	weather_canvas.name="WeatherCanvas"
+	weather_canvas.layer=5
+	add_child(weather_canvas)
+	weather_overlay=WeatherOverlay.new()
+	weather_overlay.name="WeatherOverlay"
+	weather_canvas.add_child(weather_overlay)
+	weather_overlay.set_weather(weather_state)
 
 func create_mobile_controls() -> void:
 	mobile_controls = MobileControls.new()
@@ -504,9 +523,17 @@ func advance_world_time(minutes: float) -> void:
 func update_world_lighting() -> void:
 	if not is_instance_valid(world_tint):
 		return
-	var base := Survival.light_color(game_time_minutes)
+	weather_state=WeatherRules.sample(game_time_minutes)
+	var weather_tint: Color=weather_state.tint
+	var base := Survival.light_color(game_time_minutes)*weather_tint
 	var inside := not current_player_building_id().is_empty()
 	world_tint.color = UtilityRules.darken_for_unpowered_interior(base,game_time_minutes,inside,power_available())
+	if is_instance_valid(weather_overlay):
+		var visual_state: Dictionary=weather_state.duplicate()
+		if inside:
+			visual_state.rain=0.0
+			visual_state.fog=float(visual_state.fog)*0.25
+		weather_overlay.set_weather(visual_state)
 
 func update_survival_hud() -> void:
 	if not is_instance_valid(clock_label):
@@ -514,7 +541,7 @@ func update_survival_hud() -> void:
 	var clock:=Survival.clock_parts(game_time_minutes)
 	var phase:="夜晚" if int(clock.hour)<6 or int(clock.hour)>=20 else ("清晨" if int(clock.hour)<9 else ("傍晚" if int(clock.hour)>=17 else "白昼"))
 	var speed_text:="睡眠" if sleeping else ("暂停" if simulation_paused else ("%d×" % roundi(time_multiplier)))
-	clock_label.text="第 %d 天  %02d:%02d  %s  %s" % [clock.day,clock.hour,clock.minute,phase,speed_text]
+	clock_label.text="第 %d 天  %02d:%02d  %s  %s %s  %s" % [clock.day,clock.hour,clock.minute,phase,str(weather_state.icon),str(weather_state.name),speed_text]
 	for key: String in ["health","food","water","stamina"]:
 		need_bars[key].bar.value=clampf(float(needs.get(key,100.0)),0.0,100.0)
 		need_bars[key].label.text=str(roundi(float(needs.get(key,100.0))))
@@ -788,7 +815,7 @@ func should_spawn_zombies() -> bool:
 		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
 		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture",
 		"--skill-test", "--skill-capture", "--vehicle-test", "--vehicle-capture",
-		"--character-test", "--character-capture"
+		"--character-test", "--character-capture", "--weather-test", "--weather-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -2261,6 +2288,9 @@ func run_vehicle_test() -> void:
 func run_character_test() -> void:
 	await preload("res://scripts/character_test.gd").run(self)
 
+func run_weather_test() -> void:
+	await preload("res://scripts/weather_test.gd").run(self)
+
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
 		return
@@ -2806,6 +2836,20 @@ func character_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("CHARACTER CAPTURE PASS: build/character-creator-v031.png")
+	get_tree().quit()
+
+func weather_capture() -> void:
+	simulation_paused=true
+	game_time_minutes=900.0
+	update_world_lighting()
+	update_survival_hud()
+	camera.position_smoothing_enabled=false
+	await get_tree().create_timer(0.45).timeout
+	await RenderingServer.frame_post_draw
+	var output:=ProjectSettings.globalize_path("res://build/weather-rain-v032.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("WEATHER CAPTURE PASS: build/weather-rain-v032.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:
