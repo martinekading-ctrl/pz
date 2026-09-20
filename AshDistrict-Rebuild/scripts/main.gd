@@ -27,6 +27,8 @@ const ClothingRules = preload("res://scripts/clothing_rules.gd")
 const UtilityRules = preload("res://scripts/utility_rules.gd")
 const SkillRules = preload("res://scripts/skill_rules.gd")
 const SkillsPanel = preload("res://scripts/skills_panel.gd")
+const VehiclePanel = preload("res://scripts/vehicle_panel.gd")
+const VehicleRules = preload("res://scripts/vehicle_rules.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -45,6 +47,7 @@ var health_overlay: ColorRect
 var corpse_overlay: ColorRect
 var crafting_overlay: ColorRect
 var skills_overlay: ColorRect
+var vehicle_overlay: ColorRect
 var product_shell: ColorRect
 var active_save_slot := 1
 var game_started := false
@@ -71,7 +74,7 @@ var search_building: Node2D
 var left_items := {}
 var searching := -1
 var search_time := 0.0
-var inventory := {"food":0,"water":0,"empty_bottle":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"baseball_cap":0,"motorcycle_helmet":0,"denim_jacket":0,"leather_jacket":0,"jeans":0,"cargo_pants":0,"sneakers":0,"work_boots":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
+var inventory := {"food":0,"water":0,"empty_bottle":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"gas_can":0,"baseball_cap":0,"motorcycle_helmet":0,"denim_jacket":0,"leather_jacket":0,"jeans":0,"cargo_pants":0,"sneakers":0,"work_boots":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
 const Backpack=preload("res://scripts/backpack.gd")
 var backpack: ColorRect
 var ground_items: Array[Dictionary]=[]
@@ -121,10 +124,11 @@ var autosave_cooldown := 0.0
 var autosave_path_override := ""
 var skills: Dictionary = SkillRules.fresh_state()
 var fitness_xp_seconds := 0.0
+var active_vehicle: Node2D
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 幸存者成长 0.29")
+	DisplayServer.window_set_title("余烬街区：重建版 · 车辆与油料 0.30")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -135,6 +139,9 @@ func _ready() -> void:
 	world_map = WorldMap.new()
 	world_map.name = "WorldMap"
 	add_child(world_map)
+	for vehicle: Node2D in world_map.vehicles:
+		vehicle.game=self
+		vehicle.controls=game_input
 	seed_weapon_loot()
 	seed_expanded_loot()
 	world_tint=CanvasModulate.new()
@@ -215,6 +222,8 @@ func _ready() -> void:
 	if "--utility-capture" in OS.get_cmdline_user_args(): call_deferred("utility_capture")
 	if "--skill-test" in OS.get_cmdline_user_args(): call_deferred("run_skill_test")
 	if "--skill-capture" in OS.get_cmdline_user_args(): call_deferred("skill_capture")
+	if "--vehicle-test" in OS.get_cmdline_user_args(): call_deferred("run_vehicle_test")
+	if "--vehicle-capture" in OS.get_cmdline_user_args(): call_deferred("vehicle_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -230,7 +239,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.29"
+	title.text = "余烬街区 · 生存测试版 0.30"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -409,6 +418,9 @@ func _process(delta: float) -> void:
 		if survival_clock_enabled and not sleeping:
 			advance_survival(simulation_delta)
 		autosave_cooldown = maxf(0.0, autosave_cooldown - simulation_delta)
+	if is_instance_valid(active_vehicle):
+		player.position=active_vehicle.position
+		player.update_depth()
 	for building in world_map.interactive_buildings: building.update_player(player.position,delta)
 	update_world_lighting()
 	update_safehouse_entry()
@@ -429,13 +441,18 @@ func _process(delta: float) -> void:
 			return
 	var status := get_node_or_null("HUD/Status") as Label
 	if status: status.text = "地图：512×576 格   区块：32×32 格   当前："+str(world_map.chunk_of_world(player.position))
+	var vehicle_nearby := nearest_vehicle()
 	var corpse_nearby := nearest_searchable_corpse()
 	update_corpse_highlights(corpse_nearby)
 	var nearby_building: Node2D = world_map.building_near(player.position)
 	var nearby: int = nearby_building.nearest_furniture(player.position)
 	var nearby_window: int = nearby_building.nearest_window(player.position)
 	var context_hint := ""
-	if corpse_nearby != null:
+	if is_instance_valid(active_vehicle):
+		context_hint = "E 下车  ·  W/S 油门与倒车  ·  A/D 转向"
+	elif vehicle_nearby != null:
+		context_hint = "E 检查「%s」" % vehicle_nearby.display_name
+	elif corpse_nearby != null:
 		context_hint = "E 搜索尸体"
 	elif nearby >= 0:
 		context_hint = "E 搜索「" + nearby_building.item_title(nearby) + "」"
@@ -700,9 +717,9 @@ func gameplay_blocked() -> bool:
 	return simulation_paused or int(needs.health)<=0
 
 func refresh_player_control() -> void:
-	var modal_open:=sleeping or is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(skills_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
+	var modal_open:=sleeping or is_instance_valid(backpack) or is_instance_valid(loot_overlay) or is_instance_valid(corpse_overlay) or is_instance_valid(crafting_overlay) or is_instance_valid(skills_overlay) or is_instance_valid(vehicle_overlay) or is_instance_valid(product_shell) or is_instance_valid(mobile_settings_overlay) or is_instance_valid(health_overlay) or searching>=0
 	var gameplay_enabled := not simulation_paused and int(needs.health)>0 and not modal_open
-	player.set_physics_process(gameplay_enabled)
+	player.set_physics_process(gameplay_enabled and not is_instance_valid(active_vehicle))
 	if not gameplay_enabled:
 		player.running = false
 		player.moving = false
@@ -710,12 +727,28 @@ func refresh_player_control() -> void:
 		game_input.clear_transient()
 	if is_instance_valid(mobile_controls):
 		mobile_controls.set_gameplay_enabled(gameplay_enabled)
+		mobile_controls.set_vehicle_mode(is_instance_valid(active_vehicle))
 	if is_instance_valid(quickbar):
-		quickbar.set_interactive(gameplay_enabled)
+		quickbar.set_interactive(gameplay_enabled and not is_instance_valid(active_vehicle))
+	if is_instance_valid(world_map):
+		for vehicle: Node2D in world_map.vehicles:
+			vehicle.driving_enabled=gameplay_enabled and vehicle==active_vehicle
 
 func current_player_building_id() -> String:
 	var building: Node2D = world_map.building_containing(player.position) if is_instance_valid(world_map) and is_instance_valid(player) else null
 	return str(building.name) if is_instance_valid(building) else ""
+
+func nearest_vehicle(max_distance_meters: float=2.0) -> Node2D:
+	if not is_instance_valid(world_map):
+		return null
+	var nearest: Node2D
+	var best:=max_distance_meters
+	for vehicle: Node2D in world_map.vehicles:
+		var distance: float=vehicle.interaction_distance_meters(player.position)
+		if distance<=best:
+			best=distance
+			nearest=vehicle
+	return nearest
 
 func update_safehouse_entry() -> void:
 	if not game_started or sleeping or safehouse_building_id.is_empty():
@@ -747,7 +780,7 @@ func should_spawn_zombies() -> bool:
 		"--product-test", "--product-capture", "--product-preview",
 		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
 		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture",
-		"--skill-test", "--skill-capture"
+		"--skill-test", "--skill-capture", "--vehicle-test", "--vehicle-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -770,6 +803,7 @@ func seed_weapon_loot() -> void:
 	seed_item_in_building(world_map.residential_b01,"储物柜","plank",3)
 	seed_item_in_building(world_map.residential_b01,"储物柜","nails",12)
 	seed_item_in_building(world_map.residential_b01,"储物柜","hammer",1)
+	seed_item_in_building(world_map.residential_b01,"储物柜","gas_can",1)
 
 func seed_expanded_loot() -> void:
 	for building: Node2D in world_map.interactive_buildings:
@@ -974,6 +1008,9 @@ func refresh_equipped_weapon() -> void:
 
 func update_weapon_hud() -> void:
 	if not is_instance_valid(weapon_label):
+		return
+	if is_instance_valid(active_vehicle):
+		weapon_label.text="%s  %d km/h  ·  油 %.1f L  ·  车况 %d%%" % [active_vehicle.display_name,VehicleRules.speed_kph(active_vehicle.speed_mps),active_vehicle.fuel_liters,roundi(active_vehicle.condition)]
 		return
 	var item_id:=active_weapon_id()
 	if item_id.is_empty():
@@ -1346,6 +1383,11 @@ func _input(event: InputEvent) -> void:
 				get_viewport().set_input_as_handled()
 				close_skills_panel(true)
 			return
+		if is_instance_valid(vehicle_overlay):
+			if event.is_action_pressed("back"):
+				get_viewport().set_input_as_handled()
+				close_vehicle_panel()
+			return
 		if is_instance_valid(corpse_overlay):
 			if event.is_action_pressed("back"):
 				get_viewport().set_input_as_handled()
@@ -1384,12 +1426,18 @@ func _input(event: InputEvent) -> void:
 func toggle_backpack() -> void:
 	if int(needs.health) <= 0:
 		return
+	if is_instance_valid(active_vehicle):
+		show_combat_message("请先停车并下车")
+		return
 	if is_instance_valid(backpack):
 		close_backpack()
 	else:
 		open_backpack()
 
 func interact() -> void:
+	if is_instance_valid(active_vehicle):
+		exit_vehicle()
+		return
 	if crafting_overlay:
 		close_crafting()
 		return
@@ -1400,6 +1448,10 @@ func interact() -> void:
 		close_loot()
 		return
 	if searching >= 0: return
+	var nearby_vehicle:=nearest_vehicle()
+	if nearby_vehicle!=null:
+		open_vehicle_panel(nearby_vehicle)
+		return
 	var corpse_nearby := nearest_searchable_corpse()
 	if corpse_nearby != null:
 		open_corpse_loot(corpse_nearby)
@@ -1538,6 +1590,7 @@ func take_corpse_item(corpse: Node2D, item_id: String, requested: int) -> int:
 
 func open_backpack() -> void:
 	close_skills_panel(false)
+	close_vehicle_panel()
 	close_corpse_loot()
 	close_health_panel()
 	close_mobile_settings()
@@ -1561,6 +1614,7 @@ func open_skills_panel() -> void:
 		return
 	if is_instance_valid(backpack):
 		close_backpack()
+	close_vehicle_panel()
 	close_corpse_loot()
 	close_health_panel()
 	close_mobile_settings()
@@ -1593,8 +1647,144 @@ func gain_skill_xp(skill_id: String,amount: int) -> Dictionary:
 		show_combat_message("%s提升至等级 %d" % [SkillRules.DEFINITIONS[skill_id].name,int(result.after)],2.2)
 	return result
 
+func open_vehicle_panel(vehicle: Node2D) -> void:
+	if not is_instance_valid(vehicle) or is_instance_valid(active_vehicle) or vehicle.interaction_distance_meters(player.position)>2.4:
+		return
+	close_skills_panel(false)
+	close_corpse_loot()
+	close_health_panel()
+	close_mobile_settings()
+	close_crafting()
+	if is_instance_valid(backpack): close_backpack()
+	close_loot()
+	searching=-1
+	search_time=0.0
+	search_building=null
+	vehicle_overlay=VehiclePanel.new()
+	vehicle_overlay.name="VehiclePanel"
+	vehicle_overlay.game=self
+	vehicle_overlay.vehicle=vehicle
+	hud.add_child(vehicle_overlay)
+	refresh_player_control()
+
+func close_vehicle_panel() -> void:
+	if is_instance_valid(vehicle_overlay):
+		vehicle_overlay.hide()
+		vehicle_overlay.queue_free()
+	vehicle_overlay=null
+	refresh_player_control()
+
+func vehicle_item_storable(item_id: String) -> bool:
+	return Catalog.has(item_id) and not Catalog.is_weapon(item_id) and not Catalog.is_clothing(item_id)
+
+func transfer_vehicle_item(vehicle: Node2D,item_id: String,amount: int,from_vehicle: bool) -> Dictionary:
+	if not is_instance_valid(vehicle) or not Catalog.has(item_id) or amount<=0:
+		return {"moved":0,"message":"无法转移该物品"}
+	if not from_vehicle and not vehicle_item_storable(item_id):
+		return {"moved":0,"message":"武器和衣物请保留在随身装备中"}
+	var source: Dictionary=vehicle.trunk if from_vehicle else inventory
+	var destination: Dictionary=inventory if from_vehicle else vehicle.trunk
+	var moved:=0
+	while moved<mini(amount,int(source.get(item_id,0))):
+		var fits:=Backpack.fits(destination,item_id,1) if from_vehicle else vehicle_trunk_fits(destination,item_id,1)
+		if not fits: break
+		source[item_id]=int(source.get(item_id,0))-1
+		destination[item_id]=int(destination.get(item_id,0))+1
+		moved+=1
+	if int(source.get(item_id,0))<=0: source.erase(item_id)
+	if is_instance_valid(quickbar): quickbar.force_refresh()
+	return {"moved":moved,"message":"已%s %d 件%s%s" % ["取出" if from_vehicle else "存入",moved,item_name(item_id),"，容量不足" if moved<amount else ""]}
+
+func vehicle_trunk_fits(items: Dictionary,item_id: String,count: int) -> bool:
+	var copy:=items.duplicate()
+	copy[item_id]=int(copy.get(item_id,0))+count
+	return Backpack.weight(copy)<=VehicleRules.TRUNK_MAX_WEIGHT+0.001 and Backpack.slots(copy)<=VehicleRules.TRUNK_MAX_SLOTS
+
+func refuel_vehicle(vehicle: Node2D) -> Dictionary:
+	if not is_instance_valid(vehicle) or vehicle.fuel_liters>=VehicleRules.MAX_FUEL_LITERS-0.01:
+		return {"ok":false,"message":"油箱已经装满"}
+	if int(inventory.get("gas_can",0))<=0:
+		return {"ok":false,"message":"背包中没有汽油桶"}
+	inventory.gas_can=int(inventory.get("gas_can",0))-1
+	vehicle.fuel_liters=minf(VehicleRules.MAX_FUEL_LITERS,vehicle.fuel_liters+10.0)
+	if is_instance_valid(quickbar): quickbar.force_refresh()
+	return {"ok":true,"message":"加入 10 升汽油 · 当前 %.1f L" % vehicle.fuel_liters}
+
+func enter_vehicle(vehicle: Node2D) -> bool:
+	if not is_instance_valid(vehicle) or vehicle.condition<=0.0 or vehicle.fuel_liters<=0.0:
+		return false
+	close_vehicle_panel()
+	active_vehicle=vehicle
+	vehicle.occupied=true
+	player.visible=false
+	player.moving=false
+	player.running=false
+	player.position=vehicle.position
+	camera.zoom=Vector2.ONE*0.56
+	show_combat_message("已进入驾驶位 · W/S 油门与倒车 · A/D 转向 · E 下车",3.0)
+	refresh_player_control()
+	return true
+
+func exit_vehicle() -> bool:
+	if not is_instance_valid(active_vehicle):
+		return false
+	if absf(float(active_vehicle.speed_mps))>1.2:
+		show_combat_message("请先把车辆停稳")
+		return false
+	var vehicle:=active_vehicle
+	var exit_position: Vector2=vehicle.exit_world_position()
+	vehicle.occupied=false
+	vehicle.driving_enabled=false
+	active_vehicle=null
+	player.position=exit_position
+	player.visible=true
+	player.update_depth()
+	camera.zoom=Vector2.ONE*DEFAULT_CAMERA_ZOOM
+	refresh_player_control()
+	return true
+
+func clear_vehicle_occupancy() -> void:
+	if is_instance_valid(active_vehicle):
+		active_vehicle.occupied=false
+		active_vehicle.driving_enabled=false
+	active_vehicle=null
+	player.visible=true
+	camera.zoom=Vector2.ONE*DEFAULT_CAMERA_ZOOM
+
+func restore_vehicle_occupancy(vehicle_id: String) -> void:
+	clear_vehicle_occupancy()
+	if vehicle_id.is_empty(): return
+	for vehicle: Node2D in world_map.vehicles:
+		if vehicle.vehicle_id==vehicle_id:
+			active_vehicle=vehicle
+			vehicle.occupied=true
+			player.visible=false
+			player.position=vehicle.position
+			camera.zoom=Vector2.ONE*0.56
+			return
+
+func on_vehicle_travel(vehicle: Node2D,_old_position: Vector2,_distance_meters: float) -> void:
+	if vehicle!=active_vehicle or absf(float(vehicle.speed_mps))<3.0:
+		return
+	for zombie: Node2D in zombies:
+		if zombie.is_dead(): continue
+		var distance: float=world_map.world_to_map(zombie.position-vehicle.position).length()*0.5
+		if distance>1.5 or not vehicle.can_hit_zombie(zombie): continue
+		var damage:=VehicleRules.impact_damage(vehicle.speed_mps)
+		if damage<=0: continue
+		zombie.take_hit(damage,vehicle.position,clampf(absf(vehicle.speed_mps)/12.0,0.3,1.0))
+		vehicle.condition=maxf(0.0,vehicle.condition-0.5)
+		show_combat_message("撞击感染者 · 车辆受损")
+
+func on_vehicle_collision(vehicle: Node2D,impact_speed: float) -> void:
+	emit_world_sound(vehicle.position,20.0,"vehicle_crash")
+	show_combat_message("车辆碰撞 · 车况 %d%%" % roundi(vehicle.condition),2.0)
+
 func toggle_crafting() -> void:
 	if int(needs.health) <= 0:
+		return
+	if is_instance_valid(active_vehicle):
+		show_combat_message("驾驶时无法制作")
 		return
 	if is_instance_valid(crafting_overlay):
 		close_crafting()
@@ -1608,6 +1798,7 @@ func nearest_barricade_target() -> Dictionary:
 	return {"building":building,"index":index} if index >= 0 else {}
 
 func open_crafting(building: Node2D = null,window_index: int = -1) -> void:
+	close_vehicle_panel()
 	close_corpse_loot()
 	close_health_panel()
 	close_mobile_settings()
@@ -1740,6 +1931,7 @@ func toggle_mobile_settings() -> void:
 func open_mobile_settings() -> void:
 	if int(needs.health) <= 0:
 		return
+	close_vehicle_panel()
 	close_corpse_loot()
 	close_health_panel()
 	close_crafting()
@@ -1764,6 +1956,7 @@ func close_mobile_settings() -> void:
 func open_health_panel() -> void:
 	if int(needs.health) <= 0 or is_instance_valid(health_overlay):
 		return
+	close_vehicle_panel()
 	close_corpse_loot()
 	close_mobile_settings()
 	close_crafting()
@@ -1903,6 +2096,10 @@ func show_game_over() -> void:
 	if is_instance_valid(skills_overlay):
 		skills_overlay.queue_free()
 		skills_overlay=null
+	if is_instance_valid(vehicle_overlay):
+		vehicle_overlay.queue_free()
+		vehicle_overlay=null
+	clear_vehicle_occupancy()
 	if is_instance_valid(backpack):
 		backpack.queue_free()
 		backpack=null
@@ -2048,6 +2245,9 @@ func run_utility_test() -> void:
 
 func run_skill_test() -> void:
 	await preload("res://scripts/skill_test.gd").run(self)
+
+func run_vehicle_test() -> void:
+	await preload("res://scripts/vehicle_test.gd").run(self)
 
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
@@ -2518,6 +2718,27 @@ func skill_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("SKILL CAPTURE PASS: build/skills-v029.png")
+	get_tree().quit()
+
+func vehicle_capture() -> void:
+	simulation_paused=true
+	var vehicle: Node2D=world_map.vehicles[0]
+	player.position=vehicle.position+world_map.map_to_world(Vector2(0,2.4))
+	player.update_depth()
+	inventory.gas_can=1
+	camera.position_smoothing_enabled=false
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var exterior_output:=ProjectSettings.globalize_path("res://build/vehicle-exterior-v030.png")
+	DirAccess.make_dir_recursive_absolute(exterior_output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(exterior_output)
+	open_vehicle_panel(vehicle)
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output:=ProjectSettings.globalize_path("res://build/vehicle-v030.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("VEHICLE CAPTURE PASS: build/vehicle-v030.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:

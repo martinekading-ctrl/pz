@@ -4,7 +4,9 @@
 
 ## 当前阶段
 
-最新版本为 0.29：加入体能、近战、搜索、生存四项行动成长。奔跑、战斗、首次搜查、医疗和施工会获得对应经验，每项技能最高 5 级并直接改善体力、伤害、搜索时间、治疗修理与武器保养。技能页从背包进入，成长状态完整进入存档。说明见 `docs/skill-progression-v1.md`。
+最新版本为 0.30：首辆旧旅行车已经进入住宅街块。靠近后可检查车况、油量和后备箱，转移普通物资、使用汽油桶加油并进入驾驶；车辆具有加速、倒车、转向、障碍碰撞、撞击感染者、噪声、燃油消耗和完整存档。说明见 `docs/vehicle-system-v1.md`。
+
+0.29 幸存者成长：加入体能、近战、搜索、生存四项行动成长。奔跑、战斗、首次搜查、医疗和施工会获得对应经验，每项技能最高 5 级并直接改善体力、伤害、搜索时间、治疗修理与武器保养。技能页从背包进入，成长状态完整进入存档。说明见 `docs/skill-progression-v1.md`。
 
 0.27 服装与身体防护：加入四个穿戴槽、8 件服装、分伤口概率防护、耐久磨损、损坏卸下和服装分类掉落。说明见 `docs/clothing-protection-system-v1.md`。
 
@@ -85,6 +87,8 @@
 - 制作与路障验证：`Godot --headless --path . -- --crafting-test`
 - 制作页面截图：`Godot --path . -- --crafting-capture`
 - 可操作制作测试场景：`Godot --path . -- --crafting-preview`
+- 车辆、燃油与后备箱验证：`Godot --headless --path . -- --vehicle-test`
+- 车辆外观与检查页面截图：`Godot --path . -- --vehicle-capture`
 - 产品外壳验证：`Godot --headless --path . -- --product-test`
 - 主菜单、存档槽和设置截图：`Godot --path . -- --product-capture`
 - 正常启动菜单预览：`Godot --path . -- --product-preview`

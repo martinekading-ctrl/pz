@@ -21,6 +21,7 @@ var blue_house: Node2D
 var store_building: Node2D
 var residential_b01: Node2D
 var interactive_buildings: Array[Node2D]=[]
+var vehicles: Array[Node2D]=[]
 
 func _ready() -> void:
 	for layer_name in layer_names:
@@ -55,6 +56,11 @@ func _ready() -> void:
 	expansion=preload("res://scripts/expansion.gd").new()
 	add_child(expansion)
 	expansion.setup(self)
+	var vehicle:=preload("res://scripts/vehicle.gd").new()
+	vehicle.name="StationWagon01"
+	add_child(vehicle)
+	vehicle.setup(self,"station_wagon_01",Vector2(39.0,44.0))
+	vehicles.append(vehicle)
 	queue_redraw()
 
 func build_surfaces() -> void:
@@ -101,7 +107,7 @@ func map_rect(rect: Rect2i) -> PackedVector2Array:
 func contains(rect: Rect2i,cell: Vector2i) -> bool:
 	return rect.has_point(cell)
 
-func is_walkable_world(point: Vector2) -> bool:
+func is_walkable_world(point: Vector2,exclude_vehicle: Node2D=null) -> bool:
 	var logical := world_to_map(point)
 	if is_instance_valid(expansion) and expansion.blocks(logical): return false
 	if is_instance_valid(vegetation) and vegetation.blocks(logical): return false
@@ -110,6 +116,8 @@ func is_walkable_world(point: Vector2) -> bool:
 		return false
 	for building in interactive_buildings:
 		if not building.is_walkable_logical(logical): return false
+	for vehicle: Node2D in vehicles:
+		if vehicle!=exclude_vehicle and vehicle.blocks(logical): return false
 	for key in BUILDINGS:
 		var rect: Rect2i = BUILDINGS[key]
 		if contains(rect,cell):

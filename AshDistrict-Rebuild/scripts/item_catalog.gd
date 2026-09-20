@@ -14,6 +14,7 @@ const ITEMS := {
 	"disinfectant":{"name":"消毒剂","category":"consumable","weight":0.22,"stack":4,"icon":"✣","desc":"处理一个感染伤口；咬伤只能减缓感染。"},
 	"antibiotics":{"name":"抗生素","category":"consumable","weight":0.06,"stack":4,"icon":"✜","desc":"降低全身非咬伤感染；不能治愈僵尸咬伤。"},
 	"duct_tape":{"name":"强力胶带","category":"consumable","weight":0.18,"stack":5,"icon":"◎","desc":"修补当前装备的武器，恢复约 20% 最大耐久。"},
+	"gas_can":{"name":"汽油桶","category":"fuel","weight":7.5,"stack":1,"icon":"▨","desc":"装有约 10 升汽油，可在车辆检查页面加入油箱。"},
 	"baseball_cap":{"name":"棒球帽","category":"clothing","slot":"head","weight":0.18,"stack":1,"icon":"⌒","desc":"轻便帽子，只能提供少量头部防护。","scratch_protection":0.12,"laceration_protection":0.05,"bite_protection":0.02,"durability":40.0},
 	"motorcycle_helmet":{"name":"摩托车头盔","category":"clothing","slot":"head","weight":1.2,"stack":1,"icon":"◒","desc":"坚固的头部防护，重量较高。","scratch_protection":0.42,"laceration_protection":0.30,"bite_protection":0.16,"durability":85.0},
 	"denim_jacket":{"name":"牛仔夹克","category":"clothing","slot":"torso","weight":0.95,"stack":1,"icon":"♜","desc":"保护躯干与手臂的耐磨外套。","scratch_protection":0.28,"laceration_protection":0.18,"bite_protection":0.08,"durability":70.0},

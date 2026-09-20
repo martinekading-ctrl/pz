@@ -12,6 +12,7 @@ var move_stick: Control
 var aim_stick: Control
 var buttons := {}
 var layout_preset := "standard"
+var vehicle_mode := false
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -161,6 +162,14 @@ func set_gameplay_enabled(value: bool) -> void:
 		move_stick.set_output(Vector2.ZERO)
 		aim_stick.set_output(Vector2.ZERO)
 		game_input.set_touch_run(false)
+
+func set_vehicle_mode(value: bool) -> void:
+	vehicle_mode=value
+	aim_stick.visible=not value
+	buttons.reload.visible=not value
+	buttons.run.visible=not value
+	buttons.crouch.visible=not value
+	buttons.interact.text="下车" if value else "交互"
 
 func request_interact() -> void:
 	if gameplay_root.visible:

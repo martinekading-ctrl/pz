@@ -66,7 +66,7 @@ func rebuild() -> void:
 	var brand := make_label("余烬街区",38,Color("f0e8d0"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(brand)
-	var version := make_label("0.29  生存测试版",17,Color("b7c7be"))
+	var version := make_label("0.30  生存测试版",17,Color("b7c7be"))
 	version.custom_minimum_size.x = 190
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

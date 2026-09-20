@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 6
+const SAVE_VERSION := 7
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -66,6 +66,17 @@ static func capture_state(game: Node2D) -> Dictionary:
 		})
 
 	var player_logical: Vector2 = game.world_map.world_to_map(game.player.position)
+	var vehicles: Array[Dictionary]=[]
+	for vehicle: Node2D in game.world_map.vehicles:
+		var vehicle_logical: Vector2=game.world_map.world_to_map(vehicle.position)
+		vehicles.append({
+			"id":str(vehicle.vehicle_id),
+			"logical_position":[vehicle_logical.x,vehicle_logical.y],
+			"heading":[float(vehicle.heading_logical.x),float(vehicle.heading_logical.y)],
+			"fuel_liters":float(vehicle.fuel_liters),
+			"condition":float(vehicle.condition),
+			"trunk":vehicle.trunk.duplicate(true),
+		})
 	return {
 		"version": SAVE_VERSION,
 		"map_schema": MAP_SCHEMA,
@@ -82,6 +93,8 @@ static func capture_state(game: Node2D) -> Dictionary:
 		"needs": game.needs.duplicate(true),
 		"injuries": game.injuries.duplicate(true),
 		"skills": game.skills.duplicate(true),
+		"vehicles":vehicles,
+		"active_vehicle_id":str(game.active_vehicle.vehicle_id) if is_instance_valid(game.active_vehicle) else "",
 		"inventory": game.inventory.duplicate(true),
 		"equipment": game.equipment.duplicate(true),
 		"clothing_equipment": game.clothing_equipment.duplicate(true),
@@ -120,6 +133,9 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 		game.close_crafting()
 	if is_instance_valid(game.skills_overlay):
 		game.close_skills_panel(false)
+	if is_instance_valid(game.vehicle_overlay):
+		game.close_vehicle_panel()
+	game.clear_vehicle_occupancy()
 	if is_instance_valid(game.game_over_overlay):
 		game.game_over_overlay.queue_free()
 		game.game_over_overlay = null
@@ -161,6 +177,23 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.firearm_loaded = restore_firearm_loaded(game, data.get("firearm_loaded", {}))
 	game.shot_sequence = maxi(0, int(data.get("shot_sequence", 0)))
 	game.cancel_reload()
+	var vehicle_lookup:={}
+	for vehicle: Node2D in game.world_map.vehicles:
+		vehicle.reset_default()
+		vehicle_lookup[str(vehicle.vehicle_id)]=vehicle
+	for saved_vehicle: Dictionary in data.get("vehicles",[]):
+		var vehicle: Node2D=vehicle_lookup.get(str(saved_vehicle.get("id","")))
+		if vehicle==null or not valid_pair(saved_vehicle.get("logical_position",[])):
+			continue
+		var position: Array=saved_vehicle.logical_position
+		var heading: Array=saved_vehicle.get("heading",[1.0,0.0])
+		vehicle.position=game.world_map.map_to_world(Vector2(float(position[0]),float(position[1])))
+		vehicle.heading_logical=Vector2(float(heading[0]),float(heading[1])).normalized() if valid_pair(heading) else Vector2.RIGHT
+		vehicle.fuel_liters=clampf(float(saved_vehicle.get("fuel_liters",18.0)),0.0,45.0)
+		vehicle.condition=clampf(float(saved_vehicle.get("condition",82.0)),0.0,100.0)
+		vehicle.trunk=sanitize_item_counts(saved_vehicle.get("trunk",{}))
+		vehicle.speed_mps=0.0
+		vehicle.update_pose()
 
 	game.ground_items.clear()
 	for item: Dictionary in data.ground_items:
@@ -245,6 +278,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.population_seed_cursor = maxi(0, int(population.get("seed_cursor", 0))) % Population.MIGRATION_CANDIDATES.size()
 	game.population_next_id = maxi(game.population_next_id, int(population.get("next_id", game.population_next_id)))
 	game.population_enabled = not data.zombies.is_empty()
+	game.restore_vehicle_occupancy(str(data.get("active_vehicle_id","")))
 
 	game.validate_equipment()
 	game.stamina_recovery_delay = 0.0
@@ -334,12 +368,17 @@ static func migrate(source: Dictionary) -> Dictionary:
 	if version == 5:
 		data["skills"] = SkillRules.fresh_state()
 		data["version"] = 6
+		version = 6
+	if version == 6:
+		data["vehicles"] = []
+		data["active_vehicle_id"] = ""
+		data["version"] = 7
 	return data
 
 static func validate(data: Dictionary) -> bool:
 	if int(data.get("version", -1)) != SAVE_VERSION or str(data.get("map_schema", "")) != MAP_SCHEMA:
 		return false
-	for key in ["player", "world", "needs", "skills", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
+	for key in ["player", "world", "needs", "skills", "vehicles", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
 		if not data.has(key):
 			return false
 	if typeof(data.player) != TYPE_DICTIONARY or typeof(data.world) != TYPE_DICTIONARY:
@@ -348,6 +387,11 @@ static func validate(data: Dictionary) -> bool:
 		return false
 	if typeof(data.skills) != TYPE_DICTIONARY:
 		return false
+	if typeof(data.vehicles) != TYPE_ARRAY:
+		return false
+	for vehicle: Dictionary in data.vehicles:
+		if not valid_pair(vehicle.get("logical_position",[])) or typeof(vehicle.get("trunk",{}))!=TYPE_DICTIONARY:
+			return false
 	if data.has("population") and typeof(data.population) != TYPE_DICTIONARY:
 		return false
 	if data.has("firearm_loaded") and typeof(data.firearm_loaded) != TYPE_DICTIONARY:
