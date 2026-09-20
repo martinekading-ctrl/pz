@@ -131,7 +131,8 @@ func rebuild() -> void:
 		var remaining: int=game.inventory.get(key,0)
 		while remaining>0:
 			var amount:=mini(remaining,int(ITEMS[key].stack))
-			var suffix: String="\n"+game.weapon_condition_text(key) if Catalog.is_weapon(key) else ""
+			var condition: String=game.weapon_condition_text(key) if Catalog.is_weapon(key) else game.item_condition_text(key)
+			var suffix: String="\n"+condition if not condition.is_empty() else ""
 			var cell:=button(grid,str(ITEMS[key].icon)+"  ×"+str(amount)+"\n"+str(ITEMS[key].name)+suffix,choose.bind(key))
 			cell.custom_minimum_size=Vector2(115,72)
 			cell.tooltip_text=str(ITEMS[key].desc)+("\n耐久 "+game.weapon_condition_text(key) if Catalog.is_weapon(key) else "")
@@ -143,6 +144,9 @@ func rebuild() -> void:
 		empty.disabled=true
 	label(right,str(ITEMS[selected].name)+"  /  %.2f kg 每件" % float(ITEMS[selected].weight),20)
 	label(right,str(ITEMS[selected].desc),16)
+	var item_condition: String=game.item_condition_text(selected)
+	if not item_condition.is_empty():
+		label(right,"状态："+item_condition,16)
 	if Catalog.is_weapon(selected):
 		var stats: Dictionary=WeaponRules.stats(selected)
 		if Catalog.is_firearm(selected):
@@ -200,7 +204,7 @@ func pickup() -> void:
 		var item: Dictionary=game.ground_items[i]
 		if game.world_map.world_to_map(item.position-game.player.position).length()*.5>1.2: continue
 		if not fits(game.inventory,item.key,1): continue
-		game.inventory[item.key]+=1
+		game.inventory[item.key]=int(game.inventory.get(item.key,0))+1
 		if Catalog.is_weapon(item.key):
 			game.add_weapon_instances(item.key,1,float(item.get("durability",WeaponRules.max_durability(item.key))))
 			if Catalog.is_firearm(item.key) and int(game.inventory.get(item.key, 0)) == 1:

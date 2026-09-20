@@ -22,6 +22,7 @@ const ZombiePopulation = preload("res://scripts/zombie_population.gd")
 const CorpsePanel = preload("res://scripts/corpse_panel.gd")
 const CraftingPanel = preload("res://scripts/crafting_panel.gd")
 const ProductShell = preload("res://scripts/product_shell.gd")
+const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -64,7 +65,7 @@ var search_building: Node2D
 var left_items := {}
 var searching := -1
 var search_time := 0.0
-var inventory := {"food":0,"water":0,"bandage":0,"painkillers":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
+var inventory := {"food":0,"water":0,"fresh_food":0,"canned_soup":0,"energy_bar":0,"soda":0,"coffee":0,"bandage":0,"painkillers":0,"disinfectant":0,"antibiotics":0,"duct_tape":0,"parts":0,"bed_sheet":0,"ripped_cloth":0,"plank":0,"nails":0,"hammer":0,"pistol_ammo":0,"pistol_magazine":0,"crowbar":1,"baseball_bat":0,"kitchen_knife":0,"hand_axe":0,"pistol":0}
 const Backpack=preload("res://scripts/backpack.gd")
 var backpack: ColorRect
 var ground_items: Array[Dictionary]=[]
@@ -75,6 +76,7 @@ var player_invulnerability:=0.0
 var combat_message:=""
 var combat_message_time:=0.0
 var game_time_minutes:=3380.0
+var fresh_food_expiry_minutes:=6980.0
 var time_multiplier:=1.0
 var simulation_paused:=false
 var game_over_overlay: ColorRect
@@ -110,7 +112,7 @@ var autosave_path_override := ""
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 安全屋与睡眠 0.25")
+	DisplayServer.window_set_title("余烬街区：重建版 · 物品与战利品 0.26")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -122,6 +124,7 @@ func _ready() -> void:
 	world_map.name = "WorldMap"
 	add_child(world_map)
 	seed_weapon_loot()
+	seed_expanded_loot()
 	world_tint=CanvasModulate.new()
 	world_tint.color=Survival.light_color(game_time_minutes)
 	add_child(world_tint)
@@ -192,6 +195,8 @@ func _ready() -> void:
 	if "--barrier-capture" in OS.get_cmdline_user_args(): call_deferred("barrier_capture")
 	if "--safehouse-test" in OS.get_cmdline_user_args(): call_deferred("run_safehouse_test")
 	if "--safehouse-capture" in OS.get_cmdline_user_args(): call_deferred("safehouse_capture")
+	if "--loot-test" in OS.get_cmdline_user_args(): call_deferred("run_loot_test")
+	if "--loot-capture" in OS.get_cmdline_user_args(): call_deferred("loot_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -207,7 +212,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.25"
+	title.text = "余烬街区 · 生存测试版 0.26"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -676,7 +681,7 @@ func should_spawn_zombies() -> bool:
 		"--mobile-test", "--mobile-capture", "--settings-capture",
 		"--injury-test", "--injury-capture", "--crafting-test", "--crafting-capture", "--crafting-preview",
 		"--product-test", "--product-capture", "--product-preview",
-		"--safehouse-test", "--safehouse-capture"
+		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -699,6 +704,14 @@ func seed_weapon_loot() -> void:
 	seed_item_in_building(world_map.residential_b01,"储物柜","plank",3)
 	seed_item_in_building(world_map.residential_b01,"储物柜","nails",12)
 	seed_item_in_building(world_map.residential_b01,"储物柜","hammer",1)
+
+func seed_expanded_loot() -> void:
+	for building: Node2D in world_map.interactive_buildings:
+		for index: int in building.furniture.size():
+			var item: Dictionary = building.furniture[index]
+			var additions: Dictionary = LootProfiles.additions(str(building.name),str(item.title),index)
+			for item_id: String in additions.keys():
+				item.remaining[item_id] = int(item.remaining.get(item_id,0)) + int(additions[item_id])
 
 func seed_item_in_building(building: Node2D,title_part: String,item_id: String,count: int) -> void:
 	for item: Dictionary in building.furniture:
@@ -725,6 +738,32 @@ func weapon_condition_text(item_id: String) -> String:
 		return ""
 	var states: Array=weapon_durability.get(item_id,[])
 	return WeaponRules.durability_text(item_id,float(states[0]) if not states.is_empty() else WeaponRules.max_durability(item_id))
+
+func is_food_spoiled(item_id: String) -> bool:
+	return item_id == "fresh_food" and game_time_minutes >= fresh_food_expiry_minutes
+
+func item_condition_text(item_id: String) -> String:
+	if item_id != "fresh_food":
+		return ""
+	if is_food_spoiled(item_id):
+		return "已变质"
+	var remaining_days := maxf(0.0, fresh_food_expiry_minutes - game_time_minutes) / 1440.0
+	return "新鲜 · 剩余 %.1f 天" % remaining_days
+
+func repair_active_weapon_with_tape() -> Dictionary:
+	var item_id := active_weapon_id()
+	if item_id.is_empty():
+		return {"consumed":false,"message":"先装备一件需要修理的武器"}
+	var states: Array = weapon_durability.get(item_id, [])
+	if states.is_empty():
+		states.append(WeaponRules.max_durability(item_id))
+	var maximum := WeaponRules.max_durability(item_id)
+	var current := float(states[0])
+	if current >= maximum - 0.01:
+		return {"consumed":false,"message":"当前武器无需修理"}
+	states[0] = minf(maximum, current + maximum * 0.2)
+	weapon_durability[item_id] = states
+	return {"consumed":true,"message":"用强力胶带修补了%s，耐久恢复至 %s" % [item_name(item_id), weapon_condition_text(item_id)]}
 
 func add_weapon_instances(item_id: String,count: int,durability: float=-1.0) -> void:
 	if not Catalog.is_weapon(item_id):
@@ -1546,8 +1585,14 @@ func use_inventory_item(item_id: String, preferred_part: String = "") -> Diction
 			result = InjuryRules.apply_bandage(injuries, preferred_part)
 		"painkillers":
 			result = InjuryRules.take_painkillers(needs, injuries)
+		"disinfectant":
+			result = InjuryRules.disinfect_wound(injuries, preferred_part)
+		"antibiotics":
+			result = InjuryRules.take_antibiotics(injuries)
+		"duct_tape":
+			result = repair_active_weapon_with_tape()
 		_:
-			result = Survival.use_item(needs, item_id)
+			result = Survival.use_item(needs, item_id, is_food_spoiled(item_id))
 	if bool(result.get("consumed", false)):
 		inventory[item_id] = maxi(0, int(inventory.get(item_id, 0)) - 1)
 	InjuryRules.sync_needs(injuries, needs)
@@ -1747,6 +1792,9 @@ func run_crafting_test() -> void:
 
 func run_product_test() -> void:
 	await preload("res://scripts/product_shell_test.gd").run(self)
+
+func run_loot_test() -> void:
+	await preload("res://scripts/loot_item_test.gd").run(self)
 
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
@@ -2125,11 +2173,40 @@ func survival_capture() -> void:
 	get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path("res://build/death-v014.png"))
 	get_tree().quit()
 
+func loot_capture() -> void:
+	simulation_paused = true
+	for item_id: String in Catalog.ITEMS.keys():
+		inventory[item_id] = 0
+	inventory.fresh_food = 2
+	inventory.canned_soup = 2
+	inventory.energy_bar = 3
+	inventory.soda = 2
+	inventory.coffee = 1
+	inventory.disinfectant = 1
+	inventory.antibiotics = 1
+	inventory.duct_tape = 2
+	inventory.crowbar = 1
+	weapon_durability.crowbar = [58.0]
+	equipment.primary = "crowbar"
+	active_weapon_slot = "primary"
+	fresh_food_expiry_minutes = game_time_minutes + 2160.0
+	open_backpack()
+	backpack.selected = "fresh_food"
+	backpack.message = "新版物资已按住宅、商店、浴室、仓储与尸体分类投放。"
+	backpack.rebuild()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output := ProjectSettings.globalize_path("res://build/loot-items-v026.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("LOOT CAPTURE PASS: build/loot-items-v026.png")
+	get_tree().quit()
+
 func run_house_flow(capture_frames: bool) -> void:
 	await preload("res://scripts/house_flow_test.gd").run(self,capture_frames)
 
 func item_name(key: String) -> String:
-	return {"food":"食物","water":"饮用水","bandage":"绷带","painkillers":"止痛药","parts":"零件"}.get(key,key)
+	return str(Catalog.item(key).get("name", key))
 
 func layout_test() -> void:
 	await get_tree().process_frame

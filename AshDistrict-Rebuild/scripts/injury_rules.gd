@@ -204,6 +204,50 @@ static func take_painkillers(needs: Dictionary, injuries: Dictionary) -> Diction
 	sync_needs(injuries, needs)
 	return {"consumed":true, "message":"服用了止痛药，约三小时内减轻疼痛"}
 
+static func disinfect_wound(injuries: Dictionary, preferred_part: String = "") -> Dictionary:
+	var part := preferred_part if preferred_part in PARTS else most_infected_part(injuries)
+	if part.is_empty():
+		return {"consumed":false, "message":"没有需要消毒的感染伤口"}
+	var injury: Dictionary = injuries.get(part, fresh_part())
+	if int(injury.get("severity",0)) <= 0 or not bool(injury.get("infected",false)):
+		return {"consumed":false, "message":PART_LABELS[part] + "没有感染伤口"}
+	var before := float(injury.get("infection",0.0))
+	injury["infection"] = maxf(0.0, before - 18.0)
+	if str(injury.get("wound","none")) != "bite" and float(injury.infection) <= 0.0:
+		injury["infected"] = false
+	injuries[part] = injury
+	return {"consumed":true, "message":"已为%s消毒，感染 %.0f%% → %.0f%%" % [PART_LABELS[part],before,float(injury.infection)]}
+
+static func take_antibiotics(injuries: Dictionary) -> Dictionary:
+	var treated := 0
+	var bite_present := false
+	for part: String in PARTS:
+		var injury: Dictionary = injuries.get(part,fresh_part())
+		if not bool(injury.get("infected",false)):
+			continue
+		var wound := str(injury.get("wound","none"))
+		var reduction := 10.0 if wound == "bite" else 35.0
+		injury["infection"] = maxf(0.0,float(injury.get("infection",0.0))-reduction)
+		if wound != "bite" and float(injury.infection) <= 0.0:
+			injury["infected"] = false
+		if wound == "bite":
+			bite_present = true
+		injuries[part] = injury
+		treated += 1
+	if treated <= 0:
+		return {"consumed":false, "message":"当前没有需要抗生素处理的感染"}
+	return {"consumed":true, "message":"抗生素降低了感染" + ("；咬伤感染只能暂时减缓" if bite_present else "")}
+
+static func most_infected_part(injuries: Dictionary) -> String:
+	var chosen := ""
+	var highest := -1.0
+	for part: String in PARTS:
+		var injury: Dictionary = injuries.get(part,fresh_part())
+		if bool(injury.get("infected",false)) and float(injury.get("infection",0.0)) > highest:
+			highest = float(injury.get("infection",0.0))
+			chosen = part
+	return chosen
+
 static func most_urgent_unbandaged(injuries: Dictionary) -> String:
 	var chosen := ""
 	var highest := 0

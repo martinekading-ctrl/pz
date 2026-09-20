@@ -13,6 +13,8 @@ var message_label: Label
 var bandage_button: Button
 var remove_button: Button
 var painkiller_button: Button
+var disinfectant_button: Button
+var antibiotics_button: Button
 var part_buttons := {}
 var last_signature := ""
 
@@ -24,7 +26,7 @@ func _ready() -> void:
 	refresh()
 
 func _process(_delta: float) -> void:
-	var signature := str([game.needs, game.injuries, game.inventory.get("bandage", 0), game.inventory.get("painkillers", 0), selected_part])
+	var signature := str([game.needs, game.injuries, game.inventory.get("bandage", 0), game.inventory.get("painkillers", 0), game.inventory.get("disinfectant",0), game.inventory.get("antibiotics",0), selected_part])
 	if signature != last_signature:
 		refresh()
 
@@ -115,8 +117,10 @@ func build_ui() -> void:
 
 	supplies_label = make_label("", 18)
 	right.add_child(supplies_label)
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 10)
+	var actions := GridContainer.new()
+	actions.columns = 3
+	actions.add_theme_constant_override("h_separation", 10)
+	actions.add_theme_constant_override("v_separation", 10)
 	right.add_child(actions)
 	bandage_button = make_button("包扎", Vector2(145, 50))
 	bandage_button.pressed.connect(apply_bandage)
@@ -127,6 +131,12 @@ func build_ui() -> void:
 	painkiller_button = make_button("服用止痛药", Vector2(170, 50))
 	painkiller_button.pressed.connect(take_painkiller)
 	actions.add_child(painkiller_button)
+	disinfectant_button = make_button("消毒伤口", Vector2(145,50))
+	disinfectant_button.pressed.connect(disinfect_wound)
+	actions.add_child(disinfectant_button)
+	antibiotics_button = make_button("服用抗生素", Vector2(170,50))
+	antibiotics_button.pressed.connect(take_antibiotics)
+	actions.add_child(antibiotics_button)
 	message_label = make_label("选择身体部位查看伤势。治疗期间游戏世界仍在运行。", 16)
 	message_label.add_theme_color_override("font_color", Color("d8c986"))
 	right.add_child(message_label)
@@ -134,7 +144,7 @@ func build_ui() -> void:
 func refresh() -> void:
 	if not is_instance_valid(game) or not is_instance_valid(diagram):
 		return
-	last_signature = str([game.needs, game.injuries, game.inventory.get("bandage", 0), game.inventory.get("painkillers", 0), selected_part])
+	last_signature = str([game.needs, game.injuries, game.inventory.get("bandage", 0), game.inventory.get("painkillers", 0), game.inventory.get("disinfectant",0), game.inventory.get("antibiotics",0), selected_part])
 	diagram.set_data(game.injuries, selected_part)
 	var pain := roundi(float(game.needs.get("pain", 0.0)))
 	var infection := roundi(float(game.needs.get("infection", 0.0)))
@@ -161,10 +171,12 @@ func refresh() -> void:
 	else:
 		lines += "\n没有需要处理的伤口。"
 	detail_label.text = lines
-	supplies_label.text = "医疗物资   绷带 ×%d     止痛药 ×%d" % [int(game.inventory.get("bandage", 0)), int(game.inventory.get("painkillers", 0))]
+	supplies_label.text = "医疗物资   绷带 ×%d   止痛药 ×%d   消毒剂 ×%d   抗生素 ×%d" % [int(game.inventory.get("bandage", 0)), int(game.inventory.get("painkillers", 0)), int(game.inventory.get("disinfectant",0)), int(game.inventory.get("antibiotics",0))]
 	bandage_button.disabled = int(game.inventory.get("bandage", 0)) <= 0 or int(selected.severity) <= 0 or bool(selected.bandaged)
 	remove_button.disabled = not bool(selected.bandaged)
 	painkiller_button.disabled = int(game.inventory.get("painkillers", 0)) <= 0 or InjuryRules.raw_pain(game.injuries) <= 0.0 or float(game.needs.get("pain_relief", 0.0)) >= 120.0
+	disinfectant_button.disabled = int(game.inventory.get("disinfectant",0)) <= 0 or not bool(selected.get("infected",false))
+	antibiotics_button.disabled = int(game.inventory.get("antibiotics",0)) <= 0 or InjuryRules.infection_value(game.injuries) <= 0.0
 
 func select_part(part: String) -> void:
 	selected_part = part
@@ -186,6 +198,18 @@ func remove_bandage() -> void:
 
 func take_painkiller() -> void:
 	var result: Dictionary = game.use_inventory_item("painkillers")
+	message_label.text = str(result.message)
+	last_signature = ""
+	refresh()
+
+func disinfect_wound() -> void:
+	var result: Dictionary = game.use_inventory_item("disinfectant",selected_part)
+	message_label.text = str(result.message)
+	last_signature = ""
+	refresh()
+
+func take_antibiotics() -> void:
+	var result: Dictionary = game.use_inventory_item("antibiotics")
 	message_label.text = str(result.message)
 	last_signature = ""
 	refresh()

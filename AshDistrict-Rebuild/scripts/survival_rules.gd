@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Catalog = preload("res://scripts/item_catalog.gd")
+
 const MAX_VALUE := 100.0
 const GAME_MINUTES_PER_REAL_SECOND := 0.8
 const HUNGER_PER_GAME_MINUTE := 25.0 / 1440.0
@@ -32,26 +34,32 @@ static func advance(needs: Dictionary, game_minutes: float, active: bool) -> voi
 	elif float(needs.food) >= 75.0 and float(needs.water) >= 75.0 and float(needs.health) < MAX_VALUE:
 		needs.health = minf(MAX_VALUE, float(needs.health) + FED_REGEN_PER_GAME_MINUTE * game_minutes)
 
-static func use_item(needs: Dictionary, item_key: String) -> Dictionary:
-	match item_key:
-		"food":
-			if float(needs.food) >= MAX_VALUE:
-				return {"consumed": false, "message": "当前已经吃饱，未消耗物品"}
-			needs.food = minf(MAX_VALUE, float(needs.food) + 25.0)
-			return {"consumed": true, "message": "食用了罐装食品，饱食 +25"}
-		"water":
-			if float(needs.water) >= MAX_VALUE:
-				return {"consumed": false, "message": "当前不渴，未消耗物品"}
-			needs.water = minf(MAX_VALUE, float(needs.water) + 30.0)
-			return {"consumed": true, "message": "饮用了瓶装水，水分 +30"}
-		"bandage":
-			var bleeding := float(needs.get("bleeding", 0.0))
-			if bleeding <= 0.0 and float(needs.health) >= MAX_VALUE:
-				return {"consumed": false, "message": "没有需要处理的伤口，未消耗绷带"}
-			needs.bleeding = 0.0
-			needs.health = minf(MAX_VALUE, float(needs.health) + (5.0 if bleeding > 0.0 else 15.0))
-			return {"consumed": true, "message": "伤口已包扎，流血停止" if bleeding > 0.0 else "使用绷带，生命 +15"}
-	return {"consumed": false, "message": "该物品不能直接使用"}
+static func use_item(needs: Dictionary, item_key: String, spoiled: bool = false) -> Dictionary:
+	if item_key == "bandage":
+		var bleeding := float(needs.get("bleeding", 0.0))
+		if bleeding <= 0.0 and float(needs.health) >= MAX_VALUE:
+			return {"consumed":false, "message":"没有需要处理的伤口，未消耗绷带"}
+		needs.bleeding = 0.0
+		needs.health = minf(MAX_VALUE, float(needs.health) + (5.0 if bleeding > 0.0 else 15.0))
+		return {"consumed":true, "message":"伤口已包扎，流血停止" if bleeding > 0.0 else "使用绷带，生命 +15"}
+	if item_key == "fresh_food" and spoiled:
+		needs.food = minf(MAX_VALUE, float(needs.food) + 4.0)
+		needs.health = maxf(0.0, float(needs.health) - 6.0)
+		return {"consumed":true, "message":"面包已经变质：饱食 +4，生命 -6"}
+	var definition: Dictionary = Catalog.item(item_key)
+	var effects: Dictionary = definition.get("effects", {})
+	if effects.is_empty():
+		return {"consumed": false, "message": "该物品不能直接使用"}
+	var changed := false
+	for key: String in effects.keys():
+		var before := float(needs.get(key, 0.0))
+		var after := clampf(before + float(effects[key]), 0.0, MAX_VALUE)
+		if not is_equal_approx(before, after):
+			changed = true
+		needs[key] = after
+	if not changed:
+		return {"consumed":false, "message":"当前状态不需要使用" + str(definition.get("name", "该物品"))}
+	return {"consumed":true, "message":str(definition.get("use_text", "已使用物品"))}
 
 static func rest(needs: Dictionary, game_minutes: float = 480.0) -> Dictionary:
 	var check := can_sleep(needs)

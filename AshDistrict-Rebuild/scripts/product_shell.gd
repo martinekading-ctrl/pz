@@ -66,7 +66,7 @@ func rebuild() -> void:
 	var brand := make_label("余烬街区",38,Color("f0e8d0"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(brand)
-	var version := make_label("0.25  生存测试版",17,Color("b7c7be"))
+	var version := make_label("0.26  生存测试版",17,Color("b7c7be"))
 	version.custom_minimum_size.x = 190
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -235,7 +235,10 @@ WASD 或左摇杆移动；Shift 奔跑；C 蹲伏。奔跑更快，但消耗体�
 鼠标右键瞄准、左键攻击；手机端拖动右摇杆瞄准，松开攻击。Q 切换武器，R 给手枪装填。
 
 搜索与背包
-靠近发光家具按 E 搜索。Tab/B 打开背包；搜索页和背包不会暂停世界。
+靠近发光家具按 E 搜索。住宅、商店、浴室和仓储有不同物资；面包会变质。Tab/B 打开背包；搜索页和背包不会暂停世界。
+
+医疗与维修
+点击左上状态卡处理身体伤口。消毒剂处理选中感染，抗生素降低全身感染；强力胶带可修补当前装备的受损武器。
 
 制作与封窗
 K 或手机“制作”按钮打开制作页。靠近住宅窗户按 E，可使用木板、钉子和木工锤加固。

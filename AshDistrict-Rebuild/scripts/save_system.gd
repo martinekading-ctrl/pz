@@ -1,12 +1,13 @@
 extends RefCounted
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
 const Survival = preload("res://scripts/survival_rules.gd")
 const InjuryRules = preload("res://scripts/injury_rules.gd")
 const Population = preload("res://scripts/zombie_population.gd")
+const LootProfiles = preload("res://scripts/loot_profiles.gd")
 
 static func capture_state(game: Node2D) -> Dictionary:
 	var buildings: Array[Dictionary] = []
@@ -64,11 +65,13 @@ static func capture_state(game: Node2D) -> Dictionary:
 	return {
 		"version": SAVE_VERSION,
 		"map_schema": MAP_SCHEMA,
+		"loot_revision": LootProfiles.REVISION,
 		"saved_unix_time": int(Time.get_unix_time_from_system()),
 		"player": {"logical_position": [player_logical.x, player_logical.y]},
 		"world": {
 			"game_time_minutes": float(game.game_time_minutes),
 			"time_multiplier": float(game.time_multiplier),
+			"fresh_food_expiry_minutes": float(game.fresh_food_expiry_minutes),
 		},
 		"needs": game.needs.duplicate(true),
 		"injuries": game.injuries.duplicate(true),
@@ -119,6 +122,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	game.player.position = game.world_map.map_to_world(Vector2(float(player_position[0]), float(player_position[1])))
 	game.game_time_minutes = float(data.world.game_time_minutes)
 	game.time_multiplier = clampf(float(data.world.time_multiplier), 1.0, 4.0)
+	game.fresh_food_expiry_minutes = float(data.world.get("fresh_food_expiry_minutes", game.game_time_minutes + 3600.0))
 	var need_defaults := {"health":100.0, "food":100.0, "water":100.0, "stamina":100.0, "fatigue":0.0, "pain":0.0, "infection":0.0, "pain_relief":0.0}
 	for key: String in need_defaults:
 		var maximum := 180.0 if key == "pain_relief" else 100.0
@@ -166,14 +170,23 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 	else:
 		game.safehouse_building_id = ""
 		game.safehouse_spawn_logical = Vector2.ZERO
+	var saved_loot_revision := int(data.get("loot_revision", 0))
 	for saved_building: Dictionary in data.buildings:
 		var building: Node2D = building_lookup.get(str(saved_building.id))
 		if building == null:
 			continue
 		var containers: Array = saved_building.containers
 		for index in mini(containers.size(), building.furniture.size()):
-			building.furniture[index].remaining = sanitize_item_counts(containers[index].remaining)
-			building.furniture[index]["searched"] = bool(containers[index].get("searched", false))
+			var searched := bool(containers[index].get("searched", false))
+			var restored_remaining := sanitize_item_counts(containers[index].remaining)
+			if saved_loot_revision < LootProfiles.REVISION and not searched:
+				var seeded_remaining: Dictionary = building.furniture[index].remaining
+				for item_id: String in Catalog.LOOT_EXPANSION_IDS:
+					var seeded_count := int(seeded_remaining.get(item_id, 0))
+					if seeded_count > 0:
+						restored_remaining[item_id] = seeded_count
+			building.furniture[index].remaining = restored_remaining
+			building.furniture[index]["searched"] = searched
 			building.furniture[index]["weapon_durability"] = containers[index].get("weapon_durability", {}).duplicate(true)
 			building.furniture[index]["firearm_loaded"] = containers[index].get("firearm_loaded", {}).duplicate(true)
 		var doors: Dictionary = saved_building.doors
@@ -282,6 +295,12 @@ static func migrate(source: Dictionary) -> Dictionary:
 	if version == 1:
 		data["safehouse"] = {"building_id":"", "spawn_logical":[0.0,0.0]}
 		data["version"] = 2
+		version = 2
+	if version == 2:
+		data["loot_revision"] = 0
+		if typeof(data.get("world", {})) == TYPE_DICTIONARY and not data.world.has("fresh_food_expiry_minutes"):
+			data.world["fresh_food_expiry_minutes"] = float(data.world.get("game_time_minutes", 3380.0)) + 3600.0
+		data["version"] = 3
 	return data
 
 static func validate(data: Dictionary) -> bool:
