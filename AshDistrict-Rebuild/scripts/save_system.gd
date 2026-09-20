@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 const MAP_SCHEMA := "ash_district_slice_v1"
 const Catalog = preload("res://scripts/item_catalog.gd")
 const WeaponRules = preload("res://scripts/weapon_rules.gd")
@@ -11,6 +11,7 @@ const LootProfiles = preload("res://scripts/loot_profiles.gd")
 const ClothingRules = preload("res://scripts/clothing_rules.gd")
 const UtilityRules = preload("res://scripts/utility_rules.gd")
 const SkillRules = preload("res://scripts/skill_rules.gd")
+const CharacterRules = preload("res://scripts/character_rules.gd")
 
 static func capture_state(game: Node2D) -> Dictionary:
 	var buildings: Array[Dictionary] = []
@@ -93,6 +94,7 @@ static func capture_state(game: Node2D) -> Dictionary:
 		"needs": game.needs.duplicate(true),
 		"injuries": game.injuries.duplicate(true),
 		"skills": game.skills.duplicate(true),
+		"character_profile":game.character_profile.duplicate(true),
 		"vehicles":vehicles,
 		"active_vehicle_id":str(game.active_vehicle.vehicle_id) if is_instance_valid(game.active_vehicle) else "",
 		"inventory": game.inventory.duplicate(true),
@@ -158,6 +160,7 @@ static func apply_state(game: Node2D, data: Dictionary) -> bool:
 		game.needs[key] = clampf(float(data.needs.get(key, need_defaults[key])), 0.0, maximum)
 	game.needs["bleeding"] = maxf(0.0, float(data.needs.get("bleeding", 0.0)))
 	game.injuries = InjuryRules.sanitize(data.get("injuries", {})) if data.has("injuries") else InjuryRules.migrate_legacy_bleeding(float(game.needs.bleeding))
+	game.set_character_profile(CharacterRules.sanitize_profile(data.get("character_profile",{})))
 	game.skills = SkillRules.sanitize(data.get("skills",{}))
 	game.fitness_xp_seconds = 0.0
 	InjuryRules.sync_needs(game.injuries, game.needs)
@@ -373,12 +376,16 @@ static func migrate(source: Dictionary) -> Dictionary:
 		data["vehicles"] = []
 		data["active_vehicle_id"] = ""
 		data["version"] = 7
+		version = 7
+	if version == 7:
+		data["character_profile"] = CharacterRules.default_profile()
+		data["version"] = 8
 	return data
 
 static func validate(data: Dictionary) -> bool:
 	if int(data.get("version", -1)) != SAVE_VERSION or str(data.get("map_schema", "")) != MAP_SCHEMA:
 		return false
-	for key in ["player", "world", "needs", "skills", "vehicles", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
+	for key in ["player", "world", "needs", "skills", "character_profile", "vehicles", "inventory", "equipment", "weapon_durability", "clothing_equipment", "clothing_durability", "ground_items", "buildings", "zombies"]:
 		if not data.has(key):
 			return false
 	if typeof(data.player) != TYPE_DICTIONARY or typeof(data.world) != TYPE_DICTIONARY:
@@ -386,6 +393,8 @@ static func validate(data: Dictionary) -> bool:
 	if data.has("injuries") and typeof(data.injuries) != TYPE_DICTIONARY:
 		return false
 	if typeof(data.skills) != TYPE_DICTIONARY:
+		return false
+	if typeof(data.character_profile)!=TYPE_DICTIONARY:
 		return false
 	if typeof(data.vehicles) != TYPE_ARRAY:
 		return false

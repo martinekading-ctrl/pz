@@ -29,6 +29,7 @@ const SkillRules = preload("res://scripts/skill_rules.gd")
 const SkillsPanel = preload("res://scripts/skills_panel.gd")
 const VehiclePanel = preload("res://scripts/vehicle_panel.gd")
 const VehicleRules = preload("res://scripts/vehicle_rules.gd")
+const CharacterRules = preload("res://scripts/character_rules.gd")
 const PISTOL_SHOT_SOUND = preload("res://art/audio/pistol_shot.wav")
 const PISTOL_DRY_SOUND = preload("res://art/audio/pistol_dry.wav")
 const SAVE_SLOT_PATH := "user://ash_district_slot_1.json"
@@ -125,10 +126,12 @@ var autosave_path_override := ""
 var skills: Dictionary = SkillRules.fresh_state()
 var fitness_xp_seconds := 0.0
 var active_vehicle: Node2D
+var character_profile: Dictionary = CharacterRules.default_profile()
+var character_modifiers_cache: Dictionary = CharacterRules.DEFAULT_MODIFIERS.duplicate()
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false
-	DisplayServer.window_set_title("余烬街区：重建版 · 车辆与油料 0.30")
+	DisplayServer.window_set_title("余烬街区：重建版 · 职业与特质 0.31")
 	injury_rng.randomize()
 	survival_clock_enabled=OS.get_cmdline_user_args().is_empty()
 	GameInput.install_default_actions()
@@ -224,6 +227,8 @@ func _ready() -> void:
 	if "--skill-capture" in OS.get_cmdline_user_args(): call_deferred("skill_capture")
 	if "--vehicle-test" in OS.get_cmdline_user_args(): call_deferred("run_vehicle_test")
 	if "--vehicle-capture" in OS.get_cmdline_user_args(): call_deferred("vehicle_capture")
+	if "--character-test" in OS.get_cmdline_user_args(): call_deferred("run_character_test")
+	if "--character-capture" in OS.get_cmdline_user_args(): call_deferred("character_capture")
 	if "--product-capture" in OS.get_cmdline_user_args(): call_deferred("product_capture")
 	if OS.get_cmdline_user_args().is_empty() or "--product-preview" in OS.get_cmdline_user_args(): call_deferred("show_product_shell")
 
@@ -239,7 +244,7 @@ func create_hud() -> void:
 	hud.add_child(header_panel)
 	var title := Label.new()
 	title.position = Vector2(18,11)
-	title.text = "余烬街区 · 生存测试版 0.30"
+	title.text = "余烬街区 · 生存测试版 0.31"
 	title.add_theme_font_size_override("font_size",22)
 	header_panel.add_child(title)
 	help_label = Label.new()
@@ -432,7 +437,7 @@ func _process(delta: float) -> void:
 			refresh_player_control()
 			return
 		search_time += simulation_delta
-		var duration: float=preload("res://scripts/container_rules.gd").duration(search_building.furniture[searching]) * SkillRules.search_duration_multiplier(skill_level("scavenging"))
+		var duration: float=preload("res://scripts/container_rules.gd").duration(search_building.furniture[searching]) * SkillRules.search_duration_multiplier(skill_level("scavenging")) * character_modifier("search_time")
 		hint_label.text = ("已暂停 · 空格继续" if simulation_paused else "正在搜索… %d%%  ·  Esc 取消" % mini(100,int(search_time/duration*100.0)))
 		if search_time >= duration:
 			var target := searching
@@ -472,7 +477,7 @@ func advance_survival(real_delta: float) -> void:
 	var game_minutes:=real_delta*Survival.GAME_MINUTES_PER_REAL_SECOND*time_multiplier
 	advance_world_time(game_minutes)
 	InjuryRules.advance(injuries, needs, game_minutes)
-	Survival.advance(needs,game_minutes,player.running and player.moving)
+	Survival.advance(needs,game_minutes,player.running and player.moving,character_modifier("thirst"))
 	update_player_condition_effects()
 	if int(needs.health)<=0:
 		show_game_over()
@@ -525,7 +530,7 @@ func update_survival_hud() -> void:
 func update_exertion(real_delta: float) -> void:
 	var running_now: bool = bool(player.running and player.moving)
 	var fitness_level := skill_level("fitness")
-	stamina_recovery_delay = Exertion.advance_stamina(needs, real_delta, running_now, stamina_recovery_delay, SkillRules.stamina_cost_multiplier(fitness_level), SkillRules.stamina_regen_multiplier(fitness_level))
+	stamina_recovery_delay = Exertion.advance_stamina(needs, real_delta, running_now, stamina_recovery_delay, SkillRules.stamina_cost_multiplier(fitness_level)*character_modifier("stamina_cost"), SkillRules.stamina_regen_multiplier(fitness_level)*character_modifier("stamina_regen"))
 	if running_now:
 		fitness_xp_seconds += real_delta
 		while fitness_xp_seconds >= 4.0:
@@ -542,7 +547,7 @@ func update_player_condition_effects() -> void:
 func try_spend_attack_stamina() -> bool:
 	var item_id := active_weapon_id()
 	var weight := float(Catalog.item(item_id).get("weight", 0.0)) if not item_id.is_empty() else 0.0
-	var cost := Exertion.attack_cost(weight) * InjuryRules.attack_stamina_multiplier(injuries) * SkillRules.stamina_cost_multiplier(skill_level("fitness"))
+	var cost := Exertion.attack_cost(weight) * InjuryRules.attack_stamina_multiplier(injuries) * SkillRules.stamina_cost_multiplier(skill_level("fitness")) * character_modifier("stamina_cost")
 	if not Exertion.spend_attack(needs, cost):
 		combat_message = "体力不足"
 		combat_message_time = 0.8
@@ -563,6 +568,8 @@ func update_movement_noise(real_delta: float) -> void:
 	footstep_noise_timer = Exertion.movement_noise_interval(player.running, player.crouching)
 
 func emit_world_sound(source: Vector2, radius_meters: float, kind: String) -> int:
+	if kind not in ["vehicle","vehicle_crash"]:
+		radius_meters*=character_modifier("noise")
 	var listeners := 0
 	for zombie: Node2D in zombies:
 		if zombie.hear_sound(source, radius_meters):
@@ -780,7 +787,8 @@ func should_spawn_zombies() -> bool:
 		"--product-test", "--product-capture", "--product-preview",
 		"--safehouse-test", "--safehouse-capture", "--loot-test", "--loot-capture",
 		"--clothing-test", "--clothing-capture", "--utility-test", "--utility-capture",
-		"--skill-test", "--skill-capture", "--vehicle-test", "--vehicle-capture"
+		"--skill-test", "--skill-capture", "--vehicle-test", "--vehicle-capture",
+		"--character-test", "--character-capture"
 	]
 	for mode: String in isolated_modes:
 		if mode in args:
@@ -1285,7 +1293,7 @@ func _on_player_melee_impact(origin: Vector2,direction: Vector2) -> void:
 			nearest=distance
 			target_zombie=zombie
 	if target_zombie!=null:
-		var damage := roundi(float(weapon.damage)*SkillRules.melee_damage_multiplier(skill_level("melee")))
+		var damage := roundi(float(weapon.damage)*SkillRules.melee_damage_multiplier(skill_level("melee"))*character_modifier("melee_damage"))
 		target_zombie.take_hit(damage,origin,float(weapon.knockback))
 		gain_skill_xp("fitness",1)
 		gain_skill_xp("melee",17 if target_zombie.is_dead() else 5)
@@ -1642,7 +1650,8 @@ func skill_level(skill_id: String) -> int:
 	return SkillRules.level(skills,skill_id)
 
 func gain_skill_xp(skill_id: String,amount: int) -> Dictionary:
-	var result:=SkillRules.add_xp(skills,skill_id,amount)
+	var adjusted:=maxi(1,roundi(float(amount)*character_modifier("xp_gain"))) if amount>0 else 0
+	var result:=SkillRules.add_xp(skills,skill_id,adjusted)
 	if bool(result.get("leveled",false)):
 		show_combat_message("%s提升至等级 %d" % [SkillRules.DEFINITIONS[skill_id].name,int(result.after)],2.2)
 	return result
@@ -1990,9 +1999,9 @@ func use_inventory_item(item_id: String, preferred_part: String = "") -> Diction
 		"painkillers":
 			result = InjuryRules.take_painkillers(needs, injuries)
 		"disinfectant":
-			result = InjuryRules.disinfect_wound(injuries, preferred_part, SkillRules.treatment_multiplier(skill_level("survival")))
+			result = InjuryRules.disinfect_wound(injuries, preferred_part, SkillRules.treatment_multiplier(skill_level("survival"))*character_modifier("medical"))
 		"antibiotics":
-			result = InjuryRules.take_antibiotics(injuries, SkillRules.treatment_multiplier(skill_level("survival")))
+			result = InjuryRules.take_antibiotics(injuries, SkillRules.treatment_multiplier(skill_level("survival"))*character_modifier("medical"))
 		"duct_tape":
 			result = repair_active_weapon_with_tape()
 		_:
@@ -2249,6 +2258,9 @@ func run_skill_test() -> void:
 func run_vehicle_test() -> void:
 	await preload("res://scripts/vehicle_test.gd").run(self)
 
+func run_character_test() -> void:
+	await preload("res://scripts/character_test.gd").run(self)
+
 func show_product_shell() -> void:
 	if is_instance_valid(product_shell):
 		return
@@ -2308,7 +2320,8 @@ func save_data_summary(data: Dictionary) -> Dictionary:
 		date_text = "%04d-%02d-%02d %02d:%02d" % [date.year,date.month,date.day,date.hour,date.minute]
 	var clock: Dictionary = Survival.clock_parts(float(data.get("world",{}).get("game_time_minutes",0.0)))
 	var health := roundi(float(data.get("needs",{}).get("health",100.0)))
-	return {"exists":true,"timestamp":saved_time,"text":"第 %d 天 %02d:%02d  ·  生命 %d  ·  %s" % [clock.day,clock.hour,clock.minute,health,date_text]}
+	var profession:=CharacterRules.profession_name(data.get("character_profile",{}))
+	return {"exists":true,"timestamp":saved_time,"text":"%s  ·  第 %d 天 %02d:%02d  ·  生命 %d  ·  %s" % [profession,clock.day,clock.hour,clock.minute,health,date_text]}
 
 func latest_save_slot() -> int:
 	var latest := -1
@@ -2320,13 +2333,51 @@ func latest_save_slot() -> int:
 			latest_time = int(summary.get("timestamp",0))
 	return latest
 
-func start_new_game(slot: int) -> void:
+func start_new_game(slot: int,profile: Dictionary={}) -> void:
 	active_save_slot = clampi(slot,1,3)
 	delete_save_slot(active_save_slot)
+	apply_character_start(CharacterRules.default_profile() if profile.is_empty() else profile)
 	close_product_shell()
-	combat_message = "新游戏 · 槽位 %d" % active_save_slot
+	combat_message = "%s · 新游戏槽位 %d" % [CharacterRules.profession_name(character_profile),active_save_slot]
 	combat_message_time = 2.5
 	save_game()
+
+func character_modifier(key: String) -> float:
+	return float(character_modifiers_cache.get(key,1.0))
+
+func set_character_profile(profile: Dictionary) -> void:
+	character_profile=CharacterRules.sanitize_profile(profile)
+	character_modifiers_cache=CharacterRules.modifiers(character_profile)
+
+func apply_character_start(profile: Dictionary) -> void:
+	set_character_profile(profile)
+	for item_id: String in Catalog.ITEMS.keys():
+		inventory[item_id]=0
+	inventory.crowbar=1
+	var starting_items:=CharacterRules.initial_items(character_profile)
+	for item_id: String in starting_items.keys():
+		inventory[item_id]=int(inventory.get(item_id,0))+int(starting_items[item_id])
+	weapon_durability={"crowbar":[],"baseball_bat":[],"kitchen_knife":[],"hand_axe":[],"pistol":[]}
+	add_weapon_instances("crowbar",1)
+	for item_id: String in starting_items.keys():
+		if Catalog.is_weapon(item_id):
+			add_weapon_instances(item_id,int(starting_items[item_id]))
+	clothing_durability={"baseball_cap":[],"motorcycle_helmet":[],"denim_jacket":[],"leather_jacket":[],"jeans":[],"cargo_pants":[],"sneakers":[],"work_boots":[]}
+	for item_id: String in starting_items.keys():
+		if Catalog.is_clothing(item_id):
+			for count: int in int(starting_items[item_id]):
+				clothing_durability[item_id].append(ClothingRules.max_durability(item_id))
+	equipment={"primary":"crowbar","secondary":""}
+	clothing_equipment={"head":"","torso":"","legs":"","feet":""}
+	active_weapon_slot="primary"
+	firearm_loaded={"pistol":0}
+	skills=CharacterRules.initial_skills(character_profile)
+	needs={"health":100.0,"food":82.0,"water":78.0,"stamina":100.0,"fatigue":0.0,"bleeding":0.0,"pain":0.0,"infection":0.0,"pain_relief":0.0}
+	injuries=InjuryRules.fresh_state()
+	validate_equipment()
+	if is_instance_valid(quickbar): quickbar.force_refresh()
+	update_player_condition_effects()
+	update_survival_hud()
 
 func continue_slot(slot: int) -> void:
 	if slot < 1 or slot > 3:
@@ -2739,6 +2790,22 @@ func vehicle_capture() -> void:
 	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
 	get_viewport().get_texture().get_image().save_png(output)
 	print("VEHICLE CAPTURE PASS: build/vehicle-v030.png")
+	get_tree().quit()
+
+func character_capture() -> void:
+	show_product_shell()
+	product_shell.begin_character_creation(1)
+	product_shell.selected_profession="mechanic"
+	product_shell.selected_traits.clear()
+	product_shell.selected_traits.append("strong")
+	product_shell.selected_traits.append("noisy")
+	product_shell.rebuild()
+	await get_tree().process_frame
+	await RenderingServer.frame_post_draw
+	var output:=ProjectSettings.globalize_path("res://build/character-creator-v031.png")
+	DirAccess.make_dir_recursive_absolute(output.get_base_dir())
+	get_viewport().get_texture().get_image().save_png(output)
+	print("CHARACTER CAPTURE PASS: build/character-creator-v031.png")
 	get_tree().quit()
 
 func run_house_flow(capture_frames: bool) -> void:

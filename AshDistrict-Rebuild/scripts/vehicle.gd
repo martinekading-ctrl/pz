@@ -58,14 +58,16 @@ func _physics_process(delta: float) -> void:
 		if can_occupy(candidate):
 			var old_position:=position
 			position=world_map.map_to_world(candidate)
-			fuel_liters=maxf(0.0,fuel_liters-Rules.fuel_for_distance(distance_meters))
+			var fuel_factor: float=game.character_modifier("vehicle_fuel") if is_instance_valid(game) else 1.0
+			fuel_liters=maxf(0.0,fuel_liters-Rules.fuel_for_distance(distance_meters)*fuel_factor)
 			update_pose()
 			if is_instance_valid(game):
 				game.on_vehicle_travel(self,old_position,distance_meters)
 		else:
 			var impact_speed:=absf(speed_mps)
 			speed_mps=0.0
-			condition=maxf(0.0,condition-Rules.collision_condition_loss(impact_speed))
+			var damage_factor: float=game.character_modifier("vehicle_damage") if is_instance_valid(game) else 1.0
+			condition=maxf(0.0,condition-Rules.collision_condition_loss(impact_speed)*damage_factor)
 			if is_instance_valid(game) and impact_speed>2.0:
 				game.on_vehicle_collision(self,impact_speed)
 	engine_noise_timer-=delta

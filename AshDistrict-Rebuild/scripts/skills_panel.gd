@@ -1,6 +1,7 @@
 extends ColorRect
 
 const SkillRules = preload("res://scripts/skill_rules.gd")
+const CharacterRules = preload("res://scripts/character_rules.gd")
 
 var game: Node2D
 
@@ -51,6 +52,7 @@ func build_ui() -> void:
 	header.add_child(make_button("返回背包",game.close_skills_panel.bind(true)))
 	var note := make_label("技能会随着实际行动自动成长。等级上限 5；没有加点和重置成本。",16,Color("aebeb7"))
 	column.add_child(note)
+	column.add_child(make_label("身份："+CharacterRules.summary(game.character_profile),17,Color("d5c27e")))
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.size_flags_vertical = Control.SIZE_EXPAND_FILL

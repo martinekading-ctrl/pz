@@ -15,10 +15,10 @@ const FATIGUE_PER_GAME_MINUTE := 100.0 / 960.0
 const FATIGUE_RECOVERY_PER_GAME_MINUTE := 0.16
 const SLEEP_HEALTH_RECOVERY_PER_GAME_MINUTE := 6.0 / 480.0
 
-static func advance(needs: Dictionary, game_minutes: float, active: bool) -> void:
+static func advance(needs: Dictionary, game_minutes: float, active: bool, thirst_multiplier: float = 1.0) -> void:
 	var activity_multiplier := 1.55 if active else 1.0
 	needs.food = maxf(0.0, float(needs.food) - HUNGER_PER_GAME_MINUTE * game_minutes * activity_multiplier)
-	needs.water = maxf(0.0, float(needs.water) - THIRST_PER_GAME_MINUTE * game_minutes * activity_multiplier)
+	needs.water = maxf(0.0, float(needs.water) - THIRST_PER_GAME_MINUTE * game_minutes * activity_multiplier * maxf(0.0,thirst_multiplier))
 	needs.fatigue = minf(MAX_VALUE, float(needs.get("fatigue", 0.0)) + FATIGUE_PER_GAME_MINUTE * game_minutes * (1.18 if active else 1.0))
 	var damage := 0.0
 	if float(needs.food) <= 0.0:

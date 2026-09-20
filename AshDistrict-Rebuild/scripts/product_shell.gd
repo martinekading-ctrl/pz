@@ -1,6 +1,7 @@
 extends ColorRect
 
 const SettingsStore = preload("res://scripts/settings_store.gd")
+const CharacterRules = preload("res://scripts/character_rules.gd")
 
 var game: Node2D
 var screen_stack: Array[String] = ["main"]
@@ -8,6 +9,8 @@ var pending_slot := -1
 var content: Control
 var focus_candidates: Array[Button] = []
 var settings: Dictionary
+var selected_profession := "survivor"
+var selected_traits: Array[String] = []
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -66,7 +69,7 @@ func rebuild() -> void:
 	var brand := make_label("余烬街区",38,Color("f0e8d0"))
 	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(brand)
-	var version := make_label("0.30  生存测试版",17,Color("b7c7be"))
+	var version := make_label("0.31  生存测试版",17,Color("b7c7be"))
 	version.custom_minimum_size.x = 190
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	version.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -81,6 +84,7 @@ func rebuild() -> void:
 		"tutorial": build_tutorial(column)
 		"confirm_new": build_confirm(column,true)
 		"confirm_delete": build_confirm(column,false)
+		"character": build_character(column)
 	if not focus_candidates.is_empty():
 		call_deferred("focus_first")
 
@@ -135,7 +139,13 @@ func start_or_confirm(slot: int,occupied: bool) -> void:
 		pending_slot = slot
 		push_screen("confirm_new")
 	else:
-		game.start_new_game(slot)
+		begin_character_creation(slot)
+
+func begin_character_creation(slot: int) -> void:
+	pending_slot=slot
+	selected_profession="survivor"
+	selected_traits.clear()
+	push_screen("character")
 
 func confirm_delete(slot: int) -> void:
 	pending_slot = slot
@@ -148,8 +158,74 @@ func build_confirm(parent: VBoxContainer,overwrite: bool) -> void:
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(spacer)
-	make_button(parent,"确认"+action,game.start_new_game.bind(pending_slot) if overwrite else perform_delete)
+	make_button(parent,"确认"+action,begin_character_creation.bind(pending_slot) if overwrite else perform_delete)
 	make_button(parent,"取消",pop_screen)
+
+func build_character(parent: VBoxContainer) -> void:
+	parent.add_child(make_label("创建幸存者",28,Color("e7c979")))
+	parent.add_child(make_label("职业决定初始专长与物资；负面特质返还点数。未使用点数可以保留。",15,Color("aebdb6")))
+	var profile:={"profession":selected_profession,"traits":selected_traits}
+	var profession_grid:=GridContainer.new()
+	profession_grid.columns=2
+	profession_grid.add_theme_constant_override("h_separation",10)
+	profession_grid.add_theme_constant_override("v_separation",7)
+	parent.add_child(profession_grid)
+	for profession_id: String in CharacterRules.PROFESSION_ORDER:
+		var data: Dictionary=CharacterRules.PROFESSIONS[profession_id]
+		var label_text:="%s  ·  %d 点\n%s" % [data.name,int(data.points),data.desc]
+		var button:=make_button(profession_grid,label_text,select_profession.bind(profession_id),false,Vector2(375,66))
+		button.add_theme_font_size_override("font_size",16)
+		if profession_id==selected_profession:
+			button.add_theme_color_override("font_color",Color("f1cd70"))
+	parent.add_child(make_label("特质",20,Color("e7c979")))
+	var trait_grid:=GridContainer.new()
+	trait_grid.columns=2
+	trait_grid.add_theme_constant_override("h_separation",12)
+	trait_grid.add_theme_constant_override("v_separation",5)
+	parent.add_child(trait_grid)
+	for trait_id: String in CharacterRules.TRAIT_ORDER:
+		var data: Dictionary=CharacterRules.TRAITS[trait_id]
+		var check:=CheckButton.new()
+		check.text="%s  %s%d 点  ·  %s" % [data.name,"-" if int(data.cost)>0 else "+",absi(int(data.cost)),data.desc]
+		check.custom_minimum_size=Vector2(375,46)
+		check.add_theme_font_size_override("font_size",15)
+		check.button_pressed=trait_id in selected_traits
+		check.toggled.connect(toggle_trait.bind(trait_id))
+		trait_grid.add_child(check)
+		focus_candidates.append(check)
+	var remaining:=CharacterRules.points_remaining(profile)
+	var summary:=make_label("剩余点数：%d   ·   %s" % [remaining,CharacterRules.summary(profile)],17,Color("9ed7ab") if remaining>=0 else Color("e4776e"))
+	summary.size_flags_vertical=Control.SIZE_EXPAND_FILL
+	summary.vertical_alignment=VERTICAL_ALIGNMENT_BOTTOM
+	parent.add_child(summary)
+	var action_row:=HBoxContainer.new()
+	action_row.add_theme_constant_override("separation",12)
+	parent.add_child(action_row)
+	make_button(action_row,"返回槽位",cancel_character_creation,false,Vector2(230,48))
+	make_button(action_row,"开始游戏",finish_character_creation,remaining<0,Vector2(480,48))
+
+func select_profession(profession_id: String) -> void:
+	selected_profession=profession_id
+	rebuild()
+
+func toggle_trait(enabled: bool,trait_id: String) -> void:
+	if enabled and trait_id not in selected_traits:
+		selected_traits.append(trait_id)
+	elif not enabled:
+		selected_traits.erase(trait_id)
+	rebuild()
+
+func cancel_character_creation() -> void:
+	pending_slot=-1
+	selected_traits.clear()
+	screen_stack=["main","new_slots"]
+	rebuild()
+
+func finish_character_creation() -> void:
+	var profile:={"profession":selected_profession,"traits":selected_traits.duplicate()}
+	if pending_slot<1 or CharacterRules.points_remaining(profile)<0:
+		return
+	game.start_new_game(pending_slot,profile)
 
 func perform_delete() -> void:
 	game.delete_save_slot(pending_slot)
