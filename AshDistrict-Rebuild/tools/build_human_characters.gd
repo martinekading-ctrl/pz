@@ -86,7 +86,37 @@ func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> 
 	ground_shuffle(clip,skeleton)
 	return clip
 
-func ground_shuffle(clip: Animation, skeleton: Skeleton3D) -> void:
+func build_pursuit(source: Animation, skeleton: Skeleton3D, grab: Animation) -> Animation:
+	# Separate full-body pursuit clip: regular footfalls and alert upper body.
+	# Never derive it from the limp/shuffle track set.
+	var clip: Animation=source.duplicate(true)
+	for track in clip.get_track_count():
+		var name := str(clip.track_get_path(track).get_subname(0))
+		var bone := skeleton.find_bone(name)
+		var rest := skeleton.get_bone_rest(bone)
+		for key in clip.track_get_key_count(track):
+			var time := clip.track_get_key_time(track,key)
+			var phase := time/clip.length*TAU
+			if clip.track_get_type(track)==Animation.TYPE_POSITION_3D:
+				var value: Vector3=clip.track_get_key_value(track,key)
+				value=rest.origin+(value-rest.origin)*0.22
+				if name=="pelvis": value+=skeleton.get_bone_global_rest(skeleton.get_bone_parent(bone)).basis.inverse()*Vector3(0,-0.085,0)
+				clip.track_set_key_value(track,key,value)
+			elif clip.track_get_type(track)==Animation.TYPE_ROTATION_3D:
+				var value: Quaternion=clip.track_get_key_value(track,key)
+				if name.contains("arm_") or name.begins_with("hand_"):
+					var ready := grab.find_track(clip.track_get_path(track),Animation.TYPE_ROTATION_3D)
+					value=grab.rotation_track_interpolate(ready,0.32)
+					var side := 1.0 if name.ends_with("l") else -1.0
+					value=value*Quaternion(Vector3.RIGHT,sin(phase)*0.055*side)
+				elif name=="spine_02": value=rest.basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,0.16)
+				elif name=="Head": value=rest.basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,-0.12)
+				elif name=="pelvis": value=rest.basis.get_rotation_quaternion()
+				clip.track_set_key_value(track,key,value.normalized())
+	ground_shuffle(clip,skeleton,1.05,0.075)
+	return clip
+
+func ground_shuffle(clip: Animation, skeleton: Skeleton3D, cycle_meters: float=0.85, lift: float=0.04) -> void:
 	# Bake a two-bone leg solve. Support feet travel backwards at world speed;
 	# swing feet clear the ground by 4cm. No runtime IK cost on mobile.
 	var corrected := {}
@@ -110,13 +140,13 @@ func ground_shuffle(clip: Animation, skeleton: Skeleton3D) -> void:
 			var foot := skeleton.find_bone("foot_"+side)
 			var p := fposmod(phase+(0.5 if side=="r" else 0.0),1.0)
 			var ankle := skeleton.get_bone_global_rest(foot).origin
-			var stride := 0.85/0.95
+			var stride := cycle_meters/0.95
 			if p<0.60:
 				ankle.z+=stride*(0.30-p)
 			else:
 				var swing := (p-0.60)/0.40
 				ankle.z+=lerpf(-stride*0.30,stride*0.30,smoothstep(0.0,1.0,swing))
-				ankle.y+=sin(swing*PI)*0.04
+				ankle.y+=sin(swing*PI)*lift
 			var hip: Vector3=poses[thigh].origin
 			var upper := skeleton.get_bone_rest(calf).origin.length()
 			var lower := skeleton.get_bone_rest(foot).origin.length()
@@ -322,6 +352,7 @@ func build_all() -> void:
 			library.remove_animation("Punch")
 			library.add_animation("GrabBite",build_grab(skeleton))
 			library.add_animation("ZombieShuffle",build_shuffle(library.get_animation("Walk"),skeleton,library.get_animation("GrabBite")))
+			library.add_animation("ZombiePursuit",build_pursuit(library.get_animation("Walk"),skeleton,library.get_animation("GrabBite")))
 		player.add_animation_library("",library)
 		# 1.75m adult, a narrower ordinary build; all equipment scales with the rig.
 		character.scale=Vector3(0.88,0.965,0.95)

@@ -16,6 +16,7 @@ var facing := Vector2.DOWN
 var gait := 0.0
 var movement_mps := 0.0
 const SHUFFLE_CYCLE_METERS := 0.85
+const PURSUIT_CYCLE_METERS := 1.05
 var state_time := 0.0
 var attack_cooldown := 0.0
 var attack_committed := false

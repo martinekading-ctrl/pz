@@ -60,7 +60,10 @@ static func run(game: Node2D) -> void:
 	var test_zombie: Node2D = game.zombies[0]
 	test_zombie.change_state(test_zombie.State.CHASE)
 	test_zombie.live_visual._process(0.1)
-	assert(test_zombie.live_visual.animation_clip == "ZombieShuffle")
+	assert(test_zombie.live_visual.animation_clip == "ZombiePursuit")
+	test_zombie.change_state(test_zombie.State.WANDER)
+	test_zombie.live_visual._process(0.1)
+	assert(test_zombie.live_visual.animation_clip=="ZombieShuffle","Wander and chase must use different clips")
 	test_zombie.movement_mps=0.42
 	var slow_shuffle: float=test_zombie.live_visual.desired_rig_animation().speed
 	test_zombie.movement_mps=0.84

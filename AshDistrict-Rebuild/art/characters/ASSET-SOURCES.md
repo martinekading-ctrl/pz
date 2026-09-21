@@ -12,6 +12,7 @@
 - Generated runtime scenes: `human_base/survivor.scn` and `human_base/infected.scn`, rebuilt by `tools/build_human_characters.gd`.
 - Infected `GrabBite` is project-authored skeletal keyframing (open-handed reach, head contact, recovery); the infected scene no longer includes the source boxing clip.
 - `ZombieShuffle` uses project-authored, offline two-bone leg solving for grounded support and low swing clearance, with edited CC0 upper-body tracks and relaxed arms. Exaggerated asymmetric timing and side sway were removed after playtest feedback. Player locomotion retains its own clips.
+- `ZombiePursuit` is a separate project-edited derivative of CC0 Walk with a forward ready-to-grab upper body and baked symmetric leg trajectories. It is selected for CHASE only and is not an external motion-capture clip.
 - The older Zombie Apocalypse models below are retained for rollback/reference, not current player/zombie runtime rendering.
 
 ## Quaternius Zombie Apocalypse Kit

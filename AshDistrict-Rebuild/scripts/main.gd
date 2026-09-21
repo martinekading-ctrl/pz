@@ -3073,6 +3073,17 @@ func human_capture() -> void:
 	await get_tree().create_timer(0.62).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/zombie-grab-contact.png")
+	if "--pursuit-preview" in OS.get_cmdline_user_args():
+		var infected: Node2D=zombies[0]
+		infected.change_state(infected.State.CHASE)
+		infected.movement_mps=1.05
+		infected.facing=world_map.map_to_world(Vector2(0,1)).normalized()
+		infected.position=player.position+Vector2(90,0)
+		for frame in 24:
+			infected.position+=world_map.map_to_world(Vector2(0,1.05*0.125/0.5))
+			await get_tree().create_timer(0.125).timeout
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("res://build/pursuit-%02d.png"%frame)
 	print("HUMAN CAPTURE PASS")
 	# Release the render scene before ending the capture process.
 	var scene_tree := get_tree()
