@@ -11,7 +11,7 @@
 - Project modifications: adult height normalization, narrower torso, skinned clothing shell, recoloring, hair and backpack attachments, animation retargeting and armed upper-body poses.
 - Generated runtime scenes: `human_base/survivor.scn` and `human_base/infected.scn`, rebuilt by `tools/build_human_characters.gd`.
 - Infected `GrabBite` is project-authored skeletal keyframing (open-handed reach, head contact, recovery); the infected scene no longer includes the source boxing clip.
-- `ZombieShuffle` is a project-edited derivative of the CC0 Walk animation: asymmetric stance timing, reduced leg lift, slumped torso and independently posed dangling arms. Player locomotion retains its own clips.
+- `ZombieShuffle` uses project-authored, offline two-bone leg solving for grounded support and low swing clearance, with edited CC0 upper-body tracks and relaxed arms. Exaggerated asymmetric timing and side sway were removed after playtest feedback. Player locomotion retains its own clips.
 - The older Zombie Apocalypse models below are retained for rollback/reference, not current player/zombie runtime rendering.
 
 ## Quaternius Zombie Apocalypse Kit

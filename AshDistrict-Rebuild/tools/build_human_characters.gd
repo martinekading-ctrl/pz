@@ -63,11 +63,13 @@ func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> 
 		for key in 49:
 			var phase := float(key)/48.0
 			# Unequal stance times: one foot drags longer; endpoints still match.
-			var warped := phase*0.5/0.58 if phase<0.58 else 0.5+(phase-0.58)*0.5/0.42
+			var warped := phase
 			var time := warped*source.length
 			if type==Animation.TYPE_POSITION_3D:
 				var value := source.position_track_interpolate(track,time)
-				clip.position_track_insert_key(output,phase*clip.length,rest.origin+(value-rest.origin)*0.3)
+				var adjusted := rest.origin+(value-rest.origin)*0.3
+				if name=="pelvis": adjusted+=skeleton.get_bone_global_rest(skeleton.get_bone_parent(bone)).basis.inverse()*Vector3(0,-0.065,0)
+				clip.position_track_insert_key(output,phase*clip.length,adjusted)
 			else:
 				var value := source.rotation_track_interpolate(track,time)
 				var neutral := rest.basis.get_rotation_quaternion()
@@ -76,12 +78,73 @@ func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> 
 				elif name.begins_with("foot_") or name.begins_with("ball_"): value=neutral.slerp(value,0.45)
 				elif name.contains("arm_") or name.begins_with("hand_"):
 					var pose_track := grab.find_track(path,Animation.TYPE_ROTATION_3D)
-					value=grab.rotation_track_interpolate(pose_track,0.07)
-					value=value*Quaternion(Vector3.RIGHT,sin(phase*TAU)*0.035)
-				elif name=="spine_02": value=value*Quaternion(Vector3.RIGHT,0.10)*Quaternion(Vector3.FORWARD,sin(phase*TAU)*0.035)
-				elif name=="Head": value=neutral*Quaternion(Vector3.RIGHT,0.10)*Quaternion(Vector3.FORWARD,-0.06)
+					value=grab.rotation_track_interpolate(pose_track,0.15)
+					value=value*Quaternion(Vector3.RIGHT,sin(phase*TAU)*0.02)
+				elif name=="spine_02": value=neutral*Quaternion(Vector3.RIGHT,0.22)
+				elif name=="Head": value=neutral*Quaternion(Vector3.RIGHT,-0.08)
 				clip.rotation_track_insert_key(output,phase*clip.length,value.normalized())
+	ground_shuffle(clip,skeleton)
 	return clip
+
+func ground_shuffle(clip: Animation, skeleton: Skeleton3D) -> void:
+	# Bake a two-bone leg solve. Support feet travel backwards at world speed;
+	# swing feet clear the ground by 4cm. No runtime IK cost on mobile.
+	var corrected := {}
+	for side in ["l","r"]:
+		for part in ["thigh_","calf_","foot_"]: corrected[part+side]=[]
+	for frame in 49:
+		var phase := float(frame)/48.0
+		var poses := []
+		for bone in skeleton.get_bone_count():
+			var local := skeleton.get_bone_rest(bone)
+			var path := NodePath("Armature/Skeleton3D:"+skeleton.get_bone_name(bone))
+			var rotation := clip.find_track(path,Animation.TYPE_ROTATION_3D)
+			var position := clip.find_track(path,Animation.TYPE_POSITION_3D)
+			if rotation>=0: local.basis=Basis(clip.rotation_track_interpolate(rotation,phase*clip.length))
+			if position>=0: local.origin=clip.position_track_interpolate(position,phase*clip.length)
+			var parent := skeleton.get_bone_parent(bone)
+			poses.append(poses[parent]*local if parent>=0 else local)
+		for side in ["l","r"]:
+			var thigh := skeleton.find_bone("thigh_"+side)
+			var calf := skeleton.find_bone("calf_"+side)
+			var foot := skeleton.find_bone("foot_"+side)
+			var p := fposmod(phase+(0.5 if side=="r" else 0.0),1.0)
+			var ankle := skeleton.get_bone_global_rest(foot).origin
+			var stride := 0.85/0.95
+			if p<0.60:
+				ankle.z+=stride*(0.30-p)
+			else:
+				var swing := (p-0.60)/0.40
+				ankle.z+=lerpf(-stride*0.30,stride*0.30,smoothstep(0.0,1.0,swing))
+				ankle.y+=sin(swing*PI)*0.04
+			var hip: Vector3=poses[thigh].origin
+			var upper := skeleton.get_bone_rest(calf).origin.length()
+			var lower := skeleton.get_bone_rest(foot).origin.length()
+			var distance := hip.distance_to(ankle)
+			var axis := (ankle-hip).normalized()
+			var reach := minf(distance,upper+lower-0.001)
+			var along := (upper*upper-lower*lower+reach*reach)/(2.0*reach)
+			var bend := (Vector3.BACK-axis*axis.dot(Vector3.BACK)).normalized()
+			var knee := hip+axis*along+bend*sqrt(maxf(0.0,upper*upper-along*along))
+			for pair in [[thigh,calf,knee-hip],[calf,foot,ankle-knee]]:
+				var bone: int=pair[0]
+				var child: int=pair[1]
+				var rest_basis := skeleton.get_bone_global_rest(bone).basis
+				var direction := (rest_basis*skeleton.get_bone_rest(child).origin).normalized()
+				var basis := Basis(Quaternion(direction,Vector3(pair[2]).normalized()))*rest_basis
+				var parent := skeleton.get_bone_parent(bone)
+				var local: Basis=poses[parent].basis.inverse()*basis
+				corrected[skeleton.get_bone_name(bone)].append(local.get_rotation_quaternion())
+				poses[bone].basis=basis
+			var foot_local: Basis=poses[calf].basis.inverse()*skeleton.get_bone_global_rest(foot).basis
+			corrected["foot_"+side].append(foot_local.get_rotation_quaternion())
+	for name in corrected:
+		var path := NodePath("Armature/Skeleton3D:"+name)
+		var track := clip.find_track(path,Animation.TYPE_ROTATION_3D)
+		if track>=0: clip.remove_track(track)
+		track=clip.add_track(Animation.TYPE_ROTATION_3D)
+		clip.track_set_path(track,path)
+		for frame in 49: clip.rotation_track_insert_key(track,float(frame)/48.0*clip.length,corrected[name][frame])
 
 func material(color: Color) -> StandardMaterial3D:
 	var result := StandardMaterial3D.new()
