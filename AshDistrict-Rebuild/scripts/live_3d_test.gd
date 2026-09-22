@@ -35,6 +35,18 @@ static func run(game: Node2D) -> void:
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip == "Walk")
 	var rig_player: AnimationPlayer=game.player.live_visual.animation_player
+	var pistol: Node3D=game.player.live_visual.pistol
+	assert(pistol.name=="ServicePistol" and pistol.get_node_or_null("PistolMesh") is MeshInstance3D,"Equipped firearm must use the reusable 3D model")
+	assert(pistol.get_node_or_null("Muzzle") is Marker3D,"Pistol needs a muzzle marker for effects")
+	var grip: BoneAttachment3D=pistol.get_parent() as BoneAttachment3D
+	assert(grip.bone_name=="hand_r","Firearm must follow the right hand bone")
+	var gun_bounds: AABB=(pistol.get_node("PistolMesh") as MeshInstance3D).mesh.get_aabb()
+	assert(gun_bounds.size.z>0.2 and gun_bounds.size.z<0.3 and gun_bounds.size.x<0.06,"Pistol must fit adult hand scale")
+	game.player.weapon_is_firearm=true
+	game.player.live_visual.set_imported_weapon_visibility()
+	assert(pistol.visible and not game.player.live_visual.weapon.visible,"Only the equipped gun should be shown")
+	game.player.weapon_is_firearm=false
+	game.player.live_visual.set_imported_weapon_visibility()
 	var rig: Skeleton3D=game.player.live_visual.skeleton
 	rig_player.advance(0.2)
 	var thigh := rig.find_bone("thigh_l")

@@ -1,6 +1,7 @@
 extends Node2D
 ## Live 3D model composited at its ground anchor into the existing isometric world.
 const PLAYER_RIG := preload("res://art/characters/human_base/survivor.scn")
+const PISTOL_MODEL := preload("res://art/weapons/service_pistol.scn")
 const Metrics := preload("res://scripts/player_metrics.gd")
 const ZOMBIE_RIG := preload("res://art/characters/human_base/infected.scn")
 const LOOPED_CLIPS := [&"Idle", &"Idle_Gun", &"Idle_Attack", &"Walk", &"Walk_Gun", &"Run", &"Run_Gun", &"Run_Arms"]
@@ -123,8 +124,9 @@ func build_rigged_person() -> bool:
 		weapon.name = "Crowbar"
 		box(weapon,Vector3(0,0,0.14),Vector3(0.018,0.018,0.62),Color("66524b"))
 		box(weapon,Vector3(0,0.035,0.44),Vector3(0.018,0.08,0.018),Color("66524b"))
-		pistol = joint(grip,Vector3(0,0.065,0))
-		box(pistol,Vector3(0,0,0.08),Vector3(0.045,0.065,0.22),Color("333638"))
+		pistol = PISTOL_MODEL.instantiate()
+		grip.add_child(pistol)
+		pistol.position=Vector3(0,0.065,0)
 		for weapon_name: StringName in IMPORTED_WEAPONS:
 			var weapon_mesh := rigged_character.find_child(weapon_name, true, false) as GeometryInstance3D
 			if weapon_mesh != null:
@@ -374,6 +376,7 @@ func _draw() -> void:
 	draw_colored_polygon(points,Color(0,0,0,0.22))
 
 	if kind == "player" and actor.weapon_is_firearm and actor.aim_visible:
-		var start: Vector2 = Vector2(0,-65)+actor.facing*35.0
+		var muzzle: Marker3D = pistol.get_node_or_null("Muzzle") as Marker3D
+		var start: Vector2 = (viewport.get_camera_3d().unproject_position(muzzle.global_position)*sprite.scale+sprite.position) if muzzle != null else Vector2(0,-65)+actor.facing*35.0
 		draw_dashed_line(start,start+actor.facing*150.0,Color(0.9,0.8,0.5,0.55),2.0,8.0)
 		if actor.muzzle_flash>0.0: draw_circle(start,6.0,Color("ffd779"))

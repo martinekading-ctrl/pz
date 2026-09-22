@@ -17,6 +17,8 @@
 
 ## Quaternius Zombie Apocalypse Kit
 
+The standalone 3D pistol in `art/weapons/service_pistol.scn` is extracted from the Pistol mesh in `Characters_Matt.gltf` by `tools/build_pistol_model.gd`, scaled to an adult hand, and reused by the current runtime. Its source license is `License.txt` below.
+
 - Source: https://quaternius.com/packs/zombieapocalypsekit.html
 - Creator: Quaternius
 - License: CC0 1.0 Universal

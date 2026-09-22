@@ -231,6 +231,7 @@ func _ready() -> void:
 	if "--population-capture" in OS.get_cmdline_user_args(): call_deferred("population_capture")
 	if "--firearm-test" in OS.get_cmdline_user_args(): call_deferred("run_firearm_test")
 	if "--firearm-capture" in OS.get_cmdline_user_args(): call_deferred("firearm_capture")
+	if "--pistol-closeup" in OS.get_cmdline_user_args(): call_deferred("pistol_closeup")
 	if "--firearm-preview" in OS.get_cmdline_user_args(): call_deferred("firearm_preview")
 	if "--crafting-test" in OS.get_cmdline_user_args(): call_deferred("run_crafting_test")
 	if "--crafting-capture" in OS.get_cmdline_user_args(): call_deferred("crafting_capture")
@@ -2690,6 +2691,26 @@ func firearm_preview() -> void:
 	combat_message = "手枪已装备：右键瞄准、左键射击、R 装填；手机端拖动并松开右摇杆射击"
 	combat_message_time = 8.0
 	refresh_player_control()
+
+func pistol_closeup() -> void:
+	prepare_firearm_demo()
+	player.set_physics_process(false)
+	for zombie: Node2D in zombies: zombie.visible=false
+	player.position=world_map.map_to_world(Vector2(36,49))
+	player.set_facing(world_map.map_to_world(Vector2(0,1)))
+	player.moving=false
+	player.firearm_recoil=0.0
+	player.aim_visible=true
+	camera.position_smoothing_enabled=false
+	camera.zoom=Vector2(1.35,1.35)
+	camera.position=Vector2(0,-65)
+	await get_tree().create_timer(0.7).timeout
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("res://build/pistol-equipped-v0333.png")
+	print("PISTOL CLOSEUP PASS")
+	var tree := get_tree()
+	queue_free()
+	tree.create_timer(0.3).timeout.connect(tree.quit)
 
 func firearm_capture() -> void:
 	prepare_firearm_demo()
