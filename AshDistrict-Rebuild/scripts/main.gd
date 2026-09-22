@@ -3089,6 +3089,11 @@ func human_capture() -> void:
 	await get_tree().create_timer(0.3).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://build/human-run-v0333.png")
+	if "--run-preview" in OS.get_cmdline_user_args():
+		for frame in 16:
+			await get_tree().create_timer(0.10).timeout
+			await RenderingServer.frame_post_draw
+			get_viewport().get_texture().get_image().save_png("res://build/run-%02d.png"%frame)
 	player.moving=false
 	zombies[0].change_state(zombies[0].State.ATTACK)
 	await get_tree().create_timer(0.62).timeout

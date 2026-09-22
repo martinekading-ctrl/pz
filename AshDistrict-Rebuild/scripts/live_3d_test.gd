@@ -60,6 +60,10 @@ static func run(game: Node2D) -> void:
 	game.player.running=true
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip=="Run")
+	game.player.weapon_is_firearm=true
+	game.player.live_visual._process(0.1)
+	assert(game.player.live_visual.animation_clip=="Run_Gun","Running while armed must keep gun-ready upper body")
+	game.player.weapon_is_firearm=false
 	game.player.running=false
 	game.player.crouching=true
 	game.player.live_visual._process(0.1)
