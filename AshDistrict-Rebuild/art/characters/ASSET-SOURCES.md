@@ -9,6 +9,7 @@
 - Original licenses: `human_base/License_Standard.txt` and `human_base/License_Animation.txt`.
 - Source meshes: Superhero_Male_FullBody and Hair_SimpleParted; source motions: UAL1_Standard.glb.
 - Project modifications: adult height normalization, narrower torso, skinned clothing shell, recoloring, hair and backpack attachments, animation retargeting and armed upper-body poses.
+- Player `Walk`/`Walk_Gun` use the unmodified CC0 source walk after retargeting. Player `Run`/`Run_Gun` use CMU's recorded human run/jog (trial 02_03), adapted to the same adult survivor skeleton. The earlier two-bone player leg pass produced an anatomically wrong pose and was removed. The character mesh, clothing, backpack and height remain the project's established model. See `motion_sources/SOURCE.md` for the recording, FBX conversion, terms and adaptation.
 - Generated runtime scenes: `human_base/survivor.scn` and `human_base/infected.scn`, rebuilt by `tools/build_human_characters.gd`.
 - Infected `GrabBite` is project-authored skeletal keyframing (open-handed reach, head contact, recovery); the infected scene no longer includes the source boxing clip.
 - `ZombieShuffle` uses project-authored, offline two-bone leg solving for grounded support and low swing clearance, with edited CC0 upper-body tracks and relaxed arms. Exaggerated asymmetric timing and side sway were removed after playtest feedback. Player locomotion retains its own clips.

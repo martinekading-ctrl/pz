@@ -60,6 +60,15 @@ static func run(game: Node2D) -> void:
 	game.player.running=true
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip=="Run")
+	# W moves up on screen. The animated torso must face the same map direction.
+	game.player.visual_facing=Vector2.UP
+	game.player.live_visual._process(1.0)
+	rig_player.seek(rig_player.get_animation("Run").length * 0.25, true)
+	var pelvis := rig.find_bone("pelvis")
+	var body_front: Vector3 = rig.get_bone_global_pose(pelvis).basis * rig.get_bone_global_rest(pelvis).basis.inverse() * Vector3.BACK
+	var map_front: Vector3 = (game.player.live_visual.model.basis * game.player.live_visual.rigged_character.basis * body_front).normalized()
+	var w_map: Vector2 = game.world_map.world_to_map(Vector2.UP).normalized()
+	assert(map_front.dot(Vector3(w_map.x, 0.0, w_map.y)) > 0.9, "W running must face forward, not backpedal")
 	game.player.weapon_is_firearm=true
 	game.player.live_visual._process(0.1)
 	assert(game.player.live_visual.animation_clip=="Run_Gun","Running while armed must keep gun-ready upper body")

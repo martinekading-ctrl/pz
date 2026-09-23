@@ -3,6 +3,7 @@ extends SceneTree
 const BASE = preload("res://art/characters/human_base/Superhero_Male_FullBody.gltf")
 const MOTION = preload("res://art/characters/human_base/UAL1_Standard.glb")
 const HAIR = preload("res://art/characters/human_base/Hair_SimpleParted.gltf")
+const CMU_RUN = preload("res://tools/retarget_cmu_run.gd")
 const CLIPS = {"Idle":"Idle", "Idle_Gun":"Pistol_Idle", "Idle_Attack":"Idle", "Walk":"Walk", "Walk_Gun":"Walk", "Run":"Jog_Fwd", "Run_Gun":"Jog_Fwd", "Slash":"Sword_Attack", "Punch":"Punch_Cross", "HitReact":"Hit_Chest", "Jump":"Jump", "Death":"Death01", "Crouch_Walk":"Crouch_Fwd", "Crouch_Idle":"Crouch_Idle", "Shoot":"Pistol_Shoot"}
 
 func _initialize() -> void:
@@ -47,6 +48,22 @@ func own_children(node: Node, scene: Node) -> void:
 		child.owner = scene
 		own_children(child, scene)
 
+func armed_run(run: Animation, idle_gun: Animation) -> Animation:
+	var clip := run.duplicate(true) as Animation
+	for track in idle_gun.get_track_count():
+		if idle_gun.track_get_type(track) != Animation.TYPE_ROTATION_3D: continue
+		var path := idle_gun.track_get_path(track)
+		var bone := str(path.get_subname(0))
+		if not (bone.begins_with("clavicle_") or bone.contains("arm_") or bone.begins_with("hand_") or bone.begins_with("index_") or bone.begins_with("middle_") or bone.begins_with("ring_") or bone.begins_with("pinky_") or bone.begins_with("thumb_")): continue
+		var existing := clip.find_track(path, Animation.TYPE_ROTATION_3D)
+		if existing >= 0: clip.remove_track(existing)
+		var output := clip.add_track(Animation.TYPE_ROTATION_3D)
+		clip.track_set_path(output, path)
+		var pose := idle_gun.rotation_track_interpolate(track, 0.2)
+		clip.rotation_track_insert_key(output, 0.0, pose)
+		clip.rotation_track_insert_key(output, clip.length, pose)
+	return clip
+
 func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> Animation:
 	var clip := Animation.new()
 	clip.length=1.5
@@ -83,77 +100,8 @@ func build_shuffle(source: Animation, skeleton: Skeleton3D, grab: Animation) -> 
 				elif name=="spine_02": value=neutral*Quaternion(Vector3.RIGHT,0.22)
 				elif name=="Head": value=neutral*Quaternion(Vector3.RIGHT,-0.08)
 				clip.rotation_track_insert_key(output,phase*clip.length,value.normalized())
-	ground_shuffle(clip,skeleton)
+	bake_foot_trajectory(clip,skeleton)
 	return clip
-
-func build_survivor_run(walk: Animation, jog: Animation, skeleton: Skeleton3D, armed: bool) -> Animation:
-	# Keep the familiar jog arm rhythm, with shorter ground-contact steps.
-	var clip: Animation=walk.duplicate(true)
-	clip.length=1.0
-	for track in clip.get_track_count():
-		var path := clip.track_get_path(track)
-		var name := str(path.get_subname(0))
-		var bone := skeleton.find_bone(name)
-		var rest := skeleton.get_bone_rest(bone)
-		for key in clip.track_get_key_count(track):
-			var key_time := clip.track_get_key_time(track,key)
-			var phase := key_time/walk.length
-			if clip.track_get_type(track)==Animation.TYPE_POSITION_3D:
-				var value: Vector3=clip.track_get_key_value(track,key)
-				value=rest.origin+(value-rest.origin)*0.25
-				if name=="pelvis": value+=skeleton.get_bone_global_rest(skeleton.get_bone_parent(bone)).basis.inverse()*Vector3(0,-0.09,0)
-				clip.track_set_key_value(track,key,value)
-			elif clip.track_get_type(track)==Animation.TYPE_ROTATION_3D:
-				var value: Quaternion=clip.track_get_key_value(track,key)
-				if name.contains("arm_") or name.begins_with("clavicle") or name.begins_with("hand_"):
-					var source_track := jog.find_track(path,Animation.TYPE_ROTATION_3D)
-					if source_track>=0:
-						var run_arm := jog.rotation_track_interpolate(source_track,phase*jog.length)
-						value=value.slerp(run_arm,0.3 if armed else (0.55 if name.begins_with("upperarm_") else 0.75))
-				elif name=="spine_02": value=rest.basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,0.08)
-				elif name=="Head": value=rest.basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,-0.04)
-				clip.track_set_key_value(track,key,value.normalized())
-			clip.track_set_key_time(track,key,phase*clip.length)
-	ground_shuffle(clip,skeleton,1.8,0.10,0.38)
-	if not armed: balance_run_arms(clip,skeleton)
-	return clip
-
-func balance_run_arms(clip: Animation, skeleton: Skeleton3D) -> void:
-	var corrected := {}
-	for side in ["l","r"]:
-		for part in ["upperarm_","lowerarm_"]: corrected[part+side]=[]
-	for frame in 49:
-		var phase := float(frame)/48.0
-		var poses := []
-		for bone in skeleton.get_bone_count():
-			var local := skeleton.get_bone_rest(bone)
-			var path := NodePath("Armature/Skeleton3D:"+skeleton.get_bone_name(bone))
-			var rotation := clip.find_track(path,Animation.TYPE_ROTATION_3D)
-			var position := clip.find_track(path,Animation.TYPE_POSITION_3D)
-			if rotation>=0: local.basis=Basis(clip.rotation_track_interpolate(rotation,phase*clip.length))
-			if position>=0: local.origin=clip.position_track_interpolate(position,phase*clip.length)
-			var parent := skeleton.get_bone_parent(bone)
-			poses.append(poses[parent]*local if parent>=0 else local)
-		for side in ["l","r"]:
-			var sign := 1.0 if side=="l" else -1.0
-			var swing := sin(phase*TAU)*sign
-			for pair in [["upperarm_","lowerarm_",Vector3(sign*0.17,-0.85,swing*0.36)], ["lowerarm_","hand_",Vector3(-sign*0.06,-0.18,0.70)]]:
-				var bone := skeleton.find_bone(str(pair[0])+side)
-				var child := skeleton.find_bone(str(pair[1])+side)
-				var rest_basis := skeleton.get_bone_global_rest(bone).basis
-				var axis := (rest_basis*skeleton.get_bone_rest(child).origin).normalized()
-				var basis := Basis(Quaternion(axis,Vector3(pair[2]).normalized()))*rest_basis
-				var parent := skeleton.get_bone_parent(bone)
-				var local: Basis=poses[parent].basis.inverse()*basis
-				corrected[str(pair[0])+side].append(local.get_rotation_quaternion())
-				poses[bone].basis=basis
-	for name in corrected:
-		var path := NodePath("Armature/Skeleton3D:"+name)
-		var track := clip.find_track(path,Animation.TYPE_ROTATION_3D)
-		if track>=0: clip.remove_track(track)
-		track=clip.add_track(Animation.TYPE_ROTATION_3D)
-		clip.track_set_path(track,path)
-		for frame in 49: clip.rotation_track_insert_key(track,float(frame)/48.0*clip.length,corrected[name][frame])
 
 func build_pursuit(source: Animation, skeleton: Skeleton3D, grab: Animation) -> Animation:
 	# Separate full-body pursuit clip: regular footfalls and alert upper body.
@@ -182,12 +130,12 @@ func build_pursuit(source: Animation, skeleton: Skeleton3D, grab: Animation) -> 
 				elif name=="Head": value=rest.basis.get_rotation_quaternion()*Quaternion(Vector3.RIGHT,-0.12)
 				elif name=="pelvis": value=rest.basis.get_rotation_quaternion()
 				clip.track_set_key_value(track,key,value.normalized())
-	ground_shuffle(clip,skeleton,1.05,0.075)
+	bake_foot_trajectory(clip,skeleton,1.05,0.075)
 	return clip
 
-func ground_shuffle(clip: Animation, skeleton: Skeleton3D, cycle_meters: float=0.85, lift: float=0.04, contact: float=0.60) -> void:
-	# Bake a two-bone leg solve. Support feet travel backwards at world speed;
-	# swing feet clear the ground by 4cm. No runtime IK cost on mobile.
+func bake_foot_trajectory(clip: Animation, skeleton: Skeleton3D, cycle_meters: float=0.85, lift: float=0.04, contact: float=0.60) -> void:
+	# Bake support and swing phases into the clip with a two-bone leg solve.
+	# Support feet travel backwards at world speed; there is no runtime IK cost.
 	var corrected := {}
 	for side in ["l","r"]:
 		for part in ["thigh_","calf_","foot_"]: corrected[part+side]=[]
@@ -387,6 +335,7 @@ func build_all() -> void:
 		character.add_child(player)
 		var library := AnimationLibrary.new()
 		for alias in CLIPS:
+			if not infected and alias in ["Run", "Run_Gun"]: continue
 			var animation: Animation=source_player.get_animation(CLIPS[alias]).duplicate(true)
 			for track in range(animation.get_track_count()-1,-1,-1):
 				var path := animation.track_get_path(track)
@@ -423,14 +372,9 @@ func build_all() -> void:
 			library.add_animation("ZombieShuffle",build_shuffle(library.get_animation("Walk"),skeleton,library.get_animation("GrabBite")))
 			library.add_animation("ZombiePursuit",build_pursuit(library.get_animation("Walk"),skeleton,library.get_animation("GrabBite")))
 		else:
-			var run_reference := library.get_animation("Run")
-			var gun_reference := library.get_animation("Run_Gun")
-			var new_run := build_survivor_run(library.get_animation("Walk"),run_reference,skeleton,false)
-			var new_gun_run := build_survivor_run(library.get_animation("Walk_Gun"),gun_reference,skeleton,true)
-			library.remove_animation("Run")
-			library.remove_animation("Run_Gun")
-			library.add_animation("Run",new_run)
-			library.add_animation("Run_Gun",new_gun_run)
+			var human_run: Animation = CMU_RUN.new().build(skeleton)
+			library.add_animation("Run", human_run)
+			library.add_animation("Run_Gun", armed_run(human_run, library.get_animation("Idle_Gun")))
 		player.add_animation_library("",library)
 		# 1.75m adult, a narrower ordinary build; all equipment scales with the rig.
 		character.scale=Vector3(0.88,0.965,0.95)

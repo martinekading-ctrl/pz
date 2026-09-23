@@ -9,6 +9,7 @@ var world_map: Node2D
 var controls: Node
 const Metrics = preload("res://scripts/player_metrics.gd")
 var facing := Vector2.DOWN
+var visual_facing := Vector2.DOWN
 var facing_index := 2
 var gait := 0.0
 var moving := false
@@ -126,6 +127,7 @@ func start_melee() -> bool:
 
 func set_facing(direction: Vector2) -> void:
 	if direction.length_squared()<0.01: return
+	visual_facing=direction.normalized()
 	facing_index=posmod(roundi(direction.angle()/(PI/4)),8)
 	facing=Vector2.from_angle(facing_index*PI/4)
 
@@ -139,13 +141,17 @@ func step_motion(direction: Vector2,delta: float) -> void:
 		meters_per_second*=0.25
 	# Input follows the screen; physical speed is normalized after inverse projection.
 	var logical_direction: Vector2=world_map.world_to_map(direction).normalized()
-	velocity_mps=logical_direction*meters_per_second*minf(1,direction.length())
+	var desired_velocity: Vector2=logical_direction*meters_per_second*minf(1,direction.length())
+	var acceleration := 5.0 if desired_velocity.length()>velocity_mps.length() else 7.0
+	velocity_mps=velocity_mps.move_toward(desired_velocity,acceleration*delta)
 	var before:=position
 	move_world(world_map.map_to_world(velocity_mps/Metrics.CELL_METERS)*delta)
 	var traveled: float=world_map.world_to_map(position-before).length()*Metrics.CELL_METERS
 	# Animation follows resolved movement, including slowing against obstacles.
 	velocity_mps=world_map.world_to_map(position-before)*Metrics.CELL_METERS/maxf(delta,0.00001)
 	moving=traveled>0.0001
+	if moving and not aim_visible and swing_remaining <= 0.0:
+		visual_facing=world_map.map_to_world(velocity_mps).normalized()
 	if moving: gait+=traveled*TAU/(Metrics.CROUCH_CYCLE_METERS if crouching else (Metrics.RUN_CYCLE_METERS if running else Metrics.WALK_CYCLE_METERS))
 	else: velocity_mps=Vector2.ZERO
 	queue_redraw()
@@ -223,7 +229,7 @@ func presentation_state() -> String:
 	if crouching:
 		return "crouch_walk" if moving else "crouch_idle"
 	if moving:
-		return "run" if running else "walk"
+		return "run" if running and velocity_mps.length()>=1.8 else "walk"
 	return "aim" if aim_visible else "idle"
 
 func _draw() -> void:

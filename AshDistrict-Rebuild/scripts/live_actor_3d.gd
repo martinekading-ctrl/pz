@@ -5,6 +5,7 @@ const PISTOL_MODEL := preload("res://art/weapons/service_pistol.scn")
 const Metrics := preload("res://scripts/player_metrics.gd")
 const ZOMBIE_RIG := preload("res://art/characters/human_base/infected.scn")
 const LOOPED_CLIPS := [&"Idle", &"Idle_Gun", &"Idle_Attack", &"Walk", &"Walk_Gun", &"Run", &"Run_Gun", &"Run_Arms"]
+const GAIT_CLIPS := [&"Walk", &"Walk_Gun", &"Run", &"Run_Gun"]
 const IMPORTED_WEAPONS := [&"Axe", &"Guitar", &"Knife", &"Pistol", &"Rifle", &"Shotgun", &"SMG", &"Spear", &"WoodenBat_Barbed", &"WoodenBat_Saw"]
 
 var kind := "player"
@@ -259,14 +260,18 @@ func update_rigged_person(delta: float) -> void:
 	var restart_attack: bool = (next_state=="attack" and attack_clock<previous_attack_clock) if kind=="zombie" else (next_state=="melee" and attack_clock>previous_attack_clock+0.02)
 	previous_attack_clock=attack_clock
 	if next_state != animation_state or str(next_clip) != animation_clip or restart_attack:
+		var preserve_gait_phase := kind == "player" and StringName(animation_clip) in GAIT_CLIPS and next_clip in GAIT_CLIPS
+		var gait_phase := fposmod(animation_player.current_animation_position / maxf(animation_player.current_animation_length, 0.001), 1.0) if preserve_gait_phase else 0.0
 		animation_state = next_state
 		animation_clip = str(next_clip)
 		animation_player.speed_scale = target_speed
 		animation_player.play(next_clip, float(target.blend), 1.0)
+		if preserve_gait_phase:
+			animation_player.seek(gait_phase * animation_player.get_animation(next_clip).length, false)
 		if bool(target.get("seek_end", false)):
 			animation_player.seek(animation_player.get_animation(next_clip).length, true)
 	else:
-		animation_player.speed_scale = lerpf(animation_player.speed_scale, target_speed, 1.0-exp(-delta*8.0))
+		animation_player.speed_scale = target_speed if next_clip in GAIT_CLIPS else lerpf(animation_player.speed_scale, target_speed, 1.0-exp(-delta*8.0))
 
 func build_vehicle() -> void:
 	var paint := Color("526e83")
@@ -308,9 +313,15 @@ func _process(delta: float) -> void:
 		animation_player.active = visible_now
 	if not visible_now: return
 	queue_redraw()
-	var heading: Vector2 = actor.heading_logical if kind == "vehicle" else actor.world_map.world_to_map(actor.facing).normalized()
+	var heading: Vector2
+	if kind == "vehicle":
+		heading = actor.heading_logical
+	elif kind == "player":
+		heading = actor.world_map.world_to_map(actor.visual_facing).normalized()
+	else:
+		heading = actor.world_map.world_to_map(actor.facing).normalized()
 	var target_yaw := atan2(-heading.x,-heading.y)
-	yaw = lerp_angle(yaw,target_yaw,minf(1.0,delta*18.0))
+	yaw = lerp_angle(yaw,target_yaw,minf(1.0,delta*(7.0 if kind == "player" else 18.0)))
 	model.rotation.y = yaw
 	if kind == "vehicle":
 		wheel_angle += actor.speed_mps * delta / 0.35
